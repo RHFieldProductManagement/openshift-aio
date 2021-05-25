@@ -1,0 +1,73 @@
+---
+- name: Destroy Baremetal instance in provider {{ baremetal_provider }}
+  hosts: localhost
+  vars:
+    project_exists: false
+    project_id: null
+    instance_exists: false
+  tasks:
+
+     - name: Get list of Packet projects
+       uri:
+         url: https://api.equinix.com/metal/v1/projects
+         method: GET
+         status_code: 200
+         headers:
+           Content-Type: "application/json"
+           X-Auth-Token: "{{ packet_api_token }}"
+       register: projects
+
+     - name: Check if project {{ packet_project_name }} exists
+       vars:
+         project_name: "{{ packet_project_name }}"
+       set_fact:
+         project_exists: true
+         project_id: "{{ item.id }}"
+       with_items: "{{ projects.json.projects }}"
+       when: item.name == project_name
+
+     - name: Get list of Packet instances
+       uri:
+         url: "https://api.equinix.com/metal/v1/projects/{{ project_id }}/devices"
+         method: GET
+         status_code: 200
+         headers:
+           Content-Type: "application/json"
+           X-Auth-Token: "{{ packet_api_token }}"
+       register: devices
+
+     - name: Get Packet instance ID
+       set_fact:
+         instance_id: "{{ item.id }}"
+         instance_exists: true
+       with_items: "{{ devices.json.devices }}"
+       when: item.hostname == "{{ packet_project_name }}-node"
+
+     - name: Delete Packet instance
+       uri:
+         url: "https://api.equinix.com/metal/v1/devices/{{ instance_id }}"
+         method: DELETE
+         status_code: 204
+         body_format: json
+         headers:
+           Content-Type: "application/json"
+           X-Auth-Token: "{{ packet_api_token }}"
+       when: instance_exists | bool
+
+     - name: Sleep whilst instance is removed
+       pause:
+         minutes: 2
+       when: instance_exists | bool
+
+     - name: Delete Packet project
+       vars:
+         delete_project: "{{ packet_delete_project }}"
+       uri:
+         url: "https://api.equinix.com/metal/v1/projects/{{ project_id }}"
+         method: DELETE
+         status_code: 204
+         body_format: json
+         headers:
+           Content-Type: "application/json"
+           X-Auth-Token: "{{ packet_api_token }}"
+       when: delete_project

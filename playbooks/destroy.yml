@@ -1,0 +1,5 @@
+---
+# vim: set ft=ansible:
+
+# Step 0: Destroy Base Infrastructure
+- import_playbook: "./{{ baremetal_provider }}/destroy_infra.yml"

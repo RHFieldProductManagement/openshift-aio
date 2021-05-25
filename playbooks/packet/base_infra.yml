@@ -1,0 +1,79 @@
+---
+- name: Build Baremetal instance in provider {{ baremetal_provider }}
+  hosts: localhost
+  vars:
+    project_exists: false
+    project_id: null
+  tasks:
+
+     - name: Get list of Packet projects
+       uri:
+         url: https://api.equinix.com/metal/v1/projects
+         method: GET
+         status_code: 200
+         headers:
+           Content-Type: "application/json"
+           X-Auth-Token: "{{ packet_api_token }}"
+       register: projects
+
+     - name: Check if project {{ packet_project_name }} exists
+       vars:
+         project_name: "{{ packet_project_name }}"
+       set_fact:
+         project_exists: true
+         project_id: "{{ item.id }}"
+       with_items: "{{ projects.json.projects }}"
+       when: item.name == project_name
+
+     - name: Create Packet project
+       uri:
+         url: https://api.equinix.com/metal/v1/projects
+         method: POST
+         status_code: 201
+         body_format: json
+         body:
+           name: "{{ packet_project_name }}"
+         headers:
+           Content-Type: "application/json"
+           X-Auth-Token: "{{ packet_api_token }}"
+       register: new_project
+       when: not project_exists | bool
+
+     - name: Set Packet project ID from new project
+       set_fact:
+         project_id: "{{ new_project.json.id }}"
+       when: not project_exists | bool
+
+     - name: Add SSH key to project
+       uri:
+         url: "https://api.equinix.com/metal/v1/projects/{{ project_id }}/ssh-keys"
+         method: POST
+         status_code: 201, 422
+         body_format: json
+         body:
+           label: "{{ project_id }}-key"
+           key: "{{ ssh_key }}"
+         headers:
+           Content-Type: "application/json"
+           X-Auth-Token: "{{ packet_api_token }}"
+
+     - name: Calculate instance termination time
+       shell: date -d '+ {{ packet_runtime_hours }} hours' +%FT%T%Z
+       register: termination_time
+
+     - name: Deploying {{ packet_deploy_type }} instance type
+       uri:
+         url: "https://api.equinix.com/metal/v1/projects/{{ project_id }}/devices"
+         method: POST
+         status_code: 201
+         body_format: json
+         body:
+           facility: "{{ packet_facility }}"
+           plan: "{{ packet_ondemand_type }}"
+           hostname: "{{ packet_project_name }}-node"
+           operating_system: "centos_8"
+           key: "{{ ssh_key }}"
+           termination_time: "{{ termination_time.stdout }}"
+         headers:
+           Content-Type: "application/json"
+           X-Auth-Token: "{{ packet_api_token }}"
