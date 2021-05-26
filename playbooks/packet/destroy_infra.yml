@@ -30,18 +30,23 @@
        uri:
          url: "https://api.equinix.com/metal/v1/projects/{{ project_id }}/devices"
          method: GET
-         status_code: 200
+         status_code: 200, 404
          headers:
            Content-Type: "application/json"
            X-Auth-Token: "{{ packet_api_token }}"
        register: devices
+       when: project_exists | bool
 
      - name: Get Packet instance ID
+       vars:
+         project_name: "{{ packet_project_name }}-node"
        set_fact:
          instance_id: "{{ item.id }}"
          instance_exists: true
        with_items: "{{ devices.json.devices }}"
-       when: item.hostname == "{{ packet_project_name }}-node"
+       when:
+         - project_exists | bool
+         - item.hostname == project_name
 
      - name: Delete Packet instance
        uri:
@@ -70,4 +75,6 @@
          headers:
            Content-Type: "application/json"
            X-Auth-Token: "{{ packet_api_token }}"
-       when: delete_project
+       when:
+         - project_exists
+         - delete_project
