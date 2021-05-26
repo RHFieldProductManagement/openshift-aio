@@ -2,6 +2,9 @@
 - name: Build Baremetal instance in provider {{ baremetal_provider }}
   hosts: localhost
   vars:
+    is_spot: false
+    instance_exists: false
+    instance_ip: null
     project_exists: false
     project_id: null
   tasks:
@@ -57,9 +60,37 @@
            Content-Type: "application/json"
            X-Auth-Token: "{{ packet_api_token }}"
 
+     - name: Get list of Packet instances
+       uri:
+         url: "https://api.equinix.com/metal/v1/projects/{{ project_id }}/devices"
+         method: GET
+         status_code: 200
+         headers:
+           Content-Type: "application/json"
+           X-Auth-Token: "{{ packet_api_token }}"
+       register: devices
+
+     - name: Check if instance is already running
+       vars:
+         project_name: "{{ packet_project_name }}-node"
+       set_fact:
+         instance_id: "{{ item.id }}"
+         instance_exists: true
+       with_items: "{{ devices.json.devices }}"
+       when:
+         - item.hostname == project_name
+
      - name: Calculate instance termination time
        shell: date -d '+ {{ packet_runtime_hours }} hours' +%FT%T%Z
        register: termination_time
+       when: not instance_exists
+
+     - name: Check if we're doing an ondemand or spot deployment
+       set_fact:
+         is_spot: true
+       when:
+         - packet_deploy_type == "spot"
+         - not instance_exists
 
      - name: Deploying {{ packet_deploy_type }} instance type
        uri:
@@ -74,6 +105,40 @@
            operating_system: "centos_8"
            key: "{{ ssh_key }}"
            termination_time: "{{ termination_time.stdout }}"
+           spot_instance: "{{ is_spot }}"
+           spot_price_max: "{{ packet_spot_bid }}"
          headers:
            Content-Type: "application/json"
            X-Auth-Token: "{{ packet_api_token }}"
+       when: not instance_exists
+
+     - name: Sleep whilst instance is spawned
+       pause:
+         minutes: 2
+       when: not instance_exists
+
+     - name: Get list of Packet instances
+       uri:
+         url: "https://api.equinix.com/metal/v1/projects/{{ project_id }}/devices"
+         method: GET
+         status_code: 200
+         headers:
+           Content-Type: "application/json"
+           X-Auth-Token: "{{ packet_api_token }}"
+       register: devices
+
+     - name: Get Packet instance IP address
+       vars:
+         project_name: "{{ packet_project_name }}-node"
+       set_fact:
+         instance_id: "{{ item.id }}"
+         instance_ip: "{{ item.ip_addresses[0].address }}"
+         instance_exists: true
+       with_items: "{{ devices.json.devices }}"
+       when:
+         - project_exists | bool
+         - item.hostname == project_name
+
+     - name: Display IP address of Packet instance
+       debug:
+         msg: "{{ instance_ip }}"
