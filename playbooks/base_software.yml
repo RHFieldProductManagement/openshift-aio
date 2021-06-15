@@ -1,0 +1,91 @@
+---
+# vim: set ft=ansible:
+
+- name: Refresh inventory file
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - meta: refresh_inventory
+
+- name: Check target is ready
+  gather_facts: false
+  remote_user: root
+  hosts: target
+  tasks:
+
+    - name: "Wait for {{ baremetal_provider }} instance to come online..."
+      wait_for_connection:
+        timeout: 300
+
+- name: Deploy base software configuration
+  gather_facts: true
+  remote_user: root
+  hosts: target
+  tasks:
+
+    - name: Check system matches requirements
+      assert:
+        that:
+          - ansible_memtotal_mb >= 1000
+          - ansible_facts['os_family'] == 'RedHat'
+          - ansible_facts['distribution_major_version'] == '8'
+
+    - name: Install EPEL Repo
+      dnf:
+        name: epel-release
+        state: latest
+      become: True
+
+    - name: Install required base packages
+      dnf:
+        name:
+          - wget
+          - libvirt
+          - qemu-kvm
+          - virt-manager
+          - virt-install
+          - libguestfs
+          - libguestfs-tools
+          - libguestfs-xfs
+          - net-tools
+          - sshpass
+          - virt-what
+          - nmap
+        state: latest
+      become: True
+
+    - name: Upgrade all packages
+      dnf:
+        name: "*"
+        state: latest
+
+    - name: Install OpenStack repo for VirtualBMC
+      dnf:
+        name:
+          - https://repos.fedorapeople.org/repos/openstack/openstack-victoria/rdo-release-victoria-3.el8.noarch.rpm
+        state: latest
+        disable_gpg_check: yes
+      become: true
+      when: deploy_type == "ipi"
+
+    - name: Install VirtualBMC packages and dependencies
+      dnf:
+        name:
+          - python36
+          - python3-virtualbmc
+        state: latest
+      become: true
+      when: deploy_type == "ipi"
+
+    - name: Enable VirtualBMC
+      ansible.builtin.systemd:
+        name: virtualbmc
+        enabled: yes
+        state: started
+      when: deploy_type == "ipi"
+
+    - name: Enable Libvirt
+      ansible.builtin.systemd:
+        name: libvirtd
+        enabled: yes
+        state: started

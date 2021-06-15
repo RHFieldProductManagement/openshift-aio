@@ -142,3 +142,19 @@
      - name: Display IP address of Packet instance
        debug:
          msg: "{{ instance_ip }}"
+
+     - name: Touch inventory file
+       ansible.builtin.file:
+         path: ../../inventory.yml
+         state: touch
+         mode: u+rw,g-wx,o+rw
+
+     - name: Build new inventory file for server
+       ini_file:
+         dest: ../../inventory.yml
+         section: target
+         option: "{{ instance_ip }}"
+         mode: 0666
+         state: present
+         backup: no
+         allow_no_value: yes

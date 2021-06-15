@@ -78,3 +78,8 @@
        when:
          - project_exists
          - delete_project
+
+     - name: Remove dynamic inventory file
+       ansible.builtin.file:
+         path: ../../inventory.yml
+         state: absent

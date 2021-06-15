@@ -1,0 +1,253 @@
+---
+# vim: set ft=ansible:
+
+- name: Deploy base virtualisation configuration
+  gather_facts: true
+  remote_user: root
+  hosts: target
+  tasks:
+
+    - name: Copy over virtual network definition files
+      ansible.builtin.copy:
+        src: "{{ item }}"
+        dest: "/tmp"
+        owner: root
+        group: root
+        mode: 0644
+      loop:
+        - ../conf/ocp4-net.xml
+        - ../conf/ocp4-prov-net.xml
+
+    - name: Check if ocp4-net network is already configured
+      ansible.builtin.command: virsh net-dumpxml ocp4-net
+      register: ocp4_net_return
+      failed_when: ocp4_net_return.rc > 1
+
+    - name: Check if ocp4-prov-net network is already configured
+      ansible.builtin.command: virsh net-dumpxml ocp4-provisioning
+      register: ocp4_prov_return
+      failed_when: ocp4_prov_return.rc > 1
+      when: deploy_type == "ipi"
+
+    - name: Enable OpenShift base network (192.168.123.100/24)
+      ansible.builtin.shell: "{{ item }}"
+      loop:
+        - "virsh net-define /tmp/ocp4-net.xml"
+        - "virsh net-start ocp4-net"
+        - "virsh net-autostart ocp4-net"
+      when: ocp4_net_return.rc == 1
+
+    - name: Enable OpenShift provisioning network (172.22.0.0/24)
+      ansible.builtin.shell: "{{ item }}"
+      loop:
+        - "virsh net-define /tmp/ocp4-prov-net.xml"
+        - "virsh net-start ocp4-provisioning"
+        - "virsh net-autostart ocp4-provisioning"
+      when:
+        - ocp4_prov_return.rc == 1
+        - deploy_type == "ipi"
+
+- name: Configure virtual machines
+  gather_facts: true
+  remote_user: root
+  hosts: target
+  vars_files:
+    - "../conf/vms.yml"
+  tasks:
+    - name: Create virtual disk images for nodes
+      ansible.builtin.shell: "qemu-img create -f qcow2 /var/lib/libvirt/images/ocp4-{{ item }}.qcow2 80G"
+      loop:
+        - "bootstrap"
+        - "master1"
+        - "master2"
+        - "master3"
+        - "worker1"
+        - "worker2"
+        - "worker3"
+
+    - name: Create virtual disk images for OCS (even if not used)
+      ansible.builtin.shell: "qemu-img create -f qcow2 /var/lib/libvirt/images/ocp4-worker{{ item }}.qcow2 100G"
+      loop:
+        - "1-osd1"
+        - "1-osd2"
+        - "2-osd1"
+        - "2-osd2"
+        - "3-osd1"
+        - "3-osd2"
+
+    - name: Check if base RHEL/CentOS 8 already disk image exists
+      stat:
+        path: /var/lib/libvirt/images/centos8-kvm.qcow2
+      register: base_result
+
+    - name: Downloading CentOS 8 base image
+      ansible.builtin.get_url:
+        url: https://cloud.centos.org/centos/8/x86_64/images/CentOS-8-GenericCloud-8.4.2105-20210603.0.x86_64.qcow2
+        dest: /var/lib/libvirt/images/centos8-kvm.qcow2
+        mode: 0644
+      when: not base_result.stat.exists
+
+    - name: Copy over ifcfg-eth0 for bastion VM
+      ansible.builtin.copy:
+        src: "../conf/ifcfg-eth0"
+        dest: "/tmp"
+        owner: root
+        group: root
+        mode: 0644
+
+    - name: Check if Bastion disk image already exists - don't clobber
+      stat:
+        path: /var/lib/libvirt/images/ocp4-bastion.qcow2
+      register: bastion_result
+
+    - name: Creating and customising Bastion VM image from CentOS 8 template
+      ansible.builtin.shell: "{{ item }}"
+      loop:
+        - "qemu-img create -f qcow2 /var/lib/libvirt/images/ocp4-bastion.qcow2 -b /var/lib/libvirt/images/centos8-kvm.qcow2 -F qcow2 200G"
+        - "virt-customize -a /var/lib/libvirt/images/ocp4-bastion.qcow2 --uninstall cloud-init"
+        - "virt-customize -a /var/lib/libvirt/images/ocp4-bastion.qcow2 --root-password password:redhat"
+        - "virt-copy-in -a /var/lib/libvirt/images/ocp4-bastion.qcow2 /tmp/ifcfg-eth0 /etc/sysconfig/network-scripts"
+        - "virt-customize -a /var/lib/libvirt/images/ocp4-bastion.qcow2 --run-command \"mkdir -p /root/.ssh/ && chmod -R 0700 /root/.ssh/\""
+        - "virt-customize -a /var/lib/libvirt/images/ocp4-bastion.qcow2 --run-command \"restorecon -Rv /root/.ssh/\""
+      when: not bastion_result.stat.exists
+
+    - name: Check if we have defined virtual machines
+      ansible.builtin.command: virsh dumpxml ocp4-bastion
+      register: vms_defined
+      failed_when: vms_defined.rc > 1
+
+    - name: Build Bastion VM definition for IPI
+      ansible.builtin.command: >
+        virt-install --virt-type kvm --ram {{ vms.bastion.mem }} --vcpus {{ vms.bastion.cpus }} --cpu=host-passthrough --os-variant rhel8.1
+        --disk path=/var/lib/libvirt/images/ocp4-bastion.qcow2,device=disk,bus=virtio,format=qcow2
+        --network network:ocp4-net,mac={{ vms.bastion.base_network }}
+        --network network:ocp4-provisioning,mac={{ vms.bastion.prov_network }}
+        --boot hd --noautoconsole --vnc --name ocp4-bastion --noreboot
+      when:
+        - vms_defined.rc == 1
+        - deploy_type == "ipi"
+
+    - name: Build Bastion VM definition for UPI
+      ansible.builtin.command: >
+        virt-install --virt-type kvm --ram {{ vms.bastion.mem }} --vcpus {{ vms.bastion.cpus }} --cpu=host-passthrough --os-variant rhel8.1
+        --disk path=/var/lib/libvirt/images/ocp4-bastion.qcow2,device=disk,bus=virtio,format=qcow2
+        --network network:ocp4-net,mac={{ vms.bastion.base_network }}
+        --boot hd --noautoconsole --vnc --name ocp4-bastion --noreboot
+      when:
+        - vms_defined.rc == 1
+        - deploy_type == "upi"
+
+    - name: Build Master VM definitions for IPI
+      ansible.builtin.command: >
+        virt-install --virt-type kvm --ram {{ item.value.mem }} --vcpus {{ item.value.cpus }} --cpu=host-passthrough --os-variant rhel8.1
+        --disk path=/var/lib/libvirt/images/ocp4-{{ item.key }}.qcow2,device=disk,bus=virtio,format=qcow2
+        --network network:ocp4-net,mac={{ item.value.base_network }}
+        --network network:ocp4-provisioning,mac={{ item.value.prov_network }}
+        --boot hd,network --noautoconsole --vnc --name ocp4-{{ item.key }} --noreboot
+      with_dict: "{{ vms['masters'] }}"
+      when:
+        - vms_defined.rc == 1
+        - deploy_type == "ipi"
+
+    - name: Build Master VM definitions for UPI
+      ansible.builtin.command: >
+        virt-install --virt-type kvm --ram {{ item.value.mem }} --vcpus {{ item.value.cpus }} --cpu=host-passthrough --os-variant rhel8.1
+        --disk path=/var/lib/libvirt/images/ocp4-{{ item.key }}.qcow2,device=disk,bus=virtio,format=qcow2
+        --network network:ocp4-net,mac={{ item.value.base_network }}
+        --boot hd,network --noautoconsole --vnc --name ocp4-{{ item.key }} --noreboot
+      with_dict: "{{ vms['masters'] }}"
+      when:
+        - vms_defined.rc == 1
+        - deploy_type == "upi"
+
+    - name: Build Worker VM definitions for IPI
+      ansible.builtin.command: >
+        virt-install --virt-type kvm --ram {{ item.value.mem }} --vcpus {{ item.value.cpus }} --cpu=host-passthrough --os-variant rhel8.1
+        --disk path=/var/lib/libvirt/images/ocp4-{{ item.key }}.qcow2,device=disk,bus=virtio,format=qcow2
+        --disk path=/var/lib/libvirt/images/ocp4-{{ item.key }}-osd1.qcow2,device=disk,bus=virtio,format=qcow2
+        --disk path=/var/lib/libvirt/images/ocp4-{{ item.key }}-osd2.qcow2,device=disk,bus=virtio,format=qcow2
+        --network network:ocp4-net,mac={{ item.value.base_network }}
+        --network network:ocp4-provisioning,mac={{ item.value.prov_network }}
+        --boot hd,network --noautoconsole --vnc --name ocp4-{{ item.key }} --noreboot
+      with_dict: "{{ vms['workers'] }}"
+      when:
+        - vms_defined.rc == 1
+        - deploy_type == "ipi"
+
+    - name: Build Worker VM definitions for UPI
+      ansible.builtin.command: >
+        virt-install --virt-type kvm --ram {{ item.value.mem }} --vcpus {{ item.value.cpus }} --cpu=host-passthrough --os-variant rhel8.1
+        --disk path=/var/lib/libvirt/images/ocp4-{{ item.key }}.qcow2,device=disk,bus=virtio,format=qcow2
+        --disk path=/var/lib/libvirt/images/ocp4-{{ item.key }}-osd1.qcow2,device=disk,bus=virtio,format=qcow2
+        --disk path=/var/lib/libvirt/images/ocp4-{{ item.key }}-osd2.qcow2,device=disk,bus=virtio,format=qcow2
+        --network network:ocp4-net,mac={{ item.value.base_network }}
+        --boot hd,network --noautoconsole --vnc --name ocp4-{{ item.key }} --noreboot
+      with_dict: "{{ vms['workers'] }}"
+      when:
+        - vms_defined.rc == 1
+        - deploy_type == "upi"
+
+    - name: Check if firewalld is available
+      ansible.builtin.command: systemctl status firewalld
+      register: firewalld_avail
+      failed_when: firewalld_avail.rc == 1
+
+    - name: Enable firewalld for IPI deployments
+      ansible.builtin.systemd:
+        name: firewalld
+        enabled: yes
+        state: started
+      when:
+        - firewalld_avail.rc < 4
+        - deploy_type == "ipi"
+
+    - name: Enable firewalld ports for IPI deployments
+      firewalld:
+        port: 6231-6237/udp
+        zone: libvirt
+        permanent: yes
+        state: enabled
+      when:
+        - firewalld_avail.rc !=	4
+        - deploy_type == "ipi"
+
+    - name: Enable iptables ports for IPI deployments
+      ansible.builtin.iptables:
+        chain: LIBVIRT_INP
+        protocol: udp
+        destination_port: "6231:6237"
+        jump: ACCEPT
+      when:
+        - firewalld_avail.rc == 4
+        - deploy_type == "ipi"
+
+    - name: Add VBMC entries for IPI deployments
+      ansible.builtin.command: "{{ item }}"
+      with_items:
+        - "vbmc add --username admin --password redhat --port 6231 --address 192.168.123.1 --libvirt-uri qemu:///system ocp4-bastion"
+        - "vbmc add --username admin --password redhat --port 6232 --address 192.168.123.1 --libvirt-uri qemu:///system ocp4-master1"
+        - "vbmc add --username admin --password redhat --port 6233 --address 192.168.123.1 --libvirt-uri qemu:///system ocp4-master2"
+        - "vbmc add --username admin --password redhat --port 6234 --address 192.168.123.1 --libvirt-uri qemu:///system ocp4-master3"
+        - "vbmc add --username admin --password redhat --port 6235 --address 192.168.123.1 --libvirt-uri qemu:///system ocp4-worker1"
+        - "vbmc add --username admin --password redhat --port 6236 --address 192.168.123.1 --libvirt-uri qemu:///system ocp4-worker2"
+        - "vbmc add --username admin --password redhat --port 6237 --address 192.168.123.1 --libvirt-uri qemu:///system ocp4-worker3"
+        - "vbmc start ocp4-bastion"
+        - "vbmc start ocp4-master1"
+        - "vbmc start ocp4-master2"
+        - "vbmc start ocp4-master3"
+        - "vbmc start ocp4-worker1"
+        - "vbmc start ocp4-worker2"
+        - "vbmc start ocp4-worker3"
+      register: vbmc_return
+      failed_when: vbmc_return.rc > 1      
+      when:
+        deploy_type == "ipi"
+
+    - name: Generate ssh-key for connectivity across deployments
+      openssh_keypair:
+        path: "~/.ssh/id_rsa"
+        type: rsa
+        size: 4096
+        state: present
+        force: no
+

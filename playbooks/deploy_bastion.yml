@@ -1,0 +1,456 @@
+---
+# vim: set ft=ansible:
+
+- name: Setup new Bastion host
+  hosts: localhost
+  tasks:
+
+    - name: Dynamically add new Bastion VM to the inventory
+      add_host:
+        ansible_ssh_user: root
+        ansible_password: redhat
+        hostname: 192.168.123.100
+        groups: bastion
+
+- name: Start Bastion machine
+  gather_facts: true
+  remote_user: root
+  hosts: target
+  tasks:
+
+    - name: Start Bastion virtual machine
+      ansible.builtin.command: virsh start ocp4-bastion
+      register: bastion_start
+      failed_when: bastion_start.rc > 1
+
+- name: Deploy Bastion machine
+  gather_facts: false
+  hosts: bastion
+  tasks:
+
+    - name: Get RHCOS version to use
+      set_fact:
+        subversion: "{{ ocp_version.split('latest-')[1] if ('latest' in ocp_version) else ocp_version.split('.')[:2]|join('.') }}"
+
+    - name: Wait for Bastion machine to start
+      wait_for_connection:
+        delay: 10
+        timeout: 240
+
+    - name: Grow root disk
+      ansible.builtin.command: growpart /dev/vda 1
+      ignore_errors: true
+
+    - name: Resize partition to fill disk
+      ansible.builtin.command: xfs_growfs /
+
+    - name: Set Bastion hostname
+      ansible.builtin.hostname:
+        name: ocp4-bastion.aio.example.com
+
+    - name: Install required base packages
+      dnf:
+        name:
+          - qemu-img
+          - jq
+          - git
+          - httpd
+          - squid
+          - dhcp-server
+          - xinetd
+          - net-tools
+          - nano
+          - bind
+          - bind-utils
+          - haproxy
+          - wget
+          - syslinux
+          - libvirt-libs
+          - tftp-server
+          - syslinux-tftpboot
+          - firewalld
+        state: latest
+
+    - name: Install IPI-specific base packages
+      dnf:
+        name:
+          - libvirt
+          - qemu-kvm
+          - mkisofs
+          - python3-devel
+          - jq
+          - ipmitool
+        state: latest
+      when: deploy_type == "ipi"
+
+    - name: Enable Libvirtd for IPI
+      ansible.builtin.systemd:
+        name: libvirtd
+        enabled: yes
+        state: started
+      when: deploy_type == "ipi"
+
+    - name: Upgrade all packages
+      dnf:
+        name: "*"
+        state: latest
+
+    - name: Create SSH keypair
+      openssh_keypair:
+        path: "~/.ssh/id_rsa"
+        type: rsa
+        size: 4096
+        state: present
+        force: no
+
+    - name: Enable Firewalld
+      ansible.builtin.systemd:
+        name: firewalld
+        enabled: yes
+        state: started
+
+    - name: Enable Bastion services in firewall
+      firewalld:
+        permanent: yes
+        state: enabled
+        service: "{{ item }}"
+      loop:
+        - dhcp
+        - dns
+        - http
+        - https
+        - squid
+        - nfs3
+        - mountd
+        - rpc-bind
+        - nfs
+
+    - name: Enable extra Bastion ports in firewall
+      firewalld:
+        permanent: yes
+        state: enabled
+        port: "{{ item }}"
+      loop:
+        - "6443/tcp"
+        - "8443/tcp"
+        - "22623/tcp"
+        - "81/tcp"
+
+    - name: Reload Firewalld
+      ansible.builtin.command: firewall-cmd --reload
+      register: firewalld_return
+      failed_when: firewalld_return.rc > 0
+
+    - name: Make NFS PV and TFTPboot directories
+      file:
+        path: "{{ item }}"
+        state: directory
+        mode: 0777
+        recurse: yes
+      loop:
+        - "/nfs/pv1"
+        - "/nfs/pv2"
+        - "/nfs/pv3"
+        - "/nfs/pv4"
+        - "/nfs/pv5"
+        - "/var/lib/tftpboot/pxelinux/pxelinux.cfg/"
+
+    - name: Setting up NFS config
+      ansible.builtin.lineinfile:
+        path: /etc/exports
+        line: /nfs *(rw,no_root_squash)
+        create: yes
+
+    - name: Setting up HTTPD config
+      ansible.builtin.lineinfile:
+        path: /etc/httpd/conf/httpd.conf
+        regexp: '^Listen '
+        insertafter: '^#Listen '
+        line: Listen 81
+
+    - name: Setting up TFTP configs
+      ansible.builtin.copy:
+        remote_src: yes
+        src: "{{ item }}"
+        dest: /var/lib/tftpboot/pxelinux
+      loop:
+        - "/tftpboot/pxelinux.0"
+        - "/tftpboot/ldlinux.c32"
+        - "/tftpboot/vesamenu.c32"
+      when: deploy_type == "upi"
+
+    - name: Copy over DHCP config file for UPI
+      ansible.builtin.copy:
+        src: ../conf/dhcpd.conf
+        dest: /etc/dhcp/dhcpd.conf
+        mode: 0644
+      when: deploy_type == "upi"
+
+    - name: Copy over DHCP config file for IPI
+      ansible.builtin.copy:
+        src: ../conf/dhcpd-ipi.conf
+        dest: /etc/dhcp/dhcpd.conf
+        mode: 0644
+      when: deploy_type == "ipi"
+
+    - name: Copy over Squid config file
+      ansible.builtin.copy:
+        src: ../conf/squid.conf
+        dest: /etc/squid/squid.conf
+        mode: 0644
+
+    - name: Copy over named config file
+      ansible.builtin.copy:
+        src: ../conf/named.conf
+        dest: /etc/named.conf
+        mode: 0644
+
+    - name: Copy over haproxy config file
+      ansible.builtin.copy:
+        src: ../conf/haproxy.cfg
+        dest: /etc/haproxy/haproxy.cfg
+        mode: 0644
+
+    - name: Copy over DNS zone files for UPI
+      ansible.builtin.copy:
+        src: "{{ item }}"
+        dest: /var/named
+        mode: 0644
+      loop:
+        - "../conf/aio.example.com.db"
+        - "../conf/123.168.192.db"
+      when: deploy_type == "upi"
+
+    - name: Copy over DNS zone files for IPI
+      ansible.builtin.copy:
+        src: "{{ item }}"
+        dest: /var/named
+        mode: 0644
+      loop:
+        - "../conf/aio.example.com-ipi.db"
+        - "../conf/123.168.192.db"
+      when: deploy_type == "ipi"
+
+    - name: Rename DNS zone file for IPI
+      ansible.builtin.command: mv /var/named/aio.example.com-ipi.db /var/named/aio.example.com.db
+      when: deploy_type == "ipi"
+
+    - name: Enable Bastion Services
+      ansible.builtin.systemd:
+        name: "{{ item }}"
+        enabled: yes
+        state: started
+      loop:
+        - httpd
+        - named
+        - squid
+        - dhcpd
+        - rpcbind
+        - nfs-server
+
+    - name: Enable SEBool for HAproxy
+      seboolean:
+        name: haproxy_connect_any
+        state: yes
+        persistent: yes
+      when: deploy_type == "upi"
+
+    - name: Enable UPI specific services
+      ansible.builtin.systemd:
+        name: "{{ item }}"
+        enabled: yes
+        state: started
+      loop:
+        - xinetd
+        - tftp
+        - haproxy
+      when: deploy_type == "upi"
+
+    - name: Configure Libvirt Pool for IPI
+      ansible.builtin.command: virsh pool-define-as --name default --type dir --target /var/lib/libvirt/images
+      register: virsh_pool
+      failed_when: virsh_pool.rc > 1
+      when: deploy_type == "ipi"
+
+    - name: Enable Libvirt Pool Autostart for IPI
+      ansible.builtin.command: virsh pool-autostart default
+      when: deploy_type == "ipi"
+
+    - name: Configure Provisioning Bridge for IPI
+      nmcli:
+        type: bridge
+        conn_name: provisioning
+        ip4: 172.22.0.1/24
+        gw4: 172.22.0.254
+        state: present
+      when: deploy_type == "ipi"
+
+    - name: Add eth1 to Provisioning Bridge for IPI
+      nmcli:
+        type: bridge-slave
+        conn_name: eth1
+        ifname: eth1
+        master: provisioning
+        state: present
+      when: deploy_type == "ipi"
+
+    - name: Configure Baremetal Bridge for IPI
+      nmcli:
+        type: bridge
+        conn_name: baremetal
+        ip4: 192.168.123.100/24
+        gw4: 192.168.123.1
+        state: present
+      when: deploy_type == "ipi"
+
+    - name: Add eth0 to Baremetal Bridge for IPI
+      nmcli:
+        type: bridge-slave
+        conn_name: eth0
+        ifname: eth0
+        master: baremetal
+        state: present
+      when: deploy_type == "ipi"
+
+    - name: Remove hardcoded ifcfg-eth0 for IPI
+      ansible.builtin.file:
+        path: /etc/sysconfig/network-scripts/ifcfg-eth0
+        state: absent
+      when: deploy_type == "ipi"
+
+    - name: Download OpenShift Client
+      ansible.builtin.get_url:
+        url: https://mirror.openshift.com/pub/openshift-v4/clients/ocp/{{ ocp_version }}/openshift-client-linux.tar.gz
+        dest: /root
+        mode: 0644
+
+    - name: Download OpenShift Installer
+      ansible.builtin.get_url:
+        url: https://mirror.openshift.com/pub/openshift-v4/clients/ocp/{{ ocp_version }}/openshift-install-linux.tar.gz
+        dest: /root
+        mode: 0644
+
+    - name: Download RHCOS RAMDISK
+      ansible.builtin.get_url:
+        url: https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/{{ subversion }}/latest/rhcos-live-initramfs.x86_64.img
+        dest: /var/www/html
+        mode: 0644
+      when: deploy_type == "upi"
+
+    - name: Download RHCOS Kernel
+      ansible.builtin.get_url:
+        url: https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/{{ subversion }}/latest/rhcos-live-kernel-x86_64
+        dest: /var/www/html
+        mode: 0644
+      when: deploy_type == "upi"
+
+    - name: Download RHCOS RAW Disk image
+      ansible.builtin.get_url:
+        url: https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/{{ subversion }}/latest/rhcos-metal.x86_64.raw.gz
+        dest: /var/www/html
+        mode: 0644
+      when: deploy_type == "upi"
+
+    - name: Download RHCOS Live RootFS
+      ansible.builtin.get_url:
+        url: https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/{{ subversion }}/latest/rhcos-live-rootfs.x86_64.img
+        dest: /var/www/html
+        mode: 0644
+      when: deploy_type == "upi"
+
+    - name: Unpack OpenShift Client & Installer
+      ansible.builtin.unarchive:
+        remote_src: yes
+        src: "{{ item }}"
+        dest: /usr/bin
+      loop:
+        - "/root/openshift-install-linux.tar.gz"
+        - "/root/openshift-client-linux.tar.gz"
+
+    - name: Rename RHCOS files to simplify filenames
+      ansible.builtin.command: "{{ item }}"
+      loop:
+        - "mv /var/www/html/rhcos-metal.x86_64.raw.gz /var/www/html/rhcos.raw.gz"
+        - "mv /var/www/html/rhcos-live-kernel-x86_64 /var/www/html/rhcos.kernel"
+        - "mv /var/www/html/rhcos-live-initramfs.x86_64.img /var/www/html/rhcos.initramfs"
+        - "mv /var/www/html/rhcos-live-rootfs.x86_64.img /var/www/html/rhcos.rootfs"
+      when: deploy_type == "upi"
+
+    - name: Reset permissions for /var/www/html for UPI
+      ansible.builtin.file:
+        path: /var/www/html
+        recurse: yes
+        mode: '0755'
+        setype: _default
+
+    - name: Make ocp-install directory on bastion
+      ansible.builtin.file:
+        path: /root/ocp-install
+        state: directory
+
+    - name: Copy install-config over to bastion for IPI
+      ansible.builtin.copy:
+        src: ../conf/install-config.yaml
+        dest: /root/install-config.yaml
+      when: deploy_type == "upi"
+
+    - name: Copy install-config over to bastion for UPI
+      ansible.builtin.copy:
+        src: ../conf/install-config-ipi.yaml
+        dest: /root/install-config.yaml
+      when: deploy_type == "ipi"
+
+    - name: Copy over pxeboot configs for UPI
+      ansible.builtin.copy:
+        src: ../conf/pxeboot/
+        dest: /var/lib/tftpboot/pxelinux/pxelinux.cfg/
+      when: deploy_type == "upi"
+
+    - name: Reset permissions for /var/lib/tftpboot/pxelinux/pxelinux.cfg for UPI
+      ansible.builtin.file:
+        path: /var/lib/tftpboot/pxelinux/pxelinux.cfg
+        recurse: yes
+        mode: '0755'
+        setype: _default
+      when: deploy_type == "upi"
+
+    - name: Grab contents of Bastions SSH public key
+      ansible.builtin.command: cat /root/.ssh/id_rsa.pub
+      register: bastion_ssh
+
+    - name: Insert ssh pub key into install-config
+      ansible.builtin.lineinfile:
+        path: /root/install-config.yaml
+        regexp: '^sshKey: '
+        insertafter: '^#sshKey: '
+        line: "sshKey: '{{ bastion_ssh.stdout }}'"
+
+    - name: Insert pull secret into install-config
+      ansible.builtin.lineinfile:
+        path: /root/install-config.yaml
+        regexp: '^pullSecret: '
+        insertafter: '^#pullSecret: '
+        line: "pullSecret: '{{ pull_secret }}'"
+
+    - name: Creating pull-secret file
+      ansible.builtin.lineinfile:
+        path: /root/pull-secret.json
+        line: "{{ pull_secret }}"
+        create: yes
+
+    - name: Make sure /etc/resolv.conf is writable
+      ansible.builtin.file:
+        path: /etc/resolv.conf
+        attributes: -i
+
+    - name: Clear out existing /etc/resolv.conf contents
+      ansible.builtin.command: truncate -s 0 /etc/resolv.conf
+
+    - name: Ensuring /etc/resolv.conf is setup for DNS
+      ansible.builtin.blockinfile:
+        path: /etc/resolv.conf
+        block: |
+          search aio.example.com
+          nameserver 192.168.123.100
+        create: yes
+        attributes: +i
