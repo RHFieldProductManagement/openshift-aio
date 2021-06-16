@@ -1,0 +1,167 @@
+---
+# vim: set ft=ansible:
+
+- name: Reload inventory for bastion host
+  hosts: localhost
+  tasks:
+
+    - meta: refresh_inventory
+
+- name: Deploy OpenShift Cluster
+  gather_facts: false
+  hosts: bastion
+  tasks:
+
+    - name: Make sure that Bastion machine is running
+      wait_for_connection:
+        timeout: 240
+
+    - name: Get exact OpenShift version in use
+      ansible.builtin.command: oc version --client=false
+      register: ocp_client_output
+      when: deploy_type == "ipi"
+
+    - set_fact:
+        ocp_client_version: "{{ ocp_client_output.stdout.split(':')[1] | trim }}"
+      when: deploy_type == "ipi"
+
+    - name: Check if OpenShift Installer binary exists
+      stat:
+        path: /root/openshift-baremetal-install
+      register: installer_exists
+      when: deploy_type == "ipi"
+
+    - name: Extract OpenShift Baremetal Installer for IPI
+      ansible.builtin.command: >
+        oc adm release extract --registry-config /root/pull-secret.json
+        --command=openshift-baremetal-install --to /root {{ ocp_client_version }}
+      when:
+        - deploy_type == "ipi"
+        - not installer_exists.stat.exists
+
+    - name: Get OpenShift installer commit ID for IPI
+      ansible.builtin.command: /root/openshift-baremetal-install version
+      register: installer_version
+      when: deploy_type == "ipi"
+
+    - set_fact:
+        installer_commit: "{{ installer_version.stdout_lines[1].split('commit')[1] | trim }}"
+      when: deploy_type == "ipi"
+
+    - name: Check if RHCOS file descriptor exists
+      stat:
+        path: /root/openshift-baremetal-install
+      register: installer_exists
+      when: deploy_type == "ipi"
+
+    - name: Get the RHCOS file descriptor for IPI deployments
+      ansible.builtin.get_url:
+        url: "https://raw.githubusercontent.com/openshift/installer/{{ installer_commit }}/data/data/rhcos.json"
+        dest: /tmp/rhcos.json
+        mode: 0644
+      when: deploy_type == "ipi"
+
+    - name: Slurp the RHCOS json data
+      slurp:
+        path: /tmp/rhcos.json
+      register: rhcos_slurp
+      when: deploy_type == "ipi"
+
+    - name: Decode the RHCOS json data
+      set_fact:
+        rhcos_json: "{{ rhcos_slurp.content | b64decode }}"
+      when: deploy_type == "ipi"
+
+    - name: Get RHCOS OpenStack image URL
+      set_fact:
+        rhcos_openstack_url: "{{ rhcos_json.baseURI }}{{ rhcos_json.images.openstack.path }}"
+      when: deploy_type == "ipi"
+
+    - name: Get RHCOS QEMU image URL
+      set_fact:
+        rhcos_qemu_url: "{{ rhcos_json.baseURI }}{{ rhcos_json.images.qemu.path }}"
+      when: deploy_type == "ipi"
+
+    - name: Get RHCOS OpenStack sha265 checksum
+      set_fact:
+        rhcos_openstack_sha256: "{{ rhcos_json.images.openstack.sha256 }}"
+      when: deploy_type == "ipi"
+
+    - name: Get RHCOS QEMU sha265 checksum
+      set_fact:
+        rhcos_qemu_sha256: "{{ rhcos_json.images.qemu[\"uncompressed-sha256\"] }}"
+      when: deploy_type == "ipi"
+
+    - name: Check if RHCOS OpenStack image exists
+      stat:
+        path: /var/www/html/rhcos-openstack.x86_64.qcow2.gz
+      register: openstack_exists
+      when: deploy_type == "ipi"
+
+    - name: Download the RHCOS OpenStack image
+      ansible.builtin.get_url:
+        url: "{{ rhcos_openstack_url }}"
+        dest: /var/www/html/rhcos-openstack.x86_64.qcow2.gz
+        mode: 0644
+      when:
+        - deploy_type == "ipi"
+        - not openstack_exists.stat.exists
+
+    - name: Check if RHCOS QEMU image exists
+      stat:
+        path: /var/www/html/rhcos-qemu.x86_64.qcow2.gz
+      register: qemu_exists
+      when: deploy_type == "ipi"
+
+    - name: Download the RHCOS QEMU image
+      ansible.builtin.get_url:
+        url: "{{ rhcos_qemu_url }}"
+        dest: /var/www/html/rhcos-qemu.x86_64.qcow2.gz
+        mode: 0644
+      when:
+        - deploy_type == "ipi"
+        - not qemu_exists.stat.exists
+
+    - name: Make ocp-install directory
+      ansible.builtin.file:
+        path: /root/ocp-install/
+        state: directory
+
+    - name: Copy lab install-config to ocp-install directory
+      ansible.builtin.copy:
+        remote_src: yes
+        src: /root/lab/install-config.yaml
+        dest: /root/ocp-install/install-config.yaml
+
+    - name: Update OpenStack image location in install-config
+      ansible.builtin.replace:
+        path: /root/ocp-install/install-config.yaml
+        regexp: 'RHCOS_OPENSTACK_IMAGE'
+        replace: "http://192.168.123.100:81/rhcos-openstack.x86_64.qcow2.gz?sha256={{ rhcos_openstack_sha256 }}"
+
+    - name: Update OpenStack image location in install-config
+      ansible.builtin.replace:
+        path: /root/ocp-install/install-config.yaml
+        regexp: 'RHCOS_QEMU_IMAGE'
+        replace: "http://192.168.123.100:81/rhcos-qemu.x86_64.qcow2.gz?sha256={{ rhcos_qemu_sha256 }}"
+
+    - name: Make a backup of the install-config from ocp-install directory
+      ansible.builtin.copy:
+        remote_src: yes
+        src: /root/ocp-install/install-config.yaml
+        dest: /root/install-config.yaml.bak
+
+    - name: Create OpenShift manifests
+      ansible.builtin.command: >
+        /root/openshift-baremetal-install
+        --dir=/root/ocp-install/ create manifests
+
+    - name: Copy over MachineConfigs for chrony and networking
+      ansible.builtin.copy:
+        src: "{{ item }}"
+        dest: /root/ocp-install/openshift
+      loop:
+        - "../conf/99_masters-chrony-configuration.yaml"
+        - "../conf/99_workers-chrony-configuration.yaml"
+        - "../conf/97_workers_empty_enp3s0.yaml"
+

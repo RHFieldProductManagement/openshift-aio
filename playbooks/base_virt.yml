@@ -44,8 +44,8 @@
         - "virsh net-start ocp4-provisioning"
         - "virsh net-autostart ocp4-provisioning"
       when:
-        - ocp4_prov_return.rc == 1
         - deploy_type == "ipi"
+        - ocp4_prov_return.rc == 1
 
 - name: Configure virtual machines
   gather_facts: true
@@ -203,7 +203,7 @@
 
     - name: Enable firewalld ports for IPI deployments
       firewalld:
-        port: 6231-6237/udp
+        port: 6230-6236/udp
         zone: libvirt
         permanent: yes
         state: enabled
@@ -215,7 +215,7 @@
       ansible.builtin.iptables:
         chain: LIBVIRT_INP
         protocol: udp
-        destination_port: "6231:6237"
+        destination_port: "6230:6236"
         jump: ACCEPT
       when:
         - firewalld_avail.rc == 4
@@ -224,13 +224,13 @@
     - name: Add VBMC entries for IPI deployments
       ansible.builtin.command: "{{ item }}"
       with_items:
-        - "vbmc add --username admin --password redhat --port 6231 --address 192.168.123.1 --libvirt-uri qemu:///system ocp4-bastion"
-        - "vbmc add --username admin --password redhat --port 6232 --address 192.168.123.1 --libvirt-uri qemu:///system ocp4-master1"
-        - "vbmc add --username admin --password redhat --port 6233 --address 192.168.123.1 --libvirt-uri qemu:///system ocp4-master2"
-        - "vbmc add --username admin --password redhat --port 6234 --address 192.168.123.1 --libvirt-uri qemu:///system ocp4-master3"
-        - "vbmc add --username admin --password redhat --port 6235 --address 192.168.123.1 --libvirt-uri qemu:///system ocp4-worker1"
-        - "vbmc add --username admin --password redhat --port 6236 --address 192.168.123.1 --libvirt-uri qemu:///system ocp4-worker2"
-        - "vbmc add --username admin --password redhat --port 6237 --address 192.168.123.1 --libvirt-uri qemu:///system ocp4-worker3"
+        - "vbmc add --username admin --password redhat --port 6230 --address 192.168.123.1 --libvirt-uri qemu:///system ocp4-bastion"
+        - "vbmc add --username admin --password redhat --port 6231 --address 192.168.123.1 --libvirt-uri qemu:///system ocp4-master1"
+        - "vbmc add --username admin --password redhat --port 6232 --address 192.168.123.1 --libvirt-uri qemu:///system ocp4-master2"
+        - "vbmc add --username admin --password redhat --port 6233 --address 192.168.123.1 --libvirt-uri qemu:///system ocp4-master3"
+        - "vbmc add --username admin --password redhat --port 6234 --address 192.168.123.1 --libvirt-uri qemu:///system ocp4-worker1"
+        - "vbmc add --username admin --password redhat --port 6235 --address 192.168.123.1 --libvirt-uri qemu:///system ocp4-worker2"
+        - "vbmc add --username admin --password redhat --port 6236 --address 192.168.123.1 --libvirt-uri qemu:///system ocp4-worker3"
         - "vbmc start ocp4-bastion"
         - "vbmc start ocp4-master1"
         - "vbmc start ocp4-master2"

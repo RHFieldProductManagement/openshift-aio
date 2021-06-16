@@ -26,7 +26,7 @@
     - name: Check system matches requirements
       assert:
         that:
-          - ansible_memtotal_mb >= 1000
+          - ansible_memtotal_mb >= 100000
           - ansible_facts['os_family'] == 'RedHat'
           - ansible_facts['distribution_major_version'] == '8'
 
@@ -51,6 +51,7 @@
           - sshpass
           - virt-what
           - nmap
+          - python3-libselinux
         state: latest
       become: True
 

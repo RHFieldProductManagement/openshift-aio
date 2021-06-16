@@ -1,40 +1,76 @@
 ---
 # vim: set ft=ansible:
 
-- name: Setup new Bastion host
+- name: Add Bastion to Inventory
   hosts: localhost
   tasks:
 
     - name: Dynamically add new Bastion VM to the inventory
       add_host:
         ansible_ssh_user: root
-        ansible_password: redhat
         hostname: 192.168.123.100
         groups: bastion
 
-- name: Start Bastion machine
+    - name: Insert bastion into inventory file
+      ini_file:
+        dest: ../inventory.yml
+        section: bastion
+        option: 192.168.123.100 ansible_ssh_user=root
+        mode: 0666
+        state: present
+        backup: no
+        allow_no_value: yes
+
+    - name: Insert SSH proxy information into inventory file for bastion VM
+      ini_file:
+        dest: ../inventory.yml
+        section: bastion:vars
+        option: ansible_ssh_common_args='-o ProxyCommand="ssh -o StrictHostKeyChecking=no -W %h:%p -q root@{{ groups['target'][0] }}"'
+        mode: 0666
+        state: present
+        backup: no
+        allow_no_value: yes
+
+- name: Configure Bastion machine
   gather_facts: true
   remote_user: root
   hosts: target
   tasks:
 
+    - name: Make sure Bastion VM isn't running
+      virt:
+        name: ocp4-bastion
+        state: shutdown
+
+    - name: Create temporary users SSH public key file
+      ansible.builtin.lineinfile:
+        path: /tmp/user-key.pub
+        line: "{{ ssh_key }}"
+        create: yes
+
+    - name: Inject users SSH key into Bastion VM for Ansible
+      ansible.builtin.command: >
+        virt-sysprep -a /var/lib/libvirt/images/ocp4-bastion.qcow2 --selinux-relabel
+        --ssh-inject root:file:/root/.ssh/id_rsa.pub
+        --ssh-inject root:file:/tmp/user-key.pub
+        --enable net-hwaddr
+      register: result
+      until: result is succeeded
+      retries: 3
+      delay: 30
+
     - name: Start Bastion virtual machine
-      ansible.builtin.command: virsh start ocp4-bastion
-      register: bastion_start
-      failed_when: bastion_start.rc > 1
+      virt:
+        name: ocp4-bastion
+        state: running
 
 - name: Deploy Bastion machine
   gather_facts: false
   hosts: bastion
   tasks:
 
-    - name: Get RHCOS version to use
-      set_fact:
-        subversion: "{{ ocp_version.split('latest-')[1] if ('latest' in ocp_version) else ocp_version.split('.')[:2]|join('.') }}"
-
     - name: Wait for Bastion machine to start
       wait_for_connection:
-        delay: 10
         timeout: 240
 
     - name: Grow root disk
@@ -235,6 +271,11 @@
       ansible.builtin.command: mv /var/named/aio.example.com-ipi.db /var/named/aio.example.com.db
       when: deploy_type == "ipi"
 
+    - name: Make sure DHCPD leases file exists
+      ansible.builtin.file:
+        path: /var/lib/dhcpd/dhcpd.leases
+        state: touch
+
     - name: Enable Bastion Services
       ansible.builtin.systemd:
         name: "{{ item }}"
@@ -312,11 +353,23 @@
         state: present
       when: deploy_type == "ipi"
 
+    - name: Ensure that provisioning bridge is never default-gw
+      ansible.builtin.command: nmcli con modify provisioning ipv4.never-default yes
+      when: deploy_type == "ipi"
+
     - name: Remove hardcoded ifcfg-eth0 for IPI
       ansible.builtin.file:
         path: /etc/sysconfig/network-scripts/ifcfg-eth0
         state: absent
       when: deploy_type == "ipi"
+
+    - name: Rebooting Bastion VM
+      reboot:
+        reboot_timeout: 600
+
+    - name: Get RHCOS version to use
+      set_fact:
+        subversion: "{{ ocp_version.split('latest-')[1] if ('latest' in ocp_version) else ocp_version.split('.')[:2]|join('.') }}"
 
     - name: Download OpenShift Client
       ansible.builtin.get_url:
@@ -367,6 +420,14 @@
         - "/root/openshift-install-linux.tar.gz"
         - "/root/openshift-client-linux.tar.gz"
 
+    - name: Remove OpenShift client and installer tarballs
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - "/root/openshift-install-linux.tar.gz"
+        - "/root/openshift-client-linux.tar.gz"
+
     - name: Rename RHCOS files to simplify filenames
       ansible.builtin.command: "{{ item }}"
       loop:
@@ -383,21 +444,21 @@
         mode: '0755'
         setype: _default
 
-    - name: Make ocp-install directory on bastion
+    - name: Make lab directory on bastion
       ansible.builtin.file:
-        path: /root/ocp-install
+        path: /root/lab
         state: directory
-
-    - name: Copy install-config over to bastion for IPI
-      ansible.builtin.copy:
-        src: ../conf/install-config.yaml
-        dest: /root/install-config.yaml
-      when: deploy_type == "upi"
 
     - name: Copy install-config over to bastion for UPI
       ansible.builtin.copy:
+        src: ../conf/install-config.yaml
+        dest: /root/lab/install-config.yaml
+      when: deploy_type == "upi"
+
+    - name: Copy install-config over to bastion for IPI
+      ansible.builtin.copy:
         src: ../conf/install-config-ipi.yaml
-        dest: /root/install-config.yaml
+        dest: /root/lab/install-config.yaml
       when: deploy_type == "ipi"
 
     - name: Copy over pxeboot configs for UPI
@@ -420,22 +481,27 @@
 
     - name: Insert ssh pub key into install-config
       ansible.builtin.lineinfile:
-        path: /root/install-config.yaml
+        path: /root/lab/install-config.yaml
         regexp: '^sshKey: '
         insertafter: '^#sshKey: '
         line: "sshKey: '{{ bastion_ssh.stdout }}'"
 
     - name: Insert pull secret into install-config
       ansible.builtin.lineinfile:
-        path: /root/install-config.yaml
+        path: /root/lab/install-config.yaml
         regexp: '^pullSecret: '
         insertafter: '^#pullSecret: '
         line: "pullSecret: '{{ pull_secret }}'"
 
+    - name: Make sure we remove existing pull-secret
+      ansible.builtin.file:
+        path: /root/pull-secret.json
+        state: absent
+
     - name: Creating pull-secret file
       ansible.builtin.lineinfile:
         path: /root/pull-secret.json
-        line: "{{ pull_secret }}"
+        line: "{{ pull_secret | string }}"
         create: yes
 
     - name: Make sure /etc/resolv.conf is writable
@@ -446,7 +512,7 @@
     - name: Clear out existing /etc/resolv.conf contents
       ansible.builtin.command: truncate -s 0 /etc/resolv.conf
 
-    - name: Ensuring /etc/resolv.conf is setup for DNS
+    - name: Ensuring /etc/resolv.conf is setup for local DNS
       ansible.builtin.blockinfile:
         path: /etc/resolv.conf
         block: |
@@ -454,3 +520,4 @@
           nameserver 192.168.123.100
         create: yes
         attributes: +i
+

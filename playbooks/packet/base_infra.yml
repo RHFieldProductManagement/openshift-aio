@@ -143,6 +143,11 @@
        debug:
          msg: "{{ instance_ip }}"
 
+     - name: Delete any existing inventory.yml file
+       ansible.builtin.file:
+         path: ../../inventory.yml
+         state: absent
+
      - name: Touch inventory file
        ansible.builtin.file:
          path: ../../inventory.yml
@@ -153,7 +158,7 @@
        ini_file:
          dest: ../../inventory.yml
          section: target
-         option: "{{ instance_ip }}"
+         option: "{{ instance_ip }} ansible_ssh_common_args='-o StrictHostKeyChecking=no'"
          mode: 0666
          state: present
          backup: no
