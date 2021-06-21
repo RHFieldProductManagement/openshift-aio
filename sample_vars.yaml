@@ -1,0 +1,60 @@
+# Set baremetal provider to use, options are currently: packet, prebuilt
+baremetal_provider: prebuilt
+
+# Set the prebuilt IP address (please setup ssh-keys first)
+prebuilt_ip: 127.0.0.1
+
+# Set Packet API Token
+packet_api_token:
+
+# Set Packet project name (will create if doesn't exist)
+packet_project_name:
+
+# Set Packet on-demand instance type
+packet_ondemand_type: s3.xlarge.x86
+
+# Set Packet spot instance type and bid
+packet_spot_type: s3.xlarge.x86
+packet_spot_bid: 0.70
+
+# Set the type of Packet deployment to do (ondemand/spot)
+packet_deploy_type: spot
+
+# Set the Packet facility to use
+packet_facility: am6
+
+# Set the run-time for your instance
+packet_runtime_hours: 3
+
+# Set whether you want the project to be automatically deleted
+packet_delete_project: true
+
+# Enter Email address for completion email
+email:
+
+# Enter SSH public key to use
+ssh_key: ''
+
+# Enter OpenShift Pull Secret
+pull_secret: ''
+
+# Select granular deployment options
+deploy_ocp: false
+deploy_ocp_plus: false
+deploy_cnv: false
+deploy_ocs: false
+deploy_acm: false
+deploy_acs: false
+deploy_ods: false
+
+# Select OpenShift version for base cluster
+ocp_version: latest-4.7
+
+# Select number of workers for base cluster
+ocp_workers: 3
+
+# Select deployment type (upi or ipi)
+deploy_type: ipi
+
+# Set output directory
+output_dir: /tmp/output_dir

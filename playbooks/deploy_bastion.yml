@@ -25,7 +25,7 @@
       ini_file:
         dest: ../inventory.yml
         section: bastion:vars
-        option: ansible_ssh_common_args='-o ProxyCommand="ssh -o StrictHostKeyChecking=no -W %h:%p -q root@{{ groups['target'][0] }}"'
+        option: ansible_ssh_common_args='-o StrictHostKeyChecking=accept-new -o ProxyCommand="ssh -o StrictHostKeyChecking=no -W %h:%p -q root@{{ groups['target'][0] }}"'
         mode: 0666
         state: present
         backup: no
@@ -50,10 +50,9 @@
 
     - name: Inject users SSH key into Bastion VM for Ansible
       ansible.builtin.command: >
-        virt-sysprep -a /var/lib/libvirt/images/ocp4-bastion.qcow2 --selinux-relabel
+        virt-customize -a /var/lib/libvirt/images/ocp4-bastion.qcow2 --selinux-relabel
         --ssh-inject root:file:/root/.ssh/id_rsa.pub
         --ssh-inject root:file:/tmp/user-key.pub
-        --enable net-hwaddr
       register: result
       until: result is succeeded
       retries: 3

@@ -1,0 +1,29 @@
+---
+- name: Build Baremetal instance in provider {{ baremetal_provider }}
+  hosts: localhost
+  tasks:
+
+     - name: Display IP address of {{ baremetal_provider }} instance
+       debug:
+         msg: "{{ prebuilt_ip }}"
+
+     - name: Delete any existing inventory.yml file
+       ansible.builtin.file:
+         path: ../../inventory.yml
+         state: absent
+
+     - name: Touch inventory file
+       ansible.builtin.file:
+         path: ../../inventory.yml
+         state: touch
+         mode: u+rw,g-wx,o+rw
+
+     - name: Build new inventory file for server
+       ini_file:
+         dest: ../../inventory.yml
+         section: target
+         option: "{{ prebuilt_ip }} ansible_ssh_common_args='-o StrictHostKeyChecking=no'"
+         mode: 0666
+         state: present
+         backup: no
+         allow_no_value: yes

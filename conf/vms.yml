@@ -1,0 +1,38 @@
+vms:
+  bastion:
+    mem: 16384
+    cpus: 8
+    base_network: "52:54:00:22:33:44"
+    prov_network: "de:ad:be:ef:00:00"
+  masters:
+    master1:
+      mem: 16384
+      cpus: 8
+      base_network: "52:54:00:19:d7:9c"
+      prov_network: "de:ad:be:ef:00:01"
+    master2:
+      mem: 16384
+      cpus: 8
+      base_network: "52:54:00:60:66:89"
+      prov_network: "de:ad:be:ef:00:02"
+    master3:
+      mem: 16384
+      cpus: 8
+      base_network: "52:54:00:9e:5c:3f"
+      prov_network: "de:ad:be:ef:00:03"
+  workers:  
+    worker1:
+      mem: 32768
+      cpus: 16
+      base_network: "52:54:00:47:5e:94"
+      prov_network: "de:ad:be:ef:00:04"
+    worker2:
+      mem: 32768
+      cpus: 16
+      base_network: "52:54:00:47:ad:1f"
+      prov_network: "de:ad:be:ef:00:05"
+    worker3:
+      mem: 32768
+      cpus: 16
+      base_network: "52:54:00:41:be:22"
+      prov_network: "de:ad:be:ef:00:06"

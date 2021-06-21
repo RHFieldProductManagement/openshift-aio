@@ -1,0 +1,4 @@
+<network>
+  <name>ocp4-provisioning</name>
+  <ip address='172.22.0.254' netmask='255.255.255.0'/>
+</network>
