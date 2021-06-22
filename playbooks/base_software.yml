@@ -55,11 +55,6 @@
         state: latest
       become: True
 
-    - name: Upgrade all packages
-      dnf:
-        name: "*"
-        state: latest
-
     - name: Install OpenStack repo for VirtualBMC
       dnf:
         name:
@@ -77,6 +72,11 @@
         state: latest
       become: true
       when: deploy_type == "ipi"
+
+    - name: Upgrade all packages
+      dnf:
+        name: "*"
+        state: latest
 
     - name: Enable VirtualBMC
       ansible.builtin.systemd:

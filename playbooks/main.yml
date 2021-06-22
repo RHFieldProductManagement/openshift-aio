@@ -7,6 +7,7 @@
 - import_playbook: base_software.yml
 - import_playbook: base_virt.yml
 - import_playbook: deploy_bastion.yml
+- import_playbook: deploy_cluster.yml
 
 # Step 2: Deploy Variant Pre-Infra
 #- import_playbook: "./{{ variant_type }}/pre_infra.yml"

@@ -70,7 +70,11 @@
 
     - name: Wait for Bastion machine to start
       wait_for_connection:
-        timeout: 240
+        timeout: 120
+      register: result
+      until: result is succeeded
+      retries: 3
+      delay: 30
 
     - name: Grow root disk
       ansible.builtin.command: growpart /dev/vda 1
@@ -105,25 +109,6 @@
           - syslinux-tftpboot
           - firewalld
         state: latest
-
-    - name: Install IPI-specific base packages
-      dnf:
-        name:
-          - libvirt
-          - qemu-kvm
-          - mkisofs
-          - python3-devel
-          - jq
-          - ipmitool
-        state: latest
-      when: deploy_type == "ipi"
-
-    - name: Enable Libvirtd for IPI
-      ansible.builtin.systemd:
-        name: libvirtd
-        enabled: yes
-        state: started
-      when: deploy_type == "ipi"
 
     - name: Upgrade all packages
       dnf:
@@ -306,6 +291,25 @@
         - haproxy
       when: deploy_type == "upi"
 
+    - name: Install IPI-specific base packages
+      dnf:
+        name:
+          - libvirt
+          - qemu-kvm
+          - mkisofs
+          - python3-devel
+          - jq
+          - ipmitool
+        state: latest
+      when: deploy_type == "ipi"
+
+    - name: Enable Libvirtd for IPI
+      ansible.builtin.systemd:
+        name: libvirtd
+        enabled: yes
+        state: started
+      when: deploy_type == "ipi"
+
     - name: Configure Libvirt Pool for IPI
       ansible.builtin.command: virsh pool-define-as --name default --type dir --target /var/lib/libvirt/images
       register: virsh_pool
@@ -330,6 +334,7 @@
         type: bridge-slave
         conn_name: eth1
         ifname: eth1
+        hairpin: false
         master: provisioning
         state: present
       when: deploy_type == "ipi"
@@ -348,6 +353,7 @@
         type: bridge-slave
         conn_name: eth0
         ifname: eth0
+        hairpin: false
         master: baremetal
         state: present
       when: deploy_type == "ipi"
@@ -436,7 +442,7 @@
         - "mv /var/www/html/rhcos-live-rootfs.x86_64.img /var/www/html/rhcos.rootfs"
       when: deploy_type == "upi"
 
-    - name: Reset permissions for /var/www/html for UPI
+    - name: Reset permissions for /var/www/html
       ansible.builtin.file:
         path: /var/www/html
         recurse: yes

@@ -51,6 +51,8 @@
   gather_facts: true
   remote_user: root
   hosts: target
+  vars:
+    ocs_file_list: []
   vars_files:
     - "../conf/vms.yml"
   tasks:
