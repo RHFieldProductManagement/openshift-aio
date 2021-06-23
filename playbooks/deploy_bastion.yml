@@ -230,6 +230,18 @@
         src: ../conf/haproxy.cfg
         dest: /etc/haproxy/haproxy.cfg
         mode: 0644
+      when:
+        - not deploy_compact
+        - deploy_type == "upi"
+
+    - name: Copy over haproxy config file for compact
+      ansible.builtin.copy:
+        src: ../conf/haproxy-compact.cfg
+        dest: /etc/haproxy/haproxy.cfg
+        mode: 0644
+      when:
+        - deploy_compact | bool
+        - deploy_type == "upi"
 
     - name: Copy over DNS zone files for UPI
       ansible.builtin.copy:
@@ -497,6 +509,24 @@
         regexp: '^pullSecret: '
         insertafter: '^#pullSecret: '
         line: "pullSecret: '{{ pull_secret }}'"
+
+    - name: Update compute replica count to 0 in install-config
+      ansible.builtin.replace:
+        path: /root/lab/install-config.yaml
+        regexp: '^(.*)replicas:(.*)$'
+        replace: '  replicas: 0'
+        before: 'controlPlane'
+      when: deploy_compact | bool
+
+    - name: Remove workers from install-config
+      ansible.builtin.command:
+        cmd: sed -i '/{{ item }}/,+8d' /root/lab/install-config.yaml
+        warn: false
+      loop:
+        - "worker1"
+        - "worker2"
+        - "worker3"
+      when: deploy_compact | bool
 
     - name: Make sure we remove existing pull-secret
       ansible.builtin.file:

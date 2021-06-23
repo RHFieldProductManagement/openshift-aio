@@ -24,15 +24,15 @@ vms:
     worker1:
       mem: 32768
       cpus: 16
-      base_network: "52:54:00:47:5e:94"
+      base_network: "52:54:00:47:4d:83"
       prov_network: "de:ad:be:ef:00:04"
     worker2:
       mem: 32768
       cpus: 16
-      base_network: "52:54:00:47:ad:1f"
+      base_network: "52:54:00:b2:96:0e"
       prov_network: "de:ad:be:ef:00:05"
     worker3:
       mem: 32768
       cpus: 16
-      base_network: "52:54:00:41:be:22"
+      base_network: "52:54:00:b2:21:66"
       prov_network: "de:ad:be:ef:00:06"

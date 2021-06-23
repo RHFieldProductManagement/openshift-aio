@@ -204,6 +204,7 @@
         --boot hd,network --noautoconsole --vnc --name ocp4-{{ item.key }} --noreboot
       with_dict: "{{ vms['workers'] }}"
       when:
+        - not deploy_compact
         - deploy_type == "ipi"
         - vm_name not in vm_list.list_vms
 
@@ -219,6 +220,7 @@
         --boot hd,network --noautoconsole --vnc --name ocp4-{{ item.key }} --noreboot
       with_dict: "{{ vms['workers'] }}"
       when:
+        - not deploy_compact
         - deploy_type == "upi"
         - vm_name not in vm_list.list_vms
 
@@ -286,3 +288,57 @@
         state: present
         force: no
 
+    - name: Remove the workers in a compact deployment
+      vars:
+        vm_name: "ocp4-{{ item.key }}"
+      virt:
+        name: "ocp4-{{ item.key }}"
+        command: undefine
+      with_dict: "{{ vms['workers'] }}"
+      when: vm_name in vm_list.list_vms
+
+    - name: Attach OCS disks to master nodes for compact mode (osd1)
+      ansible.builtin.command: >
+        virsh attach-disk ocp4-{{ item.key }} --source /var/lib/libvirt/images/ocp4-worker{{ my_idx | int + 1 }}-osd1.qcow2
+        --target vdb --type disk --targetbus virtio --driver qemu --subdriver qcow2 --persistent
+      with_dict: "{{ vms['masters'] }}"
+      when: deploy_compact | bool
+      loop_control:
+        index_var: my_idx
+      register: osd_attach
+      failed_when: osd_attach.rc > 1
+
+    - name: Attach OCS disks to master nodes for compact mode (osd2)
+      ansible.builtin.command: >
+        virsh attach-disk ocp4-{{ item.key }} --source /var/lib/libvirt/images/ocp4-worker{{ my_idx | int + 1 }}-osd2.qcow2
+        --target vdc --type disk --targetbus virtio --driver qemu --subdriver qcow2 --persistent
+      with_dict: "{{ vms['masters'] }}"
+      when: deploy_compact | bool
+      loop_control:
+        index_var: my_idx
+      register: osd_attach
+      failed_when: osd_attach.rc > 1
+
+    - name: Update master max memory for compact mode
+      ansible.builtin.command:
+        cmd: "virsh setmaxmem ocp4-{{ item.key }} 33554415 --config"
+      with_dict: "{{ vms['masters'] }}"
+      when: deploy_compact | bool
+
+    - name: Update master memory for compact mode
+      ansible.builtin.command:
+        cmd: "virsh setmem ocp4-{{ item.key }} 33554415 --config"
+      with_dict: "{{ vms['masters'] }}"
+      when: deploy_compact | bool
+
+    - name: Update master max vcpus for compact mode
+      ansible.builtin.command:
+        cmd: "virsh setvcpus --maximum ocp4-{{ item.key }} 16 --config"
+      with_dict: "{{ vms['masters'] }}"
+      when: deploy_compact | bool
+
+    - name: Update master vcpus for compact mode
+      ansible.builtin.command:
+        cmd: "virsh setvcpus ocp4-{{ item.key }} 16 --config"
+      with_dict: "{{ vms['masters'] }}"
+      when: deploy_compact | bool

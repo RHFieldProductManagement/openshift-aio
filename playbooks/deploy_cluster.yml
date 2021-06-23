@@ -138,12 +138,14 @@
         path: /root/ocp-install/install-config.yaml
         regexp: 'RHCOS_OPENSTACK_IMAGE'
         replace: "http://192.168.123.100:81/rhcos-openstack.x86_64.qcow2.gz?sha256={{ rhcos_openstack_sha256 }}"
+      when: deploy_type == "ipi"
 
     - name: Update OpenStack image location in install-config
       ansible.builtin.replace:
         path: /root/ocp-install/install-config.yaml
         regexp: 'RHCOS_QEMU_IMAGE'
         replace: "http://192.168.123.100:81/rhcos-qemu.x86_64.qcow2.gz?sha256={{ rhcos_qemu_sha256 }}"
+      when: deploy_type == "ipi"
 
     - name: Make a backup of the install-config from ocp-install directory
       ansible.builtin.copy:
@@ -155,6 +157,7 @@
       ansible.builtin.command: >
         /root/openshift-baremetal-install
         --dir=/root/ocp-install/ create manifests
+      when: deploy_type == "ipi"
 
     - name: Copy over MachineConfigs for chrony and networking
       ansible.builtin.copy:
@@ -165,3 +168,9 @@
         - "../conf/99_workers-chrony-configuration.yaml"
         - "../conf/97_workers_empty_enp3s0.yaml"
 
+    - name: Run OpenShift Installation
+      ansible.builtin.command: >
+        /root/openshift-baremetal-install
+        --dir=/root/ocp-install/ --log-level=debug
+        create cluster
+      when: deploy_type == "ipi"

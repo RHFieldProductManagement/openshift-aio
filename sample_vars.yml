@@ -41,6 +41,7 @@ pull_secret: ''
 # Select granular deployment options
 deploy_ocp: false
 deploy_ocp_plus: false
+deploy_compact: false
 deploy_cnv: false
 deploy_ocs: false
 deploy_acm: false
