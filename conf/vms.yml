@@ -4,6 +4,11 @@ vms:
     cpus: 8
     base_network: "52:54:00:22:33:44"
     prov_network: "de:ad:be:ef:00:00"
+  bootstrap:
+    mem: 16384
+    cpus: 8
+    base_network: "52:54:00:33:44:55"
+    prov_network: "ee:ee:ee:ee:00:00"
   masters:
     master1:
       mem: 16384

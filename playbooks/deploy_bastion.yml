@@ -145,6 +145,13 @@
         - rpc-bind
         - nfs
 
+    - name: Enable TFTP in firewall for UPI
+      firewalld:
+        permanent: yes
+        state: enabled
+        service: "tftp"
+      when: deploy_type == "upi"
+
     - name: Enable extra Bastion ports in firewall
       firewalld:
         permanent: yes
@@ -193,6 +200,8 @@
         remote_src: yes
         src: "{{ item }}"
         dest: /var/lib/tftpboot/pxelinux
+        mode: 0755
+        setype: "_default"
       loop:
         - "/tftpboot/pxelinux.0"
         - "/tftpboot/ldlinux.c32"
@@ -301,6 +310,11 @@
         - xinetd
         - tftp
         - haproxy
+      when: deploy_type == "upi"
+
+    # https://github.com/ansible/ansible/issues/46744
+    - name: Enable TFTP manually for UPI
+      ansible.builtin.command: systemctl enable --now tftp
       when: deploy_type == "upi"
 
     - name: Install IPI-specific base packages
@@ -510,13 +524,21 @@
         insertafter: '^#pullSecret: '
         line: "pullSecret: '{{ pull_secret }}'"
 
-    - name: Update compute replica count to 0 in install-config
+    - name: Update compute replica count to 0 in install-config for compact
       ansible.builtin.replace:
         path: /root/lab/install-config.yaml
         regexp: '^(.*)replicas:(.*)$'
         replace: '  replicas: 0'
         before: 'controlPlane'
       when: deploy_compact | bool
+
+    - name: Update compute replica count to 3 in install-config for OCS
+      ansible.builtin.replace:
+        path: /root/lab/install-config.yaml
+        regexp: '^(.*)replicas:(.*)$'
+        replace: '  replicas: 3'
+        before: 'controlPlane'
+      when: deploy_ocs | bool
 
     - name: Remove workers from install-config
       ansible.builtin.command:

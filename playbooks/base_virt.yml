@@ -143,6 +143,22 @@
       register: bastion_defined
       failed_when: bastion_defined.rc > 1
 
+    - name: Check if Bootstrap is defined
+      ansible.builtin.command: virsh dumpxml ocp4-bootstrap
+      register: bootstrap_defined
+      failed_when: bootstrap_defined.rc > 1
+      when: deploy_type == "upi"
+
+    - name: Build Bootstrap VM definition for UPI
+      ansible.builtin.command: >
+        virt-install --virt-type kvm --ram {{ vms.bootstrap.mem }} --vcpus {{ vms.bootstrap.cpus }} --cpu=host-passthrough --os-variant rhel8.1
+        --disk path=/var/lib/libvirt/images/ocp4-bootstrap.qcow2,device=disk,bus=virtio,format=qcow2
+        --network network:ocp4-net,mac={{ vms.bootstrap.base_network }}
+        --boot hd,network --noautoconsole --vnc --name ocp4-bootstrap --noreboot
+      when:
+        - bootstrap_defined.rc|d(0) == 1
+        - deploy_type == "upi"
+
     - name: Build Bastion VM definition for IPI
       ansible.builtin.command: >
         virt-install --virt-type kvm --ram {{ vms.bastion.mem }} --vcpus {{ vms.bastion.cpus }} --cpu=host-passthrough --os-variant rhel8.1
