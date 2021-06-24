@@ -296,3 +296,14 @@
       failed_when: install_wait.rc > 0
       retries: 1
       when: deploy_type == "upi"
+
+    - name: Make .kube directory
+      ansible.builtin.file:
+        path: /root/.kube/
+        state: directory
+
+    - name: Copy kubeconfig from ocp-install directory
+      ansible.builtin.copy:
+        remote_src: yes
+        src: /root/ocp-install/auth/kubeconfig
+        dest: /root/.kube/config
