@@ -210,33 +210,33 @@
 
     - name: Copy over DHCP config file for UPI
       ansible.builtin.copy:
-        src: ../conf/dhcpd.conf
+        src: ../conf/services/dhcpd.conf
         dest: /etc/dhcp/dhcpd.conf
         mode: 0644
       when: deploy_type == "upi"
 
     - name: Copy over DHCP config file for IPI
       ansible.builtin.copy:
-        src: ../conf/dhcpd-ipi.conf
+        src: ../conf/services/dhcpd-ipi.conf
         dest: /etc/dhcp/dhcpd.conf
         mode: 0644
       when: deploy_type == "ipi"
 
     - name: Copy over Squid config file
       ansible.builtin.copy:
-        src: ../conf/squid.conf
+        src: ../conf/services/squid.conf
         dest: /etc/squid/squid.conf
         mode: 0644
 
     - name: Copy over named config file
       ansible.builtin.copy:
-        src: ../conf/named.conf
+        src: ../conf/services/named.conf
         dest: /etc/named.conf
         mode: 0644
 
     - name: Copy over haproxy config file
       ansible.builtin.copy:
-        src: ../conf/haproxy.cfg
+        src: ../conf/services/haproxy.cfg
         dest: /etc/haproxy/haproxy.cfg
         mode: 0644
       when:
@@ -245,7 +245,7 @@
 
     - name: Copy over haproxy config file for compact
       ansible.builtin.copy:
-        src: ../conf/haproxy-compact.cfg
+        src: ../conf/services/haproxy-compact.cfg
         dest: /etc/haproxy/haproxy.cfg
         mode: 0644
       when:
@@ -258,8 +258,8 @@
         dest: /var/named
         mode: 0644
       loop:
-        - "../conf/aio.example.com.db"
-        - "../conf/123.168.192.db"
+        - "../conf/services/aio.example.com.db"
+        - "../conf/services/123.168.192.db"
       when: deploy_type == "upi"
 
     - name: Copy over DNS zone files for IPI
@@ -268,8 +268,8 @@
         dest: /var/named
         mode: 0644
       loop:
-        - "../conf/aio.example.com-ipi.db"
-        - "../conf/123.168.192.db"
+        - "../conf/services/aio.example.com-ipi.db"
+        - "../conf/services/123.168.192.db"
       when: deploy_type == "ipi"
 
     - name: Rename DNS zone file for IPI
@@ -482,13 +482,13 @@
 
     - name: Copy install-config over to bastion for UPI
       ansible.builtin.copy:
-        src: ../conf/install-config.yaml
+        src: ../conf/k8s/install-config.yaml
         dest: /root/lab/install-config.yaml
       when: deploy_type == "upi"
 
     - name: Copy install-config over to bastion for IPI
       ansible.builtin.copy:
-        src: ../conf/install-config-ipi.yaml
+        src: ../conf/k8s/install-config-ipi.yaml
         dest: /root/lab/install-config.yaml
       when: deploy_type == "ipi"
 
@@ -538,7 +538,9 @@
         regexp: '^(.*)replicas:(.*)$'
         replace: '  replicas: 3'
         before: 'controlPlane'
-      when: deploy_ocs | bool
+      when:
+        - deploy_ocs | bool
+        - not deploy_compact
 
     - name: Remove workers from install-config
       ansible.builtin.command:

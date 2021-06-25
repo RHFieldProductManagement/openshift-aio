@@ -174,9 +174,9 @@
         src: "{{ item }}"
         dest: /root/ocp-install/openshift
       loop:
-        - "../conf/99_masters-chrony-configuration.yaml"
-        - "../conf/99_workers-chrony-configuration.yaml"
-        - "../conf/97_workers_empty_enp3s0.yaml"
+        - "../conf/k8s/99_masters-chrony-configuration.yaml"
+        - "../conf/k8s/99_workers-chrony-configuration.yaml"
+        - "../conf/k8s/97_workers_empty_enp3s0.yaml"
 
     - name: Copy install-config back into ocp-install directory for UPI
       ansible.builtin.copy:

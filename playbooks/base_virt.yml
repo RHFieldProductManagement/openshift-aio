@@ -15,8 +15,8 @@
         group: root
         mode: 0644
       loop:
-        - ../conf/ocp4-net.xml
-        - ../conf/ocp4-prov-net.xml
+        - ../conf/base/ocp4-net.xml
+        - ../conf/base/ocp4-prov-net.xml
 
     - name: Check if ocp4-net network is already configured
       ansible.builtin.command: virsh net-dumpxml ocp4-net
@@ -116,7 +116,7 @@
 
     - name: Copy over ifcfg-eth0 for bastion VM
       ansible.builtin.copy:
-        src: "../conf/ifcfg-eth0"
+        src: "../conf/base/ifcfg-eth0"
         dest: "/tmp"
         owner: root
         group: root
