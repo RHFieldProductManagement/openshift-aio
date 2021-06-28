@@ -188,6 +188,7 @@
         --disk path=/var/lib/libvirt/images/ocp4-{{ item.key }}.qcow2,device=disk,bus=virtio,format=qcow2
         --network network:ocp4-provisioning,mac={{ item.value.prov_network }}
         --network network:ocp4-net,mac={{ item.value.base_network }}
+        --network network:ocp4-net,mac={{ item.value.ext_network }}
         --boot hd,network --noautoconsole --vnc --name {{ vm_name }} --noreboot
       with_dict: "{{ vms['masters'] }}"
       when:
@@ -201,6 +202,7 @@
         virt-install --virt-type kvm --ram {{ item.value.mem }} --vcpus {{ item.value.cpus }} --cpu=host-passthrough --os-variant rhel8.1
         --disk path=/var/lib/libvirt/images/ocp4-{{ item.key }}.qcow2,device=disk,bus=virtio,format=qcow2
         --network network:ocp4-net,mac={{ item.value.base_network }}
+        --network network:ocp4-net,mac={{ item.value.ext_network }}
         --boot hd,network --noautoconsole --vnc --name ocp4-{{ item.key }} --noreboot
       with_dict: "{{ vms['masters'] }}"
       when:
@@ -217,6 +219,7 @@
         --disk path=/var/lib/libvirt/images/ocp4-{{ item.key }}-osd2.qcow2,device=disk,bus=virtio,format=qcow2
         --network network:ocp4-provisioning,mac={{ item.value.prov_network }}
         --network network:ocp4-net,mac={{ item.value.base_network }}
+        --network network:ocp4-net,mac={{ item.value.ext_network }}
         --boot hd,network --noautoconsole --vnc --name ocp4-{{ item.key }} --noreboot
       with_dict: "{{ vms['workers'] }}"
       when:
@@ -233,6 +236,7 @@
         --disk path=/var/lib/libvirt/images/ocp4-{{ item.key }}-osd1.qcow2,device=disk,bus=virtio,format=qcow2
         --disk path=/var/lib/libvirt/images/ocp4-{{ item.key }}-osd2.qcow2,device=disk,bus=virtio,format=qcow2
         --network network:ocp4-net,mac={{ item.value.base_network }}
+        --network network:ocp4-net,mac={{ item.value.ext_network }}
         --boot hd,network --noautoconsole --vnc --name ocp4-{{ item.key }} --noreboot
       with_dict: "{{ vms['workers'] }}"
       when:
@@ -358,3 +362,12 @@
         cmd: "virsh setvcpus ocp4-{{ item.key }} 16 --config"
       with_dict: "{{ vms['masters'] }}"
       when: deploy_compact | bool
+
+    - name: Remove additional extra NIC for masters when not compact
+      ansible.builtin.command: >
+        virsh detach-interface --domain ocp4-{{ item.key }} --type network
+        --mac={{ item.value.ext_network }} --config --persistent
+      with_dict: "{{ vms['masters'] }}"
+      register: nic_detach
+      failed_when: nic_detach.rc > 1
+      when: not deploy_compact
