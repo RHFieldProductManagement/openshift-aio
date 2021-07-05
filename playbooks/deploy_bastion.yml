@@ -31,6 +31,8 @@
         backup: no
         allow_no_value: yes
 
+    - meta: refresh_inventory
+
 - name: Configure Bastion machine
   gather_facts: true
   remote_user: root
@@ -108,6 +110,7 @@
           - tftp-server
           - syslinux-tftpboot
           - firewalld
+          - python3-virtualenv
         state: latest
 
     - name: Upgrade all packages

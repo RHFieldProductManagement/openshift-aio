@@ -1,0 +1,210 @@
+---
+- name: Destroy Baremetal instance in provider {{ baremetal_provider }}
+  hosts: target
+  remote_user: root
+  gather_facts: false
+  vars_files:
+    - "../../conf/vms.yml"
+  tasks:
+
+    - name: Get a list of all running VM's
+      virt:
+        command: list_vms
+        state: running
+      register: running_vm_list
+
+    - name: Get a list of all defined VM's
+      virt:
+        command: list_vms
+      register: vm_list
+
+    - name: Destroy the extra nodes
+      vars:
+        vm_name: "ocp4-{{ item }}"
+      virt:
+        name: "ocp4-{{ item }}"
+        command: destroy
+      loop:
+        - "bootstrap"
+        - "bastion"
+      when: vm_name in running_vm_list.list_vms
+
+    - name: Undefine the extra nodes
+      vars:
+        vm_name: "ocp4-{{ item }}"
+      virt:
+        name: "ocp4-{{ item }}"
+        command: undefine
+      loop:
+        - "bootstrap"
+        - "bastion"
+      when: vm_name in vm_list.list_vms
+
+    - name: Destroy the workers
+      vars:
+        vm_name: "ocp4-{{ item.key }}"
+      virt:
+        name: "ocp4-{{ item.key }}"
+        command: destroy
+      with_dict: "{{ vms['workers'] }}"
+      when: vm_name in running_vm_list.list_vms
+
+    - name: Undefine the workers
+      vars:
+        vm_name: "ocp4-{{ item.key }}"
+      virt:
+        name: "ocp4-{{ item.key }}"
+        command: undefine
+      with_dict: "{{ vms['workers'] }}"
+      when: vm_name in vm_list.list_vms
+
+    - name: Destroy the masters
+      vars:
+        vm_name: "ocp4-{{ item.key }}"
+      virt:
+        name: "ocp4-{{ item.key }}"
+        command: destroy
+      with_dict: "{{ vms['masters'] }}"
+      when: vm_name in running_vm_list.list_vms
+
+    - name: Undefine the masters
+      vars:
+        vm_name: "ocp4-{{ item.key }}"
+      virt:
+        name: "ocp4-{{ item.key }}"
+        command: undefine
+      with_dict: "{{ vms['masters'] }}"
+      when: vm_name in vm_list.list_vms
+
+    - name: Get a list of disk images to delete
+      ansible.builtin.find:
+        paths: /var/lib/libvirt/images
+        file_type: file
+        patterns: '*ocp4*'
+      register: disks_found
+
+    - name: Build a file list of defined disks
+      set_fact:
+        disks_found_list: "{{ disks_found_list | default([]) | union([item.path]) }}"
+      with_items:
+        - "{{ disks_found.files }}"
+
+    - name: Delete defined disks
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: absent
+      loop: "{{ disks_found_list }}"
+      when: disks_found_list is defined
+
+    - name: Remove VBMC entries if IPI
+      ansible.builtin.command: "vbmc delete {{ item }}"
+      loop: "{{ vm_list.list_vms }}"
+      register: vbmc_return
+      failed_when: vbmc_return.rc > 1
+      when: deploy_type == "ipi"
+
+    - name: Disable VirtualBMC
+      ansible.builtin.systemd:
+        name: virtualbmc
+        enabled: no
+        state: stopped
+      when: deploy_type == "ipi"
+
+    - name: Remove VirtualBMC state file
+      ansible.builtin.file:
+        path: "/var/lib/vbmcd/.vbmc"
+        state: absent
+      when: deploy_type == "ipi"
+
+    - name: Check if firewalld is available
+      ansible.builtin.command: systemctl status firewalld
+      register: firewalld_avail
+      failed_when: firewalld_avail.rc == 1
+
+    - name: Remove VBMC firewalld ports for IPI deployments
+      firewalld:
+        port: 6230-6236/udp
+        zone: libvirt
+        permanent: yes
+        state: disabled
+      when:
+        - firewalld_avail.rc != 4
+        - deploy_type == "ipi"
+
+    - name: Reload Firewalld
+      ansible.builtin.command: firewall-cmd --reload
+      register: firewalld_return
+      failed_when: firewalld_return.rc > 0
+      when:
+        - firewalld_avail.rc != 4
+        - deploy_type == "ipi"
+
+    - name: Disable VBMC iptables ports for IPI deployments
+      ansible.builtin.iptables:
+        chain: LIBVIRT_INP
+        protocol: udp
+        destination_port: "6230:6236"
+        jump: ACCEPT
+        state: absent
+      when:
+        - firewalld_avail.rc == 4
+        - deploy_type == "ipi"
+
+    - name: Check if ocp4-net network is already configured
+      ansible.builtin.command: virsh net-dumpxml ocp4-net
+      register: ocp4_net_return
+      failed_when: ocp4_net_return.rc > 1
+
+    - name: Check if ocp4-prov-net network is already configured
+      ansible.builtin.command: virsh net-dumpxml ocp4-provisioning
+      register: ocp4_prov_return
+      failed_when: ocp4_prov_return.rc > 1
+      when: deploy_type == "ipi"
+
+    - name: Remove OpenShift libvirt base network (192.168.123.100/24)
+      ansible.builtin.shell: "{{ item }}"
+      loop:
+        - "virsh net-destroy ocp4-net"
+        - "virsh net-undefine ocp4-net"
+      when: ocp4_net_return.rc == 0
+      register: ocp4_net_destroy
+      failed_when: ocp4_net_destroy.rc > 1
+
+    - name: Remove OpenShift libvirt provisioning network (172.22.0.0/24)
+      ansible.builtin.shell: "{{ item }}"
+      loop:
+        - "virsh net-destroy ocp4-provisioning"
+        - "virsh net-undefine ocp4-provisioning"
+      when:
+        - deploy_type == "ipi"
+        - ocp4_prov_return.rc == 0
+      register: ocp4_prov_destroy
+      failed_when: ocp4_prov_destroy.rc > 1
+
+    - name: Remove entries for bastion from known_hosts on target
+      ansible.builtin.known_hosts:
+        path: "/root/.ssh/known_hosts"
+        name: "192.168.123.100"
+        state: absent
+
+- name: Cleanup local system
+  hosts: localhost
+  tasks:
+
+    - name: Remove dynamic inventory file
+      ansible.builtin.file:
+        path: ../../inventory.yml
+        state: absent
+
+    - name: Remove entries for bastion from known_hosts locally
+      ansible.builtin.known_hosts:
+        path: "~/.ssh/known_hosts"
+        name: "192.168.123.100"
+        state: absent
+
+    - name: Remove entries for target from known_hosts
+      ansible.builtin.known_hosts:
+        path: "~/.ssh/known_hosts"
+        name: "{{ groups['target'][0] }}"
+        state: absent
+      when: groups['target'] is defined

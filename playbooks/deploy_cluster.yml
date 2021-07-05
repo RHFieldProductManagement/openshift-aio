@@ -303,6 +303,12 @@
       retries: 1
       when: deploy_type == "upi"
 
+    - name: Approve outstanding CSR's for UPI for a second time
+      ansible.builtin.shell: "oc get csr -o name | xargs oc adm certificate approve"
+      environment:
+        KUBECONFIG: "/root/ocp-install/auth/kubeconfig"
+      when: deploy_type == "upi"
+
     - name: Make .kube directory
       ansible.builtin.file:
         path: /root/.kube/
@@ -313,3 +319,9 @@
         remote_src: yes
         src: /root/ocp-install/auth/kubeconfig
         dest: /root/.kube/config
+
+    - name: Restart squid to fix DNS propagation
+      ansible.builtin.systemd:
+        name: squid
+        state: restarted
+        enabled: yes
