@@ -38,10 +38,11 @@ ssh_key: ''
 # Enter OpenShift Pull Secret
 pull_secret: ''
 
-# Set whether you want a compact deployment
+# Set whether you want a compact deployment (3 node cluster)
 deploy_compact: false
 
 # Select granular deployment options
+# NOTE: OCP Plus will force acm, acs, ocp on.
 deploy_ocp: false
 deploy_ocp_plus: false
 deploy_cnv: false

@@ -1,26 +1,46 @@
 ---
 # vim: set ft=ansible:
 
-# Step 0: Deploy Base Infrastructure
+# Step 0: Deploy Base Infrastructure on provider
 - import_playbook: "./{{ baremetal_provider }}/base_infra.yml"
-#- import_playbook: test.yml
+
+# Step 1: Deploy Base Software Configuration
 - import_playbook: base_software.yml
+
+# Step 2: Deploy Base Virtualisation Configuration
 - import_playbook: base_virt.yml
+
+# Step 3: Deploy Bastion VM for supporting services
 - import_playbook: deploy_bastion.yml
 
+# Step 4: Override variants depending on vars selection
+
+- set_fact:
+    deploy_ocp: true
+  when: deploy_ocs or deploy_cnv or deploy_acm
+
+- set_fact:
+    deploy_ocp: true
+    deploy_acm: true
+    deploy_acs: true
+  when: deploy_ocp_plus
+
+# Step 5: Deploy the OpenShift cluster if requested
 - import_playbook: deploy_cluster.yml
   when: deploy_ocp
 
+# Step 6: Deploy OpenShift Container Storage
 - import_playbook: deploy_ocs.yml
   when: deploy_ocs
-# Step 2: Deploy Variant Pre-Infra
-#- import_playbook: "./{{ variant_type }}/pre_infra.yml"
 
-# Step 3: Deploy Variant Main
-#- import_playbook: "./{{ variant_type }}/infra.yml"
+# Step 7: Deploy OpenShift Virtualization
+- import_playbook: deploy_cnv.yml
+  when: deploy_cnv
 
-# Step 4: Deploy Variant Post-Infra
-#- import_playbook: "./{{ variant_type }}/post_infra.yml"
+# Step 8: Deploy Advanced Cluster Manager
+- import_playbook: deploy_acm.yml
+  when: deploy_acm
 
-# Step 5: Completion Callback
-#- import_playbook: completion_callback.yml
+# Step 9: Deploy Advanced Cluster Security
+- import_playbook: deploy_acs.yml
+  when: deploy_acs

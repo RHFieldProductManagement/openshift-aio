@@ -7,7 +7,7 @@
 
     - meta: refresh_inventory
 
-- name: Make sure deployment is proceeding
+- name: Deploy OpenShift Container Storage (ODF)
   gather_facts: false
   vars_files:
     - "../conf/vms.yml"
@@ -20,7 +20,6 @@
       with_dict: "{{ vms['masters'] }}"
       when:
         - deploy_compact | bool
-#        - deploy_ocs | bool
 
     - name: Label nodes for OpenShift Storage when Compact
       ansible.builtin.command: >
@@ -28,13 +27,11 @@
       with_dict: "{{ vms['workers'] }}"
       when:
         - not deploy_compact
-#        - deploy_ocs | bool
 
     - name: Copy over k8s-aio env requirements.txt
       ansible.builtin.copy:
         src: ../conf/k8s/requirements.txt
         dest: /tmp/requirements.txt
-#      when: deploy_ocs | bool
 
     - name: "Create k8s-aio venv"
       pip:

@@ -83,3 +83,16 @@
        ansible.builtin.file:
          path: ../../inventory.yml
          state: absent
+
+    - name: Remove entries for bastion from known_hosts locally
+      ansible.builtin.known_hosts:
+        path: "~/.ssh/known_hosts"
+        name: "192.168.123.100"
+        state: absent
+
+    - name: Remove entries for target from known_hosts
+      ansible.builtin.known_hosts:
+        path: "~/.ssh/known_hosts"
+        name: "{{ groups['target'][0] }}"
+        state: absent
+      when: groups['target'] is defined
