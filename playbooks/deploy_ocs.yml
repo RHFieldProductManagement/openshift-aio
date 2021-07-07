@@ -14,14 +14,14 @@
   hosts: bastion
   tasks:
 
-    - name: Label nodes for OpenShift Storage when Compact
+    - name: Label nodes for OpenShift Storage when compact
       ansible.builtin.command: >
         oc label nodes --overwrite ocp4-{{ item.key }} cluster.ocs.openshift.io/openshift-storage=''
       with_dict: "{{ vms['masters'] }}"
       when:
         - deploy_compact | bool
 
-    - name: Label nodes for OpenShift Storage when Compact
+    - name: Label nodes for OpenShift Storage when not compact
       ansible.builtin.command: >
         oc label nodes --overwrite ocp4-{{ item.key }}.aio.example.com cluster.ocs.openshift.io/openshift-storage=''
       with_dict: "{{ vms['workers'] }}"
@@ -49,7 +49,7 @@
         state: present
         definition: "{{ lookup('file', '../conf/k8s/local-storage-operator.yaml') }}"
       register: local_storage_success
-      retries: 3
+      retries: 5
       delay: 30
       until: local_storage_success is not failed
 
@@ -58,7 +58,7 @@
         state: present
         definition: "{{ lookup('file', '../conf/k8s/local-volume.yaml') }}"
       register: local_volume_success
-      retries: 3
+      retries: 5
       delay: 30
       until: local_volume_success is not failed
 
@@ -67,7 +67,7 @@
         state: present
         definition: "{{ lookup('file', '../conf/k8s/ocs-operator.yaml') }}"
       register: ocs_operator_success
-      retries: 3
+      retries: 5
       delay: 30
       until: ocs_operator_success is not failed
 
@@ -76,7 +76,7 @@
         state: present
         definition: "{{ lookup('file', '../conf/k8s/storage-cluster.yaml') }}"
       register: storage_cluster_success
-      retries: 3
+      retries: 5
       delay: 30
       until: storage_cluster_success is not failed
 
@@ -85,7 +85,7 @@
         oc patch storageclass ocs-storagecluster-ceph-rbd 
         -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}'
       register: default_class_success
-      retries: 3
+      retries: 5
       delay: 30
       until: default_class_success is not failed
 
@@ -94,6 +94,6 @@
         oc patch OCSInitialization ocsinit -n openshift-storage
         --type json --patch '[{ "op": "replace", "path": "/spec/enableCephTools", "value": true }]'
       register:	ceph_tools_success
-      retries: 3
+      retries: 5
       delay: 30
       until: ceph_tools_success is not failed
