@@ -38,6 +38,9 @@ ssh_key: ''
 # Enter OpenShift Pull Secret
 pull_secret: ''
 
+# Set whether you want to deploy guacamole for console
+deploy_guacamole: true
+
 # Set whether you want a compact deployment (3 node cluster)
 deploy_compact: false
 

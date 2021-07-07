@@ -12,6 +12,12 @@ Now you can edit your variables to your configuration:
 $ vi my_vars.yml
 ~~~
 
+If you wish to deploy the Guacamole UI, you'll need to make sure you've either got Ansible 2.10+, or you've installed the Podman module:
+
+~~~bash
+$ ansible-galaxy collection install containers.podman
+~~~
+
 When you're ready to deploy a cluster, call main.yml making sure you specify your variables and the dynamic inventory (don't worry that it doesn't exist yet):
 
 ~~~bash
