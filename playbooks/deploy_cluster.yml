@@ -330,3 +330,4 @@
       ansible.builtin.fetch:
         src: /root/ocp-install/auth/kubeadmin-password
         dest: ../generated/kubeadmin-password.txt
+        flat: yes

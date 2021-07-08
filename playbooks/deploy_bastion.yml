@@ -527,6 +527,14 @@
         insertafter: '^#pullSecret: '
         line: "pullSecret: '{{ pull_secret }}'"
 
+    - name: Update compute replica count to match ocp_workers requested
+      ansible.builtin.replace:
+        path: /root/lab/install-config.yaml
+        regexp: '^(.*)replicas:(.*)$'
+        replace: '  replicas: {{ ocp_workers }}'
+        before: 'controlPlane'
+      when: not deploy_compact
+
     - name: Update compute replica count to 0 in install-config for compact
       ansible.builtin.replace:
         path: /root/lab/install-config.yaml
@@ -545,7 +553,7 @@
         - deploy_ocs | bool
         - not deploy_compact
 
-    - name: Remove workers from install-config
+    - name: Remove workers from install-config if compact
       ansible.builtin.command:
         cmd: sed -i '/{{ item }}/,+8d' /root/lab/install-config.yaml
         warn: false
@@ -554,6 +562,24 @@
         - "worker2"
         - "worker3"
       when: deploy_compact | bool
+
+    - name: Remove worker3 from install-config if ocp_workers is 2
+      ansible.builtin.command:
+        cmd: sed -i '/worker3/,+8d' /root/lab/install-config.yaml
+        warn: false
+      when:
+        - not deploy_ocs
+        - not deploy_compact
+        - ocp_workers == 2
+
+    - name: Remove worker2 from install-config if ocp_workers is 1
+      ansible.builtin.command:
+        cmd: sed -i '/worker2/,+8d' /root/lab/install-config.yaml
+        warn: false
+      when:
+        - not deploy_ocs
+        - not deploy_compact
+        - ocp_workers == 1
 
     - name: Make sure we remove existing pull-secret
       ansible.builtin.file:
