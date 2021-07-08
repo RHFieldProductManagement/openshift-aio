@@ -27,3 +27,8 @@
          state: present
          backup: no
          allow_no_value: yes
+
+     - name: Make generated directory
+       ansible.builtin.file:
+         path: "../../generated/"
+         state: directory

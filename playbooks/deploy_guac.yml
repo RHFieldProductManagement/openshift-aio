@@ -95,6 +95,39 @@
         /opt/guacamole/bin/initdb.sh --postgres > /usr/local/pgsql/data/initdb.sql
       when: not database_stat.stat.exists
 
+    - name: Generate random password for guacadmin user
+      ansible.builtin.shell: >
+        cat /dev/urandom | tr -dc _A-Z-a-z-0-9 | head -c12
+      register: random_out
+      when: not database_stat.stat.exists
+
+    - name: Get sha256sum for random password
+      ansible.builtin.shell: >
+        echo -n {{ random_out.stdout }} | sha256sum | awk '{print $1;}'
+      register: random_sha256
+      when: not database_stat.stat.exists
+
+    - set_fact:
+        guacadmin_password: "{{ random_out.stdout }}"
+      when: not database_stat.stat.exists
+
+    - set_fact:
+        guacadmin_password_sha256: "{{ random_sha256.stdout }}"
+      when: not database_stat.stat.exists
+
+    - name: add guacadmin_password variable to dummy host
+      add_host:
+        name: "guac_holder"
+        guac_shared_password:  "{{ guacadmin_password }}"
+      when: not database_stat.stat.exists
+
+    - name: Reset guacadmin password in initdb.sql
+      ansible.builtin.replace:
+        path: /usr/local/pgsql/data/initdb.sql
+        regexp: 'CA458A7D494E3BE824F5E1E175A1556C0F8EEF2C2D7DF3633BEC4A29C4411960'
+        replace: "{{ guacadmin_password_sha256 }}"
+      when: not database_stat.stat.exists
+
     - name: Create the guacamole_db in the postgres container
       ansible.builtin.command: >
         podman exec -it postgres createdb -U postgres guacamole_db
@@ -106,10 +139,11 @@
         -d guacamole_db -f /var/lib/postgresql/data/initdb.sql
       when: not database_stat.stat.exists
 
-    - name: Grant privileges for Guacamole in Postgres
+    - name: Grant privileges for Guacamole in Postgres and remove password salt
       ansible.builtin.shell: >
         podman exec -it postgres psql -U postgres -d guacamole_db -c {{ item }}
       loop:
+        - "\"UPDATE guacamole_user SET password_salt=NULL;\""
         - "\"CREATE USER guacamole_user WITH PASSWORD 'redhat'\""
         - "\"GRANT SELECT,INSERT,UPDATE,DELETE ON ALL TABLES IN SCHEMA public TO guacamole_user\""
         - "\"GRANT SELECT,USAGE ON ALL SEQUENCES IN SCHEMA public TO guacamole_user\""
@@ -154,6 +188,18 @@
           POSTGRES_USER: guacamole_user
           POSTGRES_PASSWORD: redhat
 
+- name: Store the Guacamole password locally
+  gather_facts: false
+  hosts: localhost
+  tasks:
+
+    - name: Write guacadmin password locally
+      ansible.builtin.lineinfile:
+        path: ../generated/guacadmin-password.txt
+        line: "{{ hostvars['guac_holder']['guac_shared_password'] }}"
+        create: yes
+      when: hostvars['guac_holder'] is defined
+
 - name: Deploy VNC server on bastion
   gather_facts: false
   remote_user: root
@@ -170,7 +216,6 @@
 
     - set_fact:
         labuser_password: "redhat"
-
 
     - name: Ensure VNC directory exists for root
       ansible.builtin.file:

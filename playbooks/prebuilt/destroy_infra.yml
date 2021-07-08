@@ -246,3 +246,8 @@
         name: "{{ groups['target'][0] }}"
         state: absent
       when: groups['target'] is defined
+
+    - name: Remove generated directory
+      ansible.builtin.file:
+        path: "../../generated/"
+        state: absent
