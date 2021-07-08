@@ -325,3 +325,8 @@
         name: squid
         state: restarted
         enabled: yes
+
+    - name: Pull kubeadmin-password to local generated
+      ansible.builtin.fetch:
+        src: /root/ocp-install/auth/kubeadmin-password
+        dest: ../generated/kubeadmin-password.txt
