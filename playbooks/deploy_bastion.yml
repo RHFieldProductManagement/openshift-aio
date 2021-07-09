@@ -574,8 +574,11 @@
 
     - name: Remove worker2 from install-config if ocp_workers is 1
       ansible.builtin.command:
-        cmd: sed -i '/worker2/,+8d' /root/lab/install-config.yaml
+        cmd: sed -i '/{{ item }}/,+8d' /root/lab/install-config.yaml
         warn: false
+      loop:
+        - "worker2"
+        - "worker3"
       when:
         - not deploy_ocs
         - not deploy_compact
