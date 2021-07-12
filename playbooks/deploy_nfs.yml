@@ -1,0 +1,49 @@
+---
+# vim: set ft=ansible:
+
+- name: Reload inventory for bastion host
+  hosts: localhost
+  tasks:
+
+    - meta: refresh_inventory
+
+- name: Deploy NFS Storage when OCS is disabled
+  gather_facts: false
+  vars_files:
+    - "../conf/vms.yml"
+  hosts: bastion
+  tasks:
+
+    - name: Copy over k8s-aio env requirements.txt
+      ansible.builtin.copy:
+        src: ../conf/k8s/requirements.txt
+        dest: /tmp/requirements.txt
+
+    - name: "Create k8s-aio venv"
+      pip:
+        requirements: "/tmp/requirements.txt"
+        virtualenv: "/opt/virtualenvs/k8s-aio"
+        virtualenv_site_packages: true
+        virtualenv_command: "/usr/bin/virtualenv"
+
+    - name: "Set Ansible interpreter to venv"
+      set_fact:
+        ansible_python_interpreter: /opt/virtualenvs/k8s-aio/bin/python
+
+    - name: Apply NFS storage class and basic PV entries
+      k8s:
+        state: present
+        definition: "{{ lookup('file', '../conf/k8s/nfs-storage.yaml') }}"
+      register: nfs_storage_success
+      retries: 5
+      delay: 30
+      until: nfs_storage_success is not failed
+
+    - name: Set default storage class to be nfs
+      ansible.builtin.command: >
+        oc patch storageclass nfs
+        -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}'
+      register: default_class_success
+      retries: 5
+      delay: 30
+      until: default_class_success is not failed

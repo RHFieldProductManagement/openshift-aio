@@ -10,3 +10,8 @@
     deploy_acm: true
     deploy_acs: true
   when: deploy_ocp_plus
+
+- name: Enable NFS storage when OCS is disabled
+  set_fact:
+    deploy_nfs: true
+  when: not deploy_ocs
