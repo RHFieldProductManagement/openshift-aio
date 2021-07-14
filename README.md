@@ -23,12 +23,12 @@ With the current implementation it's possible to achieve the following-
 * Deploy **just** the base infrastructure required to support OpenShift installation, i.e. don't run the install
 * Deploy an OpenShift cluster, but leave it bare, i.e. no further customisation post-deployment
 * Deploy an OpenShift cluster with a wide variety of additional operators deployed, including -
-  * OpenShift Virtualization (CNV)
-  * OpenShift Container Storage / OpenShift Data Foundations (OCS/ODF)
-  * Advanced Cluster Manager (ACM)
-  * Advanced Cluster Security (ACS)
-* Deploy a Red Hat OpenStack Platform Plus deployment (combination of OpenShift, ACM, and ACS)
-* Deploy an optional Apache Guacamole instance for easy browser-based interaction with the cluster
+  * [OpenShift Virtualization](https://www.openshift.com/learn/topics/virtualization/) (CNV)
+  * [OpenShift Container Storage / OpenShift Data Foundations](https://www.redhat.com/en/technologies/cloud-computing/openshift-data-foundation) (OCS/ODF)
+  * [Advanced Cluster Manager](https://www.redhat.com/en/technologies/management/advanced-cluster-management) (ACM)
+  * [Advanced Cluster Security](https://www.redhat.com/en/resources/advanced-cluster-security-for-kubernetes-datasheet) (ACS)
+* Deploy a [Red Hat OpenShift Platform Plus](https://www.openshift.com/products/platform-plus) deployment (combination of OpenShift, ACM, and ACS)
+* Deploy an optional [Apache Guacamole](https://guacamole.apache.org/) instance for easy browser-based interaction with the cluster
 * (**WIP**) Deploy the cluster in a pre-determined state to support self-paced labs and demonstration for-
   * Baremetal IPI cluster deployment & post-deployment utilisation
   * OpenShift Virtualization (CNV) deployment and utilisation
