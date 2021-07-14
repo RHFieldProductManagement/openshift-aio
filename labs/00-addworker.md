@@ -17,7 +17,7 @@ We can see from the output above that the AIO deployment used 2 of the possible 
 First we need to supply a baremetal node defintion to the baremetal operator to do this.  Lets create the following baremetal node definition file; this has been pre-populated for you based on the pre-configured worker node in your dedicated environment:
 
 ~~~bash
-[lab-user@provision scripts]$ cat << EOF > ~/bmh.yaml
+[root@ocp4-bastion ~]# cat << EOF > ~/bmh.yaml
 ---
 apiVersion: v1
 kind: Secret
@@ -47,7 +47,7 @@ EOF
 Let's look at the file that it created:
 
 ~~~bash
-[lab-user@provision scripts]$ cat ~/bmh.yaml
+[root@ocp4-bastion ~]# cat ~/bmh.yaml
 ---
 apiVersion: v1
 kind: Secret
