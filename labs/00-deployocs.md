@@ -71,9 +71,9 @@ ocp4-worker3.aio.example.com   Ready    worker   20m    v1.20.0+87cc9a4
 
 ## Deploying the Local Storage Operator
 
-Now that we know the worker nodes have their extra disk ready and labels added, we can proceed. Before installing OCS we need to first install the **[local-storage operator](https://github.com/openshift/local-storage-operator)** which is used to consume local disks, and expose them as available persistent volumes (PV) for OCS to consume; the OCS Ceph OSD pods consume local-storage based PV's and allow additional RWX PV's to be deployed on-top.
+Now that we know the worker nodes have their extra disk ready and labels added, we can proceed. Before installing OCS we need to first install the local storage operator which is used to consume local disks, and expose them as available persistent volumes (PV) for OCS to consume; the OCS Ceph OSD pods consume local-storage based PV's and allow additional RWX PV's to be deployed on-top.
 
-The first step is to create an OpenShift local storage namespace.  We can do this by creating the following namespace yaml file:
+The first step is to create an OpenShift ocal storage namespace.  We can do this by creating the following namespace yaml file:
 
 ~~~bash
 [root@ocp4-bastion ~]# cat << EOF > ~/openshift-local-storage-namespace.yaml
@@ -122,44 +122,146 @@ No resource quota.
 No LimitRange resource.
 ~~~
 
-Now we can go to **Operators** -> **OperatorHub** and search for the local storage operator in the catalog:
-
-<img src="img/select-local-storage-operator.png"/>
-
-If you do not see any available operators in the operator hub, the marketplace pods may need restarting. This is sometimes related to the initial timeout of the installation (if yours timed out):
+Now lets create an operator group for the OpenShift local storage operator:
 
 ~~~bash
-[lab-user@provision ~]$ for i in $(oc get pods -A | awk '/marketplace/ {print $2;}');
-   do oc delete pod $i -n openshift-marketplace; done
-
-pod "certified-operators-7fd49b9b57-jgbkq" deleted
-pod "community-operators-748759c64d-c8cmb" deleted
-pod "marketplace-operator-d7494b45f-qdgd5" deleted
-pod "redhat-marketplace-b96c44cdd-fhvhq" deleted
-pod "redhat-operators-585c89dcf9-6wcrr" deleted
+[root@ocp4-bastion ~]# cat << EOF > ~/openshift-local-storage-group.yaml
+apiVersion: operators.coreos.com/v1
+kind: OperatorGroup
+metadata:
+  name: local-operator-group
+  namespace: openshift-local-storage
+spec:
+  targetNamespaces:
+  - openshift-local-storage
+EOF
 ~~~
 
-You'll need to wait a minute or two, and then try refreshing the operator hub page. You should then be able to search for "local storage" and proceed.
+Lets validate the file we just created:
 
-Select the local storage operator and click install:
+~~~bash
+[root@ocp4-bastion ~]# cat ~/openshift-local-storage-group.yaml
+apiVersion: operators.coreos.com/v1
+kind: OperatorGroup
+metadata:
+  name: local-operator-group
+  namespace: openshift-local-storage
+spec:
+  targetNamespaces:
+  - openshift-local-storage
+~~~
 
-<img src="img/install-local-storage-operator.png"/>
+As we can see this file will create an operator group called local-operator-group under the openshift-local-storage namespace.  Lets now go ahead and create that operator group, show the operator group has been created and also show the details of the operator group:
 
-This will bring up a dialogue of options for configuring the operator before deploying.  The defaults are usually accceptable but note that you can configure the version, installation mode, namespace where operator should run and the approval strategy.
+~~~bash
+[root@ocp4-bastion ~]# oc create -f ~/openshift-local-storage-group.yaml
+operatorgroup.operators.coreos.com/local-operator-group created
 
-Select the defaults (ensuring that the **local-storage** namespace is selected) and click install:
+[root@ocp4-bastion ~]# oc get operatorgroup -n openshift-local-storage
+NAME                   AGE
+local-operator-group   15s
 
-<img src="img/install-choices-local-storage-operator.png"/>
+[root@ocp4-bastion ~]# oc describe  operatorgroup -n openshift-local-storage
+Name:         local-operator-group
+Namespace:    openshift-local-storage
+Labels:       <none>
+Annotations:  <none>
+API Version:  operators.coreos.com/v1
+Kind:         OperatorGroup
+Metadata:
+  Creation Timestamp:  2021-07-14T20:40:29Z
+  Generation:          1
+  Managed Fields:
+    API Version:  operators.coreos.com/v1
+    Fields Type:  FieldsV1
+    fieldsV1:
+      f:spec:
+        .:
+        f:targetNamespaces:
+          .:
+          v:"openshift-local-storage":
+    Manager:      kubectl-create
+    Operation:    Update
+    Time:         2021-07-14T20:40:29Z
+    API Version:  operators.coreos.com/v1
+    Fields Type:  FieldsV1
+    fieldsV1:
+      f:status:
+        .:
+        f:lastUpdated:
+        f:namespaces:
+          .:
+          v:"openshift-local-storage":
+    Manager:         olm
+    Operation:       Update
+    Time:            2021-07-14T20:40:29Z
+  Resource Version:  2178910
+  Self Link:         /apis/operators.coreos.com/v1/namespaces/openshift-local-storage/operatorgroups/local-operator-group
+  UID:               193c6aef-7fb4-4436-841b-e171cfd0eadd
+Spec:
+  Target Namespaces:
+    openshift-local-storage
+Status:
+  Last Updated:  2021-07-14T20:40:29Z
+  Namespaces:
+    openshift-local-storage
+Events:  <none>
+~~~
 
-Once the operator is installed we can navigate to **Operators** --> **Installed Operators** and see the local storage operator is installing which will eventually turn to a suceeded when complete:
+Once the operator group has been created we need to also create a subscription for the OpenShift local storage operator:
 
-<img src="img/installing-status-local-storage-operator.png"/>
+~~~bash
+[root@ocp4-bastion ~]# cat << EOF > ~/openshift-local-storage-subscription.yaml
+apiVersion: operators.coreos.com/v1alpha1
+kind: Subscription
+metadata:
+  name: local-storage-operator
+  namespace: openshift-local-storage
+spec:
+  channel: "4.6"
+  installPlanApproval: Automatic
+  name: local-storage-operator
+  source: redhat-operators
+  sourceNamespace: openshift-marketplace
+EOF
+~~~
+
+~~~bash
+[root@ocp4-bastion ~]# cat ~/openshift-local-storage-subscription.yaml
+apiVersion: operators.coreos.com/v1alpha1
+kind: Subscription
+metadata:
+  name: local-storage-operator
+  namespace: openshift-local-storage
+spec:
+  channel: "4.6"
+  installPlanApproval: Automatic
+  name: local-storage-operator
+  source: redhat-operators
+  sourceNamespace: openshift-marketplace
+EOF
+~~~
+
+~~~bash
+[root@ocp4-bastion ~]# oc create -f openshift-local-storage-subscription.yaml
+subscription.operators.coreos.com/local-storage-operator created
+~~~
+
+
+After a few minutes we should see an operator pod starting in the openshift-local-storage namespace
+
+~~~bash
+[root@ocp4-bastion ~]# oc get pods -n openshift-local-storage
+NAME                                      READY   STATUS              RESTARTS   AGE
+local-storage-operator-74c86b646c-87l2t   0/1     ContainerCreating   0          5s
+~~~
 
 We can also validate from the command line that the operator is installed and running as well:
 
 ~~~bash
-[lab-user@provision ~]$ oc get pods -n local-storage
-local-storage-operator-57455d9cb4-4tj54   1/1     Running   0          10m
+[root@ocp4-bastion ~]# oc get pods -n openshift-local-storage
+NAME                                      READY   STATUS    RESTARTS   AGE
+local-storage-operator-74c86b646c-87l2t   1/1     Running   0          76s
 ~~~
 
 Now that we have the local storage operator installed lets make a "**LocalVolume**" storage definition file that will use the disk device in each node:
@@ -170,7 +272,7 @@ apiVersion: local.storage.openshift.io/v1
 kind: LocalVolume
 metadata:
   name: local-block
-  namespace: local-storage
+  namespace: openshift-local-storage
 spec:
   nodeSelector:
     nodeSelectorTerms:
@@ -183,21 +285,12 @@ spec:
     - storageClassName: localblock
       volumeMode: Block
       devicePaths:
-        - /dev/sdb
+        - /dev/vdb
+        - /dev/vdc
 EOF
 ~~~
 
-You'll see that this is set to create a local volume on every host from the block device **sdb** where the selector key matches **cluster.ocs.openshift.io/openshift-storage**.  *If* we had additional devices on the worker nodes for example: **sdc** and sdd, we would just list those below the devicePaths to also be incorporated into our configuration.
-
-At this point we should double-check that all three of our worker nodes have the the OCS storage label.
-
-~~~bash
-[lab-user@provision scripts]$ oc get nodes -l cluster.ocs.openshift.io/openshift-storage
-NAME                                 STATUS   ROLES    AGE    VERSION
-worker-0.prt8x.dynamic.opentlc.com   Ready    worker   136m   v1.18.3+47c0e71
-worker-1.prt8x.dynamic.opentlc.com   Ready    worker   136m   v1.18.3+47c0e71
-worker-2.prt8x.dynamic.opentlc.com   Ready    worker   75m    v1.18.3+47c0e71
-~~~
+You'll see that this is set to create a local volume on every host from the block device **vdb** & **vdc** where the selector key matches **cluster.ocs.openshift.io/openshift-storage**.  *If* we had additional devices on the worker nodes for example: **vdd** and **vde**, we would just list those below the devicePaths to also be incorporated into our configuration.
 
 Now we can go ahead and create the assets for this local-storage configuration using the local-storage.yaml we created above.
 
