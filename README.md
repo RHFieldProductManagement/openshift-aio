@@ -17,7 +17,7 @@ With the current implementation it's possible to achieve the following-
 * Deploy either a [user-provisioned infrastructure](https://docs.openshift.com/container-platform/4.7/architecture/architecture-installation.html) (UPI) or [installer-provisioned infrastructure](https://docs.openshift.com/container-platform/4.7/architecture/architecture-installation.html) (IPI) cluster-
   * UPI deploys the nodes via DHCP/PXE, with no provider integration
   * IPI deploy the nodes through the Baremetal IPI interface via IPMI and OpenStack Ironic ([Metal3](https://metal3.io/))
-* Select the exact version of OpenShift that you want, e.g. "4.6.8", or a latest release, "latest-4.7"
+* Select the exact version of OpenShift that you want, e.g. "*4.6.8*", or a latest release, "*latest-4.7*"
 * Specify whether you want a [compact cluster](https://www.openshift.com/blog/delivering-a-three-node-architecture-for-edge-deployments), i.e. a master-only 3-node configuration with no workers
 * Specify the number of workers that you want, 1-3, depending on the host specification
 * Deploy **just** the base infrastructure required to support OpenShift installation, i.e. don't run the install
@@ -64,31 +64,31 @@ The list of available options (exposed as Ansible variables) is described below-
 
 | Name of Option / Variable | Purpose                                                      |
 | ------------------------- | ------------------------------------------------------------ |
-| baremetal_provider        | Select the baremetal provider that you want to use, i.e. which platform is providing your infrastructure. <br /><br />Choices are between "**prebuilt**" and "**packet**", where "prebuilt" will take a machine that you've already deployed with an EL8 compatible distribution and pre-configured SSH-keys, or "packet" where it will dynamically provision a new baremetal system on Packet, at your own cost.<br /><br />**Default**: There is <u>no default</u>. You must specify an option here manually. |
-| prebuilt_ip               | Enter the IP address of the target baremetal system if you're using "prebuilt" with `baremetal_provider`. Do not enter a hostname for this. This has not been tested with IPv6 but it should work just fine.<br /><br />**Default**: There is <u>no default</u>. You must specify an option here manually. |
-| packet_api_token          | If you're using "packet" for `baremetal_provider`, enter your API token so that the dynamic provisioner can deploy a baremetal instance with your credentials. Your API token can be found here: https://metal.equinix.com/developers/api/<br /><br />**Default**: There is <u>no default</u>. You must specify an option here manually. |
-| packet_project_name       | If you're using "packet" for `baremetal_provider`, enter the name of the project you would like to use; if it doesn't exist it will be created. <br /><br />**Default**: There is <u>no default</u>. You must specify an option here manually. |
-| packet_ondemand_type      | created. <br /><br />**Default**: There is <u>no default</u>. You must specify an option here manually. |
-| packet_spot_type          | created. <br /><br />**Default**: There is <u>no default</u>. You must specify an option here manually. |
-| packet_spot_bid           | created. <br /><br />**Default**: There is <u>no default</u>. You must specify an option here manually. |
-| packet_deploy_type        | created. <br /><br />**Default**: There is <u>no default</u>. You must specify an option here manually. |
-| packet_facility           | created. <br /><br />**Default**: There is <u>no default</u>. You must specify an option here manually. |
-| packet_runtime_hours      | created. <br /><br />**Default**: There is <u>no default</u>. You must specify an option here manually. |
-| packet_delete_project     | created. <br /><br />**Default**: There is <u>no default</u>. You must specify an option here manually. |
-| ssh_key                   | created. <br /><br />**Default**: There is <u>no default</u>. You must specify an option here manually. |
-| pull_secret               | created. <br /><br />**Default**: There is <u>no default</u>. You must specify an option here manually. |
-| deploy_guacamole          | created. <br /><br />**Default**: There is <u>no default</u>. You must specify an option here manually. |
-| deploy_compact            | created. <br /><br />**Default**: There is <u>no default</u>. You must specify an option here manually. |
-| deploy_ocp                | created. <br /><br />**Default**: There is <u>no default</u>. You must specify an option here manually. |
-| deploy_ocp_plus           | created. <br /><br />**Default**: There is <u>no default</u>. You must specify an option here manually. |
-| deploy_cnv                | created. <br /><br />**Default**: There is <u>no default</u>. You must specify an option here manually. |
-| deploy_ocs                | created. <br /><br />**Default**: There is <u>no default</u>. You must specify an option here manually. |
-| deploy_acm                | created. <br /><br />**Default**: There is <u>no default</u>. You must specify an option here manually. |
-| deploy_acs                | created. <br /><br />**Default**: There is <u>no default</u>. You must specify an option here manually. |
-| deploy_nfs                | created. <br /><br />**Default**: There is <u>no default</u>. You must specify an option here manually. |
-| ocp_version               | created. <br /><br />**Default**: There is <u>no default</u>. You must specify an option here manually. |
-| ocp_workers               | created. <br /><br />**Default**: '2' - we'd rather save capacity on the baremetal host, and two is the minimum number of workers in a non-compact cluster. |
-| deploy_type               | created. <br /><br />**Default**: There is <u>no default</u>. You must specify an option here manually. |
+| `baremetal_provider`      | Select the baremetal provider that you want to use, i.e. which platform is providing your infrastructure. <br /><br />Choices are between "**prebuilt**" and "**packet**", where "prebuilt" will take a machine that you've already deployed with an EL8 compatible distribution and pre-configured SSH-keys, or "packet" where it will dynamically provision a new baremetal system on Packet, at your own cost.<br /><br />**Default**: There is <u>no default</u>. You must specify an option here manually. |
+| `prebuilt_ip`             | Enter the IP address of the target baremetal system if you're using "prebuilt" with `baremetal_provider`. Do not enter a hostname for this. This has not been tested with IPv6 but it should work just fine.<br /><br />**Default**: There is <u>no default</u>. You must specify an option here manually. |
+| `packet_api_token`        | If you're using "packet" for `baremetal_provider`, enter your API token so that the dynamic provisioner can deploy a baremetal instance with your credentials. Your API token can be found here: https://metal.equinix.com/developers/api/<br /><br />**Default**: There is <u>no default</u>. You must specify an option here manually. |
+| `packet_project_name`     | If you're using "*packet*" for `baremetal_provider`, enter the name of the project you would like to use; if it doesn't exist it will be created. <br /><br />**Default**: There is <u>no default</u>. You must specify an option here manually. |
+| `packet_delete_project`   | Select whether you want the destroy process to clean up and remove the Packet project. Warning, if this is set to true, existing instances that aren't part of this deployment may be removed when the project is deleted; use with caution.<br /><br />**Default**: false |
+| `packet_deploy_type`      | Packet provisioning supports two different pricing models; "*spot*" and "*ondemand*". Spot pricing is where you bid for access to a system at a given price (see `packet_spot_bid`), which can be a way of getting much cheaper access to available systems, but it comes at the risk of your instance being deleted if a higher-bidder comes along and there's a resource shortage. On-demand pricing is where you pay the full advertised price with no risk of your instance being pulled by another higher-paying customer. For this reason we default to on demand. Full details on spot pricing can be found [here](https://metal.equinix.com/developers/docs/deploy/spot-market/). <br /><br />**Default**: "ondemand" |
+| `packet_ondemand_type`    | Select the instance type/size that you wish to provision on Packet. There are varying options, and it may depend on the datacentre that you deploy into (see `packet_facility`); but we typically require 128GB memory (minimum) and NVMe-based storage. We also currently only support x86_64 architectures. A list of available instance types can be found [here](https://metal.equinix.com/product/servers/).<br /><br />**Default**: "s3.xlarge.x86" |
+| `packet_spot_type`        | As with `packet_ondemand_type`, we can request a specific instance type, but within a spot pricing context. <br /><br />**Default**:  "s3.xlarge.x86" |
+| `packet_spot_bid`         | Select the cost per hour that you're bidding when using `packet_deploy_type: spot`. If your bid is accepted by Packet, your instance will provision, but as mentioned above, be aware of the instance revoking rules.<br /><br />**Default**: "0.70", i.e. $0.70/hour (US), which based on "s3.xlarge.x86" instance type is significantly under market pricing and would be considered fairly risky. |
+| `packet_facility`         | Specify the Packet facility (datacentre) that you want to utilise for deployment of your instance. There are many to choose from, but not all facilities have access to all of the instance types, so please ensure availability of the type via their [website](https://metal.equinix.com/developers/docs/locations/facilities/). <br /><br />**Default**: "am6" (Amsterdam, NL) |
+| `packet_runtime_hours`    | Specify how long you want the Packet instance to run for; this helps take some of the risk out of accidentally leaving the Packet system running after you're done. This flag is used to set a termination date for the instance. Note that whilst this flag should be honoured, we can take no responsibility for any costs incurred. <br /><br />**Default**: "3", i.e. 3 hours from instance request, not from Playbook completion; sometimes the playbooks can take >1hr to run, depending on the configuration requested. |
+| `ssh_key`                 | created. <br /><br />**Default**: There is <u>no default</u>. You must specify an option here manually. |
+| `pull_secret`             | created. <br /><br />**Default**: There is <u>no default</u>. You must specify an option here manually. |
+| `deploy_guacamole`        | created. <br /><br />**Default**: There is <u>no default</u>. You must specify an option here manually. |
+| `deploy_compact`          | created. <br /><br />**Default**: There is <u>no default</u>. You must specify an option here manually. |
+| `deploy_ocp`              | created. <br /><br />**Default**: There is <u>no default</u>. You must specify an option here manually. |
+| `deploy_ocp_plus`         | created. <br /><br />**Default**: There is <u>no default</u>. You must specify an option here manually. |
+| `deploy_cnv`              | created. <br /><br />**Default**: There is <u>no default</u>. You must specify an option here manually. |
+| `deploy_ocs`              | created. <br /><br />**Default**: There is <u>no default</u>. You must specify an option here manually. |
+| `deploy_acm`              | created. <br /><br />**Default**: There is <u>no default</u>. You must specify an option here manually. |
+| `deploy_acs`              | created. <br /><br />**Default**: There is <u>no default</u>. You must specify an option here manually. |
+| `deploy_nfs`              | created. <br /><br />**Default**: There is <u>no default</u>. You must specify an option here manually. |
+| `ocp_version`             | created. <br /><br />**Default**: There is <u>no default</u>. You must specify an option here manually. |
+| `ocp_workers`             | created. <br /><br />**Default**: '2' - we'd rather save capacity on the baremetal host, and two is the minimum number of workers in a non-compact cluster. |
+| `deploy_type`             | created. <br /><br />**Default**: There is <u>no default</u>. You must specify an option here manually. |
 
 
 
