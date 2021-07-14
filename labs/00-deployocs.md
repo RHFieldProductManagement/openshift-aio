@@ -1,129 +1,70 @@
 # Deploy OpenShift Container Storage
 
-Now that we have added an additional worker node to our lab cluster environment we can deploy OpenShift Container Storage (OCS) on top.  The mechanism for installation is to utilise the operator model and deploy via the OpenShift Operator Hub (Marketplace) in the web-console. Note, it's entirely possible to deploy via the CLI should you wish to do so, but we're not documenting that mechanism here. However, we will leverage command line and web-console to show the progress of the deployment.
+In the AIO deployment environment we provide 3 worker nodes to be used for consumption.  As part of that deployment we offer the capability to run OpenShift Container Storage (OCS) on top of our OpenShift deployed cluster.   AIO does have the capability to deploy OCS automatically but for those who would like to experience the process this lab gives them the hands on experience.
+
+The mechanism for installation is to utilize the operator model and deploy from the cli. Note, it's entirely possible to deploy via the web console should you wish to do so, but we're not documenting that mechanism here.
 
 From a node perspective, the lab environment should look like the following from a master/worker node count:
 
 ~~~bash
-[lab-user@provision ~]$ oc get nodes
-NAME                                 STATUS   ROLES    AGE   VERSION
-master-0.dtchw.dynamic.opentlc.com   Ready    master   63m   v1.18.3+47c0e71
-master-1.dtchw.dynamic.opentlc.com   Ready    master   63m   v1.18.3+47c0e71
-master-2.dtchw.dynamic.opentlc.com   Ready    master   63m   v1.18.3+47c0e71
-worker-0.dtchw.dynamic.opentlc.com   Ready    worker   44m   v1.18.3+47c0e71
-worker-1.dtchw.dynamic.opentlc.com   Ready    worker   43m   v1.18.3+47c0e71
-worker-2.dtchw.dynamic.opentlc.com   Ready    worker   23m   v1.18.3+47c0e71
+[root@ocp4-bastion ~]# oc get nodes
+NAME                           STATUS   ROLES    AGE     VERSION
+ocp4-master1.aio.example.com   Ready    master   5d3h    v1.20.0+87cc9a4
+ocp4-master2.aio.example.com   Ready    master   5d3h    v1.20.0+87cc9a4
+ocp4-master3.aio.example.com   Ready    master   5d3h    v1.20.0+87cc9a4
+ocp4-worker1.aio.example.com   Ready    worker   5d3h    v1.20.0+87cc9a4
+ocp4-worker2.aio.example.com   Ready    worker   5d3h    v1.20.0+87cc9a4
+ocp4-worker3.aio.example.com   Ready    worker   3m51s   v1.20.0+87cc9a4
 ~~~
 
-> **NOTE**: If you do not have **three** workers listed here, this lab will not succeed - please revert to the previous section and ensure that all three workers are provisioned, noting that the count starts from 0, hence worker-0 through 2 should be listed.
+> **NOTE**: If you do not have **three** workers listed here, this lab will not succeed - please revert to the previous section and ensure that all three workers are provisioned, noting that the count starts from 1, hence worker1 through worker3 should be listed.
 
-We need to attach a 100GB disk to each of our worker nodes in the lab environment; these disks will provide the storage capacity for the OCS based disks (or Ceph OSD's under the covers).  Thankfully we have a little script to do this for us on the provisioning node; utilising the OpenStack API to attach Cinder volumes to our virtual worker nodes, mimicking a real baremetal node with spare, unused disks. Before we run the script lets take a look at it, you'll note that the script has already been automatically customised to suit your environment:
-
-~~~bash
-[lab-user@provision ~]$ cat ~/scripts/10_volume-attach.sh
-#!/bin/bash
-OSP_PROJECT="dtchw-project"
-GUID="dtchw"
-
-attach() {
-  for NODE in $( openstack --os-cloud=$OSP_PROJECT server list|grep worker|cut -d\| -f3|sed 's/ //g' )
-  do
-          openstack --os-cloud=$OSP_PROJECT server add volume $NODE $NODE-volume
-  done
-}
-
-detach() {
-  for NODE in $( openstack --os-cloud=$OSP_PROJECT server list|grep worker|cut -d\| -f3|sed 's/ //g' )
-  do
-          openstack --os-cloud=$OSP_PROJECT server remove volume $NODE $NODE-volume
-  done
-}
-
-poweroff() {
-  /usr/bin/ipmitool -I lanplus -H10.20.0.3 -p6200 -Uadmin -Predhat chassis power off
-  /usr/bin/ipmitool -I lanplus -H10.20.0.3 -p6201 -Uadmin -Predhat chassis power off
-  /usr/bin/ipmitool -I lanplus -H10.20.0.3 -p6202 -Uadmin -Predhat chassis power off
-  /usr/bin/ipmitool -I lanplus -H10.20.0.3 -p6203 -Uadmin -Predhat chassis power off
-  /usr/bin/ipmitool -I lanplus -H10.20.0.3 -p6204 -Uadmin -Predhat chassis power off
-  /usr/bin/ipmitool -I lanplus -H10.20.0.3 -p6205 -Uadmin -Predhat chassis power off
-}
-
-case $1 in
-  attach) attach ;;
-  detach) poweroff
-          sleep 10
-          detach ;;
-  power) poweroff ;;
-  *) attach ;;
-esac
-~~~
-
-We can see the script will attach and detach volumes from a list of worker nodes within a given lab environment, and can also be used to detach if required, which will power the nodes down first, but for now all we want to do is attach them, which is the default behaviour of the script. Lets go ahead and run the script:
+Now lets validate that each node has two extra disks which will become our OSD volumes for OCS by using the debug container on the worker node to view the block devices:
 
 ~~~bash
-[lab-user@provision ~]$ unset OS_URL OS_TOKEN
-[lab-user@provision ~]$ ~/scripts/10_volume-attach.sh
-(no output)
-[lab-user@provision ~]$ echo $?
-0
-~~~
-
-> **NOTE**: Ensure that you have a '0' return code and not something else - zero means that the attachment was succes
-
-We can validate that each node has the extra disk by using the debug container on the worker node:
-
-~~~bash
-[lab-user@provision ~]$ oc debug node/worker-0.$GUID.dynamic.opentlc.com
-Starting pod/worker-0-debug ...
+[root@ocp4-bastion ~]# oc debug node/ocp4-worker3.aio.example.com
+Starting pod/ocp4-worker3aioexamplecom-debug ...
 To use host binaries, run `chroot /host`
-Pod IP: 10.20.0.200
+Pod IP: 192.168.123.106
 If you don't see a command prompt, try pressing enter.
-sh-4.2# 
-~~~
-
-Once inside the debug container we can look at the block devices available:
-
-~~~bash
-sh-4.2# chroot /host
+sh-4.4# chroot /host
 sh-4.4# lsblk
-NAME                         MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
-vda                          252:0    0  100G  0 disk 
-|-sda1                       252:1    0  384M  0 part /boot
-|-sda2                       252:2    0  127M  0 part /boot/efi
-|-sda3                       252:3    0    1M  0 part 
-|-sda4                       252:4    0 99.4G  0 part 
-| `-coreos-luks-root-nocrypt 253:0    0 99.4G  0 dm   /sysroot
-`-sda5                       252:5    0   65M  0 part 
-sdb                          252:16   0  100G  0 disk 
+NAME   MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
+vda    252:0    0   80G  0 disk 
+|-vda1 252:1    0    1M  0 part 
+|-vda2 252:2    0  127M  0 part 
+|-vda3 252:3    0  384M  0 part /boot
+|-vda4 252:4    0 79.4G  0 part /sysroot
+`-vda5 252:5    0   65M  0 part 
+vdb    252:16   0  100G  0 disk 
+vdc    252:32   0  100G  0 disk 
 sh-4.4# exit
 exit
-sh-4.2# exit
+sh-4.4# exit
 exit
 
 Removing debug pod ...
 ~~~
 
-We can see from the output above that on **worker-0** the new **100GB** volume was attached as **sdb**.  Repeat the above steps to confirm that the remaining workers also have their 100GB sdb volume attached. Once finished, we need to label our nodes for storage, this label will tell OCS that these machines can be utilised for storage requirements:
+We can see from the output above that on **worker3** the two **100GB** volumes exist as **vdb** and **vdc**.  Repeat the above steps to confirm that the remaining workers also have their 100GB vdb and vdc volumes attached. Once finished, we need to label our nodes for storage, this label will tell OCS that these machines can be utilised for storage requirements:
 
 ~~~bash
-[lab-user@provision ~]$ oc label nodes worker-0.$GUID.dynamic.opentlc.com cluster.ocs.openshift.io/openshift-storage=''
-node/worker-0 labeled
-
-[lab-user@provision ~]$ oc label nodes worker-1.$GUID.dynamic.opentlc.com cluster.ocs.openshift.io/openshift-storage=''
-node/worker-1 labeled
-
-[lab-user@provision ~]$ oc label nodes worker-2.$GUID.dynamic.opentlc.com cluster.ocs.openshift.io/openshift-storage=''
-node/worker-2 labeled
+[root@ocp4-bastion ~]# oc label nodes ocp4-worker1.aio.example.com cluster.ocs.openshift.io/openshift-storage=''
+node/ocp4-worker1.aio.example.com labeled
+[root@ocp4-bastion ~]# oc label nodes ocp4-worker2.aio.example.com cluster.ocs.openshift.io/openshift-storage=''
+node/ocp4-worker2.aio.example.com labeled
+[root@ocp4-bastion ~]# oc label nodes ocp4-worker3.aio.example.com cluster.ocs.openshift.io/openshift-storage=''
+node/ocp4-worker3.aio.example.com labeled
 ~~~
 
-And confirm the change:
+And confirm the label changes:
 
 ~~~bash
-[lab-user@provision ~]$ oc get nodes -l cluster.ocs.openshift.io/openshift-storage=
-NAME                                 STATUS   ROLES    AGE   VERSION
-worker-0.dtchw.dynamic.opentlc.com   Ready    worker   47m   v1.18.3+47c0e71
-worker-1.dtchw.dynamic.opentlc.com   Ready    worker   46m   v1.18.3+47c0e71
-worker-2.dtchw.dynamic.opentlc.com   Ready    worker   26m   v1.18.3+47c0e71
+[root@ocp4-bastion ~]# oc get nodes -l cluster.ocs.openshift.io/openshift-storage=
+NAME                           STATUS   ROLES    AGE    VERSION
+ocp4-worker1.aio.example.com   Ready    worker   5d3h   v1.20.0+87cc9a4
+ocp4-worker2.aio.example.com   Ready    worker   5d3h   v1.20.0+87cc9a4
+ocp4-worker3.aio.example.com   Ready    worker   20m    v1.20.0+87cc9a4
 ~~~
 
 
@@ -132,13 +73,54 @@ worker-2.dtchw.dynamic.opentlc.com   Ready    worker   26m   v1.18.3+47c0e71
 
 Now that we know the worker nodes have their extra disk ready and labels added, we can proceed. Before installing OCS we need to first install the **[local-storage operator](https://github.com/openshift/local-storage-operator)** which is used to consume local disks, and expose them as available persistent volumes (PV) for OCS to consume; the OCS Ceph OSD pods consume local-storage based PV's and allow additional RWX PV's to be deployed on-top.
 
-The first step is to create a local storage namespace in the OpenShift console.  Navigate to **Administration** -> **Namespaces** and click on the create namespace button.  Once the below dialogue appears, set the namespace Name to **local-storage**.
+The first step is to create an OpenShift local storage namespace.  We can do this by creating the following namespace yaml file:
 
-<img src="img/create-local-storage-namespace.png"/>
+~~~bash
+[root@ocp4-bastion ~]# cat << EOF > ~/openshift-local-storage-namespace.yaml
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: openshift-local-storage
+spec: {}
+EOF
+~~~
+
+Lets take a look at the file that was created:
+
+~~~bash
+[root@ocp4-bastion ~]# cat ~/openshift-local-storage-namespace.yaml
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: openshift-local-storage
+spec: {}
+~~~
+
+Now lets go ahead and create that namespace resource that the file defines:
+
+~~~bash
+[root@ocp4-bastion ~]# oc create -f ~/openshift-local-storage-namespace.yaml
+namespace/openshift-local-storage created
+[root@ocp4-bastion ~]# oc get namespaces openshift-local-storage
+NAME                      STATUS   AGE
+openshift-local-storage   Active   30s
+~~~
 
 After creating the namespace we see the details about the namespace and also can confirm that the namespace is active:
 
-<img src="img/show-local-storage-namespace.png"/>
+~~~bash
+[root@ocp4-bastion ~]# oc describe namespaces openshift-local-storage
+Name:         openshift-local-storage
+Labels:       <none>
+Annotations:  openshift.io/sa.scc.mcs: s0:c25,c15
+              openshift.io/sa.scc.supplemental-groups: 1000630000/10000
+              openshift.io/sa.scc.uid-range: 1000630000/10000
+Status:       Active
+
+No resource quota.
+
+No LimitRange resource.
+~~~
 
 Now we can go to **Operators** -> **OperatorHub** and search for the local storage operator in the catalog:
 
