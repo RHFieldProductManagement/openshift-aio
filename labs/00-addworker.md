@@ -1,26 +1,20 @@
 # Add Additional Third Worker Node
 
-In this section we're going to demonstrate how to expand a baremetal IPI environment with an additional 3rd **worker** node, i.e. a node that will just run workloads, not cluster services. The eagle eyed amongst you may notice that we specified two worker nodes (via compute replicas) in our initial installation configuration file, but we've actually got a spare unused "baremetal" host in the environment you're working in. We simply need to tell the baremetal operator about it, and get it to deploy RHCOS and OpenShift onto it. For reference:
+When using the AIO provisioned lab environment it automatically creates 3 nodes that can be used as worker nodes.  However during the deployment of OpenShift with the AIO one can specify 0 workers and up to 3 workers.   In this lab we will show how to consume an additional worker if in the AIO my_vars.yaml less then 3 worker nodes were specified.
+
+First lets confirm how many worker nodes were defined in the initial deployment:
 
 ~~~bash
-[lab-user@provision ~]$ grep -A2 compute ~/scripts/install-config.yaml
+[root@ocp4-bastion ~]# grep -A3 compute ~/lab/install-config.yaml
 compute:
-- name: worker
+- hyperthreading: Enabled
+  name: worker
   replicas: 2
 ~~~
 
-We need to supply a baremetal node defintion to the baremetal operator to do this, and thankfully in this lab there is a handy way to achieve this. First we need to obtain the IPMI port of the **worker-2** node by using the following one liner against the install-config.yaml we used to deploy the initial cluster:
+We can see from the output above that the AIO deployment used 2 of the possible 3 worker nodes available.  In that case lets proceed in adding the third available worker node into our OpenShift cluster.
 
-~~~bash
-[lab-user@provision scripts]$ IPMI_PORT=$(for PORT in 6200 6201 6202 6203 6204 6205; do
-	grep -q $PORT ~/scripts/install-config.yaml|| echo $PORT
-done)
-
-[lab-user@provision scripts]$ echo $IPMI_PORT
-6203
-~~~
-
-Once we have the port number lets create the following baremetal node definition file; this has been pre-populated for you based on the pre-configured worker node in your dedicated environment:
+First we need to supply a baremetal node defintion to the baremetal operator to do this.  Lets create the following baremetal node definition file; this has been pre-populated for you based on the pre-configured worker node in your dedicated environment:
 
 ~~~bash
 [lab-user@provision scripts]$ cat << EOF > ~/bmh.yaml
@@ -28,7 +22,7 @@ Once we have the port number lets create the following baremetal node definition
 apiVersion: v1
 kind: Secret
 metadata:
-  name: worker-2-bmc-secret
+  name: worker-3-bmc-secret
 type: Opaque
 data:
   username: YWRtaW4=
@@ -37,14 +31,16 @@ data:
 apiVersion: metal3.io/v1alpha1
 kind: BareMetalHost
 metadata:
-  name: worker-2
+  name: worker-3
 spec:
   online: true
-  bootMACAddress: de:ad:be:ef:00:52
+  bootMACAddress: de:ad:be:ef:00:06
   hardwareProfile: openstack
   bmc:
-    address: ipmi://10.20.0.3:${IPMI_PORT}
-    credentialsName: worker-2-bmc-secret
+    address: ipmi://192.168.123.1:6236
+    credentialsName: worker-3-bmc-secret
+  rootDeviceHints:
+    deviceName: /dev/vda
 EOF
 ~~~
 
@@ -56,7 +52,7 @@ Let's look at the file that it created:
 apiVersion: v1
 kind: Secret
 metadata:
-  name: worker-2-bmc-secret
+  name: worker-3-bmc-secret
 type: Opaque
 data:
   username: YWRtaW4=
@@ -65,14 +61,16 @@ data:
 apiVersion: metal3.io/v1alpha1
 kind: BareMetalHost
 metadata:
-  name: worker-2
+  name: worker-3
 spec:
   online: true
-  bootMACAddress: de:ad:be:ef:00:52
+  bootMACAddress: de:ad:be:ef:00:06
   hardwareProfile: openstack
   bmc:
-    address: ipmi://10.20.0.3:6203
-    credentialsName: worker-2-bmc-secret
+    address: ipmi://192.168.123.1:6236
+    credentialsName: worker-3-bmc-secret
+  rootDeviceHints:
+    deviceName: /dev/vda
 ~~~
 
 You'll see that this is set to create two different resources, one is a `secret` that contains a base64 encoded username/password for IPMI access for the baremetal host, and then a `BareMetalHost` object (linked to the secret) that will define the node within the cluster itself, which is enough for the baremetal operator to kick off the deployment.
