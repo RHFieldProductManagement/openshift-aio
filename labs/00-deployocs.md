@@ -226,6 +226,8 @@ spec:
 EOF
 ~~~
 
+Before we apply the subscription yaml file we created lets take a look at it:
+
 ~~~bash
 [root@ocp4-bastion ~]# cat ~/openshift-local-storage-subscription.yaml
 apiVersion: operators.coreos.com/v1alpha1
@@ -242,11 +244,12 @@ spec:
 EOF
 ~~~
 
+We can see from the above subscription yaml file we will be subscribed to the 4.6 release and the operator will run under the openshift-local-storage namespace.  Now lets go ahead and create the subscription:
+
 ~~~bash
 [root@ocp4-bastion ~]# oc create -f openshift-local-storage-subscription.yaml
 subscription.operators.coreos.com/local-storage-operator created
 ~~~
-
 
 After a few minutes we should see an operator pod starting in the openshift-local-storage namespace
 
@@ -267,7 +270,7 @@ local-storage-operator-74c86b646c-87l2t   1/1     Running   0          76s
 Now that we have the local storage operator installed lets make a "**LocalVolume**" storage definition file that will use the disk device in each node:
 
 ~~~bash
-[lab-user@provision scripts]$ cat << EOF > ~/local-storage.yaml
+[root@ocp4-bastion ~]# cat << EOF > ~/local-storage.yaml
 apiVersion: local.storage.openshift.io/v1
 kind: LocalVolume
 metadata:
@@ -290,49 +293,76 @@ spec:
 EOF
 ~~~
 
+Lets go ahead and view the storage definitiona yaml we created:
+
+~~~bash
+[root@ocp4-bastion ~]# cat ~/local-storage.yaml
+apiVersion: local.storage.openshift.io/v1
+kind: LocalVolume
+metadata:
+  name: local-block
+  namespace: openshift-local-storage
+spec:
+  nodeSelector:
+    nodeSelectorTerms:
+    - matchExpressions:
+        - key: cluster.ocs.openshift.io/openshift-storage
+          operator: In
+          values:
+          - ""
+  storageClassDevices:
+    - storageClassName: localblock
+      volumeMode: Block
+      devicePaths:
+        - /dev/vdb
+        - /dev/vdc
+~~~
+
 You'll see that this is set to create a local volume on every host from the block device **vdb** & **vdc** where the selector key matches **cluster.ocs.openshift.io/openshift-storage**.  *If* we had additional devices on the worker nodes for example: **vdd** and **vde**, we would just list those below the devicePaths to also be incorporated into our configuration.
 
 Now we can go ahead and create the assets for this local-storage configuration using the local-storage.yaml we created above.
 
 ~~~bash
-[lab-user@provision ~]$ oc create -f ~/local-storage.yaml
+[root@ocp4-bastion ~]# oc create -f ~/local-storage.yaml
 localvolume.local.storage.openshift.io/local-block created
 ~~~
 
 If we execute an `oc get pods` command on the namespace of `local-storage` we will see containers being created in relationship to the assets from our local-storage.yaml file. The pods generated are a provisioner and diskmaker on every worker node where the node selector matched.:
 
 ~~~bash
-[lab-user@provision ~]$ oc -n local-storage get pods
-NAME                                      READY   STATUS              RESTARTS   AGE
-local-block-local-diskmaker-626kf         0/1     ContainerCreating   0          8s
-local-block-local-diskmaker-w5l5h         0/1     ContainerCreating   0          9s
-local-block-local-diskmaker-xrxmh         0/1     ContainerCreating   0          9s
-local-block-local-provisioner-9mhdq       0/1     ContainerCreating   0          9s
-local-block-local-provisioner-lw9fm       0/1     ContainerCreating   0          9s
-local-block-local-provisioner-xhf2x       0/1     ContainerCreating   0          9s
-local-storage-operator-57455d9cb4-4tj54   1/1     Running             0          76m
+[root@ocp4-bastion ~]# oc -n openshift-local-storage get pods
+NAME                                      READY   STATUS    RESTARTS   AGE
+local-block-local-diskmaker-7mjmw         1/1     Running   0          28s
+local-block-local-diskmaker-bls94         1/1     Running   0          28s
+local-block-local-diskmaker-qxjwh         1/1     Running   0          28s
+local-block-local-provisioner-29wcm       1/1     Running   0          28s
+local-block-local-provisioner-65m54       1/1     Running   0          28s
+local-block-local-provisioner-95w9j       1/1     Running   0          28s
+local-storage-operator-74c86b646c-87l2t   1/1     Running   0          18h
 ~~~
 
 As you can see from the above we had labeled 3 worker nodes and we have 3 provisioners and 3 diskmaker pods.  To validate the nodes where the pods are running try adding `-o wide` to the command above. *Does it confirm that each worker has a provisioner and diskmaker pod?*
 
-Furthermore we can now see that 3 PV's have been created, making up our **100GB sdb** disks we attached at the beginning of the lab:
+Furthermore we can now see that 6 PV's have been created:
 
 ~~~bash
-[lab-user@provision ~]$ oc get pv
-NAME                CAPACITY   ACCESS MODES   RECLAIM POLICY   STATUS      CLAIM   STORAGECLASS   REASON   AGE
-local-pv-40d06fba   100Gi      RWO            Delete           Available           localblock              22s
-local-pv-8aea98b7   100Gi      RWO            Delete           Available           localblock              22s
-local-pv-e62c1b44   100Gi      RWO            Delete           Available           localblock              22s
+[root@ocp4-bastion ~]# oc get pv -o wide
+NAME                CAPACITY   ACCESS MODES   RECLAIM POLICY   STATUS      CLAIM   STORAGECLASS   REASON   AGE   VOLUMEMODE
+local-pv-6751e4c7   100Gi      RWO            Delete           Available           localblock              34s   Block
+local-pv-759d6092   100Gi      RWO            Delete           Available           localblock              44s   Block
+local-pv-911d74ba   100Gi      RWO            Delete           Available           localblock              34s   Block
+local-pv-9d4e1eb0   100Gi      RWO            Delete           Available           localblock              34s   Block
+local-pv-be875671   100Gi      RWO            Delete           Available           localblock              44s   Block
+local-pv-e2c7f8a9   100Gi      RWO            Delete           Available           localblock              34s   Block
 ~~~
 
 And finally a storageclass was created for the local-storage asset we created:
 
 ~~~bash
-[lab-user@provision scripts]$ oc get sc
+[root@ocp4-bastion ~]# oc get sc
 NAME         PROVISIONER                    RECLAIMPOLICY   VOLUMEBINDINGMODE      ALLOWVOLUMEEXPANSION   AGE
-localblock   kubernetes.io/no-provisioner   Delete          WaitForFirstConsumer   false                  4m37s
+localblock   kubernetes.io/no-provisioner   Delete          WaitForFirstConsumer   false                  105s
 ~~~
-
 
 
 ## Deploying OpenShift Container Storage
