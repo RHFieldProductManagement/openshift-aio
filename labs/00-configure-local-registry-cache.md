@@ -1,4 +1,4 @@
-# **Configure a Disconnected Registry and Red Hat Enterprise Linux CoreOS Cache**
+# **Configure a Disconnected Registry and RHEL CoreOS Cache**
 
 In this lab we will explore what has been a popular topic when it comes to OpenShift: the disconnected installation. A disconnected installation is one where the master and worker nodes do not have access to the internet. Thus the Red Hat Enterprise Linux CoreOS (RHCOS) images and the OpenShift pod images need to be hosted locally to support the given installation.  The AIO lab when deployed without deploying the OpenShift cluster does not have an option for automatically setting up a disconnected environment.  However this lab can provide the needed steps and insights into what that process looks like.
 
