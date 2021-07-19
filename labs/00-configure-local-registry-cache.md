@@ -53,6 +53,17 @@ Nothing to do.
 Complete!
 ~~~
 
+After installing the required packages we also need to open a few ports on the local firewall to enable remote access for the registry and image cache.  These services will run on ports 5000 and 80 respectively.  Lets ago ahead and make the adjustments:
+
+~~~bash
+[root@ocp4-bastion ~]# firewall-cmd --zone=public --permanent --add-port=5000/tcp
+success
+[root@ocp4-bastion ~]# firewall-cmd --zone=public --permanent --add-port=80/tcp
+success
+[root@ocp4-bastion ~]# firewall-cmd --reload
+success
+~~~
+
 Now let's create the directories you'll need to run the registry. These directories will be mounted in the container runtime environment for the registry.
 
 ~~~bash
@@ -66,239 +77,256 @@ drwxr-xr-x. 2 root root 6 Jul 15 19:11 data
 
 We also need to create a self signed certificate for the registry:
 
-STOP HERE - NEED to fix everything below
-
-```bash
-[lab-user@provision scripts]$ sudo openssl req -newkey rsa:4096 -nodes -sha256 \
-    -keyout /nfs/registry/certs/domain.key -x509 -days 365 -out /nfs/registry/certs/domain.crt \
-    -subj "/C=US/ST=NorthCarolina/L=Raleigh/O=Red Hat/OU=Marketing/CN=provision.$GUID.dynamic.opentlc.com"
+~~~bash
+[root@ocp4-bastion ~]# openssl req -newkey rsa:4096 -nodes -sha256 -keyout /nfs/registry/certs/domain.key -x509 -days 365 -out /nfs/registry/certs/domain.crt -subj "/C=US/ST=NorthCarolina/L=Raleigh/O=Red Hat/OU=Marketing/CN=ocp4-bastion.aio.example.com" -addext "subjectAltName = DNS:ocp4-bastion.aio.example.com" -addext "certificatePolicies = 1.2.3.4"
 Generating a RSA private key
-..................................................................................................
-..................................................................................................
-..................................................................++++
-..................................................................................................
-..................................................................................................
-.........................................................++++
+...............................................................................................++++
+......................................................................++++
 writing new private key to '/nfs/registry/certs/domain.key'
 -----
-```
+~~~
 
 Once the certificate has been created copy it into your home directory and also into the trust anchors on the provisioning node. We will also need to run the update-ca-trust command:
 
-```bash
-[lab-user@provision scripts]$ sudo cp /nfs/registry/certs/domain.crt $HOME/scripts/domain.crt
-[lab-user@provision scripts]$ sudo chown lab-user $HOME/scripts/domain.crt
-[lab-user@provision scripts]$ sudo cp /nfs/registry/certs/domain.crt /etc/pki/ca-trust/source/anchors/
-[lab-user@provision scripts]$ sudo update-ca-trust extract
-```
+~~~bash
+[root@ocp4-bastion ~]# cp /nfs/registry/certs/domain.crt /root/domain.crt
+[root@ocp4-bastion ~]# cp /nfs/registry/certs/domain.crt /etc/pki/ca-trust/source/anchors/
+[root@ocp4-bastion ~]# update-ca-trust extract
+~~~
 
 Our registry will need a simple authentication mechanism so we will use `htpasswd`. Note that when you try to authenticate to your registry the password being passed has to be in [bcrypt](https://en.wikipedia.org/wiki/Bcrypt) format.
 
-```bash
-[lab-user@provision scripts]$ sudo htpasswd -bBc /nfs/registry/auth/htpasswd dummy dummy
+~~~bash
+[root@ocp4-bastion ~]# htpasswd -bBc /nfs/registry/auth/htpasswd dummy dummy
 Adding password for user dummy
-```
+~~~
 
 Now that we have a directory structure, certificate, and a user configured for authentication we can go ahead and create the registry pod. The command below will pull down the pod and mount the appropriate directory mount points we created earlier.
 
-```bash
-[lab-user@provision scripts]$ sudo podman create --name poc-registry --net host -p 5000:5000 \
-    -v /nfs/registry/data:/var/lib/registry:z -v /nfs/registry/auth:/auth:z \
-    -e "REGISTRY_AUTH=htpasswd" -e "REGISTRY_AUTH_HTPASSWD_REALM=Registry" \
-    -e "REGISTRY_HTTP_SECRET=ALongRandomSecretForRegistry" \
-    -e REGISTRY_AUTH_HTPASSWD_PATH=/auth/htpasswd -v /nfs/registry/certs:/certs:z \
-    -e REGISTRY_HTTP_TLS_CERTIFICATE=/certs/domain.crt \
-    -e REGISTRY_HTTP_TLS_KEY=/certs/domain.key docker.io/library/registry:2
+However we will first need to login:
 
+~~~bash
+[root@ocp4-bastion ~]# docker login docker.io
+Emulate Docker CLI using podman. Create /etc/containers/nodocker to quiet msg.
+Username: schmaustech
+Password: 
+Login Succeeded!
+~~~
+
+Then we can create the container:
+
+~~~bash
+[root@ocp4-bastion ~]# podman create --name poc-registry --net host -p 5000:5000 \
+     -v /nfs/registry/data:/var/lib/registry:z -v /nfs/registry/auth:/auth:z \
+     -e "REGISTRY_AUTH=htpasswd" -e "REGISTRY_AUTH_HTPASSWD_REALM=Registry" \
+     -e "REGISTRY_HTTP_SECRET=ALongRandomSecretForRegistry" \
+     -e REGISTRY_AUTH_HTPASSWD_PATH=/auth/htpasswd -v /nfs/registry/certs:/certs:z \
+     -e REGISTRY_HTTP_TLS_CERTIFICATE=/certs/domain.crt \
+     -e REGISTRY_HTTP_TLS_KEY=/certs/domain.key docker.io/library/registry:2
 Trying to pull docker.io/library/registry:2...
 Getting image source signatures
-Copying blob cbdbe7a5bc2a done
-Copying blob c1cc712bcecd done
-Copying blob 47112e65547d done
-Copying blob 3db6272dcbfa done
-Copying blob 46bcb632e506 done
-Copying config 2d4f4b5309 done
+Copying blob 5b94580856e6 done  
+Copying blob 363ab70c2143 done  
+Copying blob 12008541203a done  
+Copying blob 6eda6749503f done  
+Copying blob ddad3d7c1e96 done  
+Copying config 1fd8e1b0bb done  
 Writing manifest to image destination
 Storing signatures
-be06131e5dc4b98a1f55fdefc6afa6989cfbc8d878b6d65cf40426e96e2bede1
-```
+Port mappings have been discarded as one of the Host, Container, Pod, and None network modes are in use
+5d0f0a92956a1b181b487e71bb05887bd7b9cdaf9de77dc4906553cb3b49ef3b
+~~~
 
 Once pod creation is complete we can start the pod:
 
-```bash
-[lab-user@provision scripts]$ sudo podman start poc-registry
+~~~bash
+[root@ocp4-bastion ~]# podman start poc-registry
 poc-registry
-```
+~~~
 
 Finally, verify the pod is up and running via the podman command:
 
-```bash
-[lab-user@provision scripts]$ sudo podman ps
-CONTAINER ID  IMAGE                         COMMAND               CREATED        STATUS             PORTS  NAMES
-be06131e5dc4  docker.io/library/registry:2  /etc/docker/regis...  2 minutes ago  Up 39 seconds ago         poc-registry
-```
+~~~bash
+[root@ocp4-bastion ~]# podman ps 
+CONTAINER ID  IMAGE                         COMMAND               CREATED        STATUS             PORTS   NAMES
+5d0f0a92956a  docker.io/library/registry:2  /etc/docker/regis...  4 minutes ago  Up 17 seconds ago          poc-registry
+~~~
 
 We can further validate the registry is functional by using a curl command and passing the user/password to the registry URL. Note here it's not necessary to use a bcrypt formatted password.
 
-```bash
-[lab-user@provision scripts]$ curl -u dummy:dummy -k \
-    https://provision.$GUID.dynamic.opentlc.com:5000/v2/_catalog
+~~~bash
+[root@ocp4-bastion ~]# curl -u dummy:dummy -k https://ocp4-bastion.aio.example.com:5000/v2/_catalog
 {"repositories":[]}
-```
+~~~
 
 Now that our registry pod is up and we have validated that it's working it's time to configure the httpd cache pod which stores our RHCOS images locally. The first step is to create some directory structures and add the appropriate permissions:
 
-```bash
-[lab-user@provision scripts]$ export IRONIC_DATA_DIR=/nfs/ocp/ironic
-[lab-user@provision scripts]$ export IRONIC_IMAGES_DIR="${IRONIC_DATA_DIR}/html/images"
-[lab-user@provision scripts]$ export IRONIC_IMAGE=quay.io/metal3-io/ironic:master
-[lab-user@provision scripts]$ sudo mkdir -p $IRONIC_IMAGES_DIR
-[lab-user@provision scripts]$ sudo chown -R "${USER}:users" "$IRONIC_DATA_DIR"
-[lab-user@provision scripts]$ sudo find $IRONIC_DATA_DIR -type d -print0 | xargs -0 chmod 755
-[lab-user@provision scripts]$ sudo chmod -R +r $IRONIC_DATA_DIR
-```
+~~~bash
+[root@ocp4-bastion ~]# export IRONIC_DATA_DIR=/nfs/ocp/ironic
+[root@ocp4-bastion ~]# export IRONIC_IMAGES_DIR="${IRONIC_DATA_DIR}/html/images"
+[root@ocp4-bastion ~]# export IRONIC_IMAGE=quay.io/metal3-io/ironic:master
+[root@ocp4-bastion ~]# mkdir -p $IRONIC_IMAGES_DIR
+[root@ocp4-bastion ~]# chown -R "${USER}:users" "$IRONIC_DATA_DIR"
+[root@ocp4-bastion ~]# find $IRONIC_DATA_DIR -type d -print0 | xargs -0 chmod 755
+[root@ocp4-bastion ~]# chmod -R +r $IRONIC_DATA_DIR
+~~~
 
 With the directory structures in place we can now create the caching pod. For this we use the ironic pod that already exists in quay.io.
 
-```bash
-[lab-user@provision scripts]$ sudo podman pod create -n ironic-pod
-12385a4f6f8cb912e7733b725c2b488de4e21aef049552efd21afc28dd647014
-```
+~~~bash
+[root@ocp4-bastion ~]# podman pod create -n ironic-pod
+63fd4b75d85ea1bf78e1b3a4c2ab4a27290e8fcd66335c6ced7e000d9ba53d76
+~~~
 
 And now run the pod:
 
-```bash
-[lab-user@provision scripts]$ sudo podman run -d --net host --privileged --name httpd --pod ironic-pod \
-    -v $IRONIC_DATA_DIR:/shared --entrypoint /bin/runhttpd ${IRONIC_IMAGE}
-
+~~~bash
+[root@ocp4-bastion ~]# podman run -d --net host --privileged --name httpd --pod ironic-pod \
+>     -v $IRONIC_DATA_DIR:/shared --entrypoint /bin/runhttpd ${IRONIC_IMAGE}
 Trying to pull quay.io/metal3-io/ironic:master...
 Getting image source signatures
-Copying blob 3c72a8ed6814 done
-Copying blob dedbfd2c2275 done
+Copying blob 7a0437f04f83 done  
+Copying blob b9cff270b3ae done  
 (...)
-Copying blob db435f5910cb done
-Copying config 3733498f02 done
+Copying blob 6acc707c4aa8 done  
+Copying config 9e82c290c3 done  
 Writing manifest to image destination
 Storing signatures
-f069949f68fa147206d154417a22c20c49983f0c5b79e9c06d56750e9d3f470d
-```
+5e5a18b8917dd3d638b225934d229609127c7df554fedbb582c135b481b769a0
+~~~
 
 Because we ran the **create** command and then a **run** command after it there is no need to actually use podman to start the httpd pod. We can see that it is running by looking at the running pods on the provisioning node:
 
-```bash
-[lab-user@provision scripts]$ sudo podman ps
-CONTAINER ID  IMAGE                            COMMAND               CREATED         STATUS             PORTS  NAMES
-f069949f68fa  quay.io/metal3-io/ironic:master                        8 seconds ago   Up 7 seconds ago          httpd
-be06131e5dc4  docker.io/library/registry:2     /etc/docker/regis...  22 minutes ago  Up 20 minutes ago         poc-registry
-```
+~~~bash
+[root@ocp4-bastion ~]# podman ps
+CONTAINER ID  IMAGE                                         COMMAND               CREATED         STATUS             PORTS   NAMES
+5d0f0a92956a  docker.io/library/registry:2                  /etc/docker/regis...  11 minutes ago  Up 6 minutes ago           poc-registry
+97b804b05471  registry.access.redhat.com/ubi8/pause:latest                        2 minutes ago   Up 43 seconds ago          63fd4b75d85e-infra
+5e5a18b8917d  quay.io/metal3-io/ironic:master                                     43 seconds ago  Up 42 seconds ago          httpd
+~~~
 
 As shown you should see **httpd** and **poc-registry** running.
 
 Further we can test that our httpd cache is operational by using the `curl` command. If you get a 301 code that is normal since we have yet to actually place any images in the cache.
 
-```bash
-[lab-user@provision scripts]$ curl http://provision.$GUID.dynamic.opentlc.com/images
-
+~~~bash
+[root@ocp4-bastion ~]# curl http://ocp4-bastion.aio.example.com/images
 <!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">
 <html><head>
 <title>301 Moved Permanently</title>
 </head><body>
 <h1>Moved Permanently</h1>
-<p>The document has moved <a href="http://provision.schmaustech.dynamic.opentlc.com/images/">here</a>.</p>
+<p>The document has moved <a href="http://ocp4-bastion.aio.example.com/images/">here</a>.</p>
 </body></html>
-```
+~~~
 
 We are almost ready to do some downloading of images but we still have a few items to tend to. First we need to generate a bcrypt password from our username and password we set on the registry. We can do this by piping them into `base64`:
 
-```bash
-[lab-user@provision scripts]$ echo -n 'dummy:dummy' | base64 -w0 && echo
+~~~bash
+[root@ocp4-bastion ~]# echo -n 'dummy:dummy' | base64 -w0 && echo
 ZHVtbXk6ZHVtbXk=
-```
+~~~
 
 The bcrypt password needs to be embedded in a registry secret text file:
 
-```bash
-[lab-user@provision scripts]$ cat <<EOF > ~/reg-secret.txt
-"provision.$GUID.dynamic.opentlc.com:5000": {
+~~~bash
+[root@ocp4-bastion ~]# cat <<EOF > ~/reg-secret.txt
+"ocp4-bastion.aio.example.com:5000": {
     "email": "dummy@redhat.com",
     "auth": "$(echo -n 'dummy:dummy' | base64 -w0)"
 }
 EOF
-```
+~~~
 
-Now we can take our existing lab pull secret and our registry pull secret and merge them. Below we will backup the existing pull secret and then add our registry pull secret to the file. Further we will add our pull secret and registry cert, as a trust bundle, to the existing install-config.yaml.
+When we first deployed AIO environment we inputted our pull-secret.  However now that we are doing a disconnected installation we need to update that pull-secret that was embedded in our install-config.yaml file.  While we certainly could manually make the change the following steps make the addition of the local registry secret easier to manage.
 
-```bash
-[lab-user@provision scripts]$ export PULLSECRET=$HOME/pull-secret.json
-[lab-user@provision scripts]$ cp $PULLSECRET $PULLSECRET.orig
-[lab-user@provision scripts]$ cat $PULLSECRET | jq ".auths += {`cat ~/reg-secret.txt`}" > $PULLSECRET
-[lab-user@provision scripts]$ cat $PULLSECRET | tr -d '[:space:]' > tmp-secret
-[lab-user@provision scripts]$ mv -f tmp-secret $PULLSECRET
-[lab-user@provision scripts]$ rm -f ~/reg-secret.txt
-[lab-user@provision scripts]$ sed -i -e 's/^/  /' $(pwd)/domain.crt
-[lab-user@provision scripts]$ echo "additionalTrustBundle: |" >> $HOME/scripts/install-config.yaml
-[lab-user@provision scripts]$ cat $HOME/scripts/domain.crt >> $HOME/scripts/install-config.yaml
-[lab-user@provision scripts]$ sed -i "s/pullSecret:.*/pullSecret: \'$(cat $PULLSECRET)\'/g" \
-    $HOME/scripts/install-config.yaml
-```
+First we need to pull the current pull-secret out of the install-config.yaml and also remove it from the install-config.yaml:
+
+~~~bash
+[root@ocp4-bastion ~]# grep pullSecret ~/lab/install-config.yaml|awk -F'pullSecret: ' '{print $2}'| awk '{print substr($0, 2, length($0) - 2)}' > ~/pull-secret.json
+[root@ocp4-bastion ~]# sed -i '/pullSecret:/d' ~/lab/install-config.yaml
+~~~
+
+Next we will need to merge the reg-secret.txt file we created with our existing pull-secret.json file we extracted from the install-config.yaml:
+
+~~~bash
+[root@ocp4-bastion ~]# cat ~/pull-secret.json |jq ".auths += {`cat ~/reg-secret.txt`}"|tr -d '[:space:]' > ~/merged-pull-secret.json
+~~~
+
+Now we should have a merged-pull-secret.json file that contains the original pull-secret along with the new registry secret.   Confirm now that the file looks correct.
+
+If the file looks correct lets go ahead and add it back into our install-config.yaml file by appending it:
+
+~~~bash
+[root@ocp4-bastion ~]# awk '{print "pullSecret: '\''"$0}' ~/merged-pull-secret.json | awk '{print $0"'\''"}' >> ~/lab/install-config.yaml
+~~~
 
 Verify that the pull secret in `install-config.yaml` now includes the credentials for our local registry.
 
-```bash
-[lab-user@provision scripts]$ grep pullSecret install-config.yaml | sed 's/^pullSecret: //' | tr -d \' | jq .
+~~~bash
+[root@ocp4-bastion ~]# grep pullSecret ~/lab/install-config.yaml | sed 's/^pullSecret: //' | tr -d \' | jq .
 (...)
-    "provision.9mj2p.dynamic.opentlc.com:5000": {
+    },
+    "ocp4-bastion.aio.example.com:5000": {
       "email": "dummy@redhat.com",
       "auth": "ZHVtbXk6ZHVtbXk="
     }
   }
 }
-```
+~~~
 
-And check that our certificate is included.
+Because our registry has a self signed certificate we will also need to add the certificate to our trust bundles in our install-config.yaml as well:
 
-```bash
-[lab-user@provision scripts]$ cat install-config.yaml
+~~~bash
+[root@ocp4-bastion ~]# sed -i -e 's/^/  /' $(pwd)/domain.crt
+[root@ocp4-bastion ~]# echo "additionalTrustBundle: |" >> ~/lab/install-config.yaml
+[root@ocp4-bastion ~]# cat ~/domain.crt >> ~/lab//install-config.yaml
+~~~
+
+And check that our certificate is included:
+
+~~~bash
+[root@ocp4-bastion ~]# cat ~/lab/install-config.yaml
 apiVersion: v1
-baseDomain: dynamic.opentlc.com
+baseDomain: example.com
 (...)
 additionalTrustBundle: |
   -----BEGIN CERTIFICATE-----
-  MIIGDzCCA/egAwIBAgIUc3tgxZl2g92XdCUX15hWMAIGi10wDQYJKoZIhvcNAQEL
-  BQAwgZYxCzAJBgNVBAYTAlVTMRYwFAYDVQQIDA1Ob3J0aENhcm9saW5hMRAwDgYD
+  MIIGKDCCBBCgAwIBAgIUYvrQxDIHbkaPoNk7YRyqhdVthk0wDQYJKoZIhvcNAQEL
+  BQAwgYQxCzAJBgNVBAYTAlVTMRYwFAYDVQQIDA1Ob3J0aENhcm9saW5hMRAwDgYD
   VQQHDAdSYWxlaWdoMRAwDgYDVQQKDAdSZWQgSGF0MRIwEAYDVQQLDAlNYXJrZXRp
-  bmcxNzA1BgNVBAMMLnByb3Zpc2lvbi5zY2htYXVzdGVjaC5zdHVkZW50cy5vc3Au
-  b3BlbnRsYy5jb20wHhcNMjAxMDA1MTM0OTAzWhcNMjExMDA1MTM0OTAzWjCBljEL
-  MAkGA1UEBhMCVVMxFjAUBgNVBAgMDU5vcnRoQ2Fyb2xpbmExEDAOBgNVBAcMB1Jh
-  bGVpZ2gxEDAOBgNVBAoMB1JlZCBIYXQxEjAQBgNVBAsMCU1hcmtldGluZzE3MDUG
-  A1UEAwwucHJvdmlzaW9uLnNjaG1hdXN0ZWNoLnN0dWRlbnRzLm9zcC5vcGVudGxj
-  LmNvbTCCAiIwDQYJKoZIhvcNAQEBBQADggIPADCCAgoCggIBAMvffu+qXR0r3Yxg
-  Z1tUKYejJTmEXf7e4JDlKWyijeu8buDJD0T544gBtWDbEwpho7lsnRgC7w5Peasc
-  DpOQAqI980vQp8tAnS9ncJVroUAtNtf3WLLVpoEPbNTyRdZ2clEh17KcnJQ4Hsjd
-  mMiRNMLzmjBocAXeA2mGkjm2ZN/+fkaC2Zk1DtcPPuF7+apNRk9dizqYawupwgrF
-  zSjFitvf1IC49NtO5b01VWW3056HX+bx8KkGAAMNvqaRlz703HWEeplfsEkyVvTL
-  SOF2BJIbS1HxYZ92qnwIVjzgdx8eZPV954pDvQovEXJExShn9mDEZWuQDcwnwdyU
-  o+zgvzp1dFm9y6iC1u+8eG5wnmoJRkFyxkE3Uoysj2yMcSNGUK8z9O2rBulA8rPC
-  IO4oaizL102wUHj6+ESvbYm5Gjzj/trKuhEtCXYmtyndHe1PsKRmUEq8dZAJBrXY
-  axasroyODSIN6g6wSNSyS490wfu4QZnuEb1X9qXNsvNOgGRwrCEodyAiwCMvVNMw
-  eDA2XAukNktOUVmzrQiupn37lGVhpl47ssmPW5EKWI9SNehz09x16ZVlGRs2ojQU
-  XbutiswxseFm8Qn9teBKLqR2HuOAZb5xS9EDesocwoGRnenmqP+jYt8ifq4ajOEV
-  nJz8oGpIt9gLWaay0fnIzfG08KXHAgMBAAGjUzBRMB0GA1UdDgQWBBTJDjq5gFPw
-  5oqaDPOci3iikL61GTAfBgNVHSMEGDAWgBTJDjq5gFPw5oqaDPOci3iikL61GTAP
-  BgNVHRMBAf8EBTADAQH/MA0GCSqGSIb3DQEBCwUAA4ICAQDBHCZeAKgkcGAGZOfS
-  F3ohdYj50MeN/lVtESbvUlirMGEs2f932YkY1oF8ulFy2n3EZftTTpUo2/tDKik7
-  3rZs/cCD8KrPnHAdSJGny7ud27w85DM+dFTwxuIjdHAXdMhoOKvV+lSkziW9Ltmg
-  p7MbOei2nqpxTpX42DfqqC2ZRZ1KyyQ8EClqTlYh3iozwyp1VwpHBnQkFnZLfLjc
-  cHcbayrEgxN7TxUJYqHUP90A7guHA1OfWSSduNN1b8aFACegOtb9MFTRjbIrbNw4
-  R1t5D5TsMc8RfIETHE+9xb1HLdojnXQA8Hwp3myVL7PNr6tKu01hKvbhhhykACFz
-  KtVFLCdv3EF/dZJHahQSJksThFY6Jaeyj7rE6OJ1lJbB/RMGdV/3l7kyDbs7A/mf
-  XKt6I4WoymEDcC7dlcif4sQHMWCKwHMtT8pen04T48CGb/5GLGBVwkx6qEynOE3S
-  KukJj2o1QZJOSi5KdSfGeILAUHW1eOOWank9l1SIS5OIaNBGkSmem6J9heGy6ulv
-  5IU9ahv5IMoJS8wJgkgTMc5B2B/Mbv2dL+kthbemyyPCdN62QtlvhkLCiOU4niI3
-  JdXFoPLSZ5nEb+Y/XB+WVaaz+j8CtGlDcwbGr4BFlakHluVxfK2sDN5n0NOLcQlw
-  Z2sCrU3XLJDME6tPetuPiBX/tA==
+  bmcxJTAjBgNVBAMMHG9jcDQtYmFzdGlvbi5haW8uZXhhbXBsZS5jb20wHhcNMjEw
+  NzE5MTg1OTUyWhcNMjIwNzE5MTg1OTUyWjCBhDELMAkGA1UEBhMCVVMxFjAUBgNV
+  BAgMDU5vcnRoQ2Fyb2xpbmExEDAOBgNVBAcMB1JhbGVpZ2gxEDAOBgNVBAoMB1Jl
+  ZCBIYXQxEjAQBgNVBAsMCU1hcmtldGluZzElMCMGA1UEAwwcb2NwNC1iYXN0aW9u
+  LmFpby5leGFtcGxlLmNvbTCCAiIwDQYJKoZIhvcNAQEBBQADggIPADCCAgoCggIB
+  AMN4cy310E6ISXWsCWNW8nAmISRvVo/jVArbxYcPktshNml3KrawdX+WT5dFw1XB
+  ECrWF6gUxqJ3gosymm3uepoLPqJViiG1R7OS+Dvi2h4xhCdVhms0wWohIDcmJZsG
+  rYp6Y7UnLe5p12mrRpMpX/5Yf/oeEDTQieZAGDRkO3bT2YoVRffMXWB/jYQc15JC
+  j+19koj10JljC7/cllbZFpq5kKjJaobofJ5W2imFyvHCjpL9oOD3BVIdhByHjDTh
+  vk8C28DylwirlVXD8os1avukExeLtaA6eDx/b1kFvInQx0bWOHBLdzeZnSnV6FBy
+  /QrtX+p5N28hKbXep+31QPUY+PdDvLB22KbkslpFib9oZ+g5YTmLgPBVUfUd5nBt
+  WxjdBnVuPxexVRmevddfOKir+Wm3j6l+ImlnrZYhhRVByHUFktRDihZHMGYXqIp/
+  o1YQZq1CgEk0LnE+IfS3ppM3K8ZAwq04BqpeSAwChRB1sHnRLRHoarbAtNVXRAbT
+  wMRgmnhYrT4eKfyXD+3IgF0PWJHLCwj8C8O3z0KUiSr4DeSlAFYoG76++Z3lJ2Le
+  ZIYAVrV0Z1dHzjpttwpMeePMHNneRFYnXTP51cmrjsztnf2ECTd3jY3AUs0eT/yx
+  B1SIY+S09Hm7NmjZp3PeS5DGzkw1/cE7HBbSA3bg0XqTAgMBAAGjgY8wgYwwHQYD
+  VR0OBBYEFEuKf/KUyt+V0yI6RIPGfqfizE6fMB8GA1UdIwQYMBaAFEuKf/KUyt+V
+  0yI6RIPGfqfizE6fMA8GA1UdEwEB/wQFMAMBAf8wJwYDVR0RBCAwHoIcb2NwNC1i
+  YXN0aW9uLmFpby5leGFtcGxlLmNvbTAQBgNVHSAECTAHMAUGAyoDBDANBgkqhkiG
+  9w0BAQsFAAOCAgEADUmGD3Ep7u4YqHm/86siL39fkxMaK/FQRdRj300/+4BLpMrH
+  seYtNBbo9Pi7BOHALlWJu9r4uTOlk2Qj2YZfBFRikONPRqeuDZclayEavP/Hu4Th
+  skPKDTFzYIC9tVhs7/nJrmb1VYBDcLqkFdV4pzXPJgi2UJelqkAH21C7r0KhPsLh
+  89JtHsoHob194/cYMwjcuJPSqim3c/vFVSbFKDdSak4rQLoEsynbKdzn4pd8ggNs
+  mdMUmUdOuW+tLSAfb+T/2SKje71MsxbcEfB53+uAtVjcgX+qJsfC+yf8wJkhNdwz
+  Uysk035m4QMxDmlMVYANMjBrbGcPfi7xs+/8d8u+DE2K3pZqDj8FlzM2yWQYW2JZ
+  n1fDd2TdxJ8HOdel1P+e4Fo+iy7xVSDiO7nAjmDKFSc7g6tmhTCPTvlzBEICmiWj
+  91Lf4mhd1g7uf7P9/jYOD9lwO65kS6EP/VT6GKD0TSu8wR1hASyW2e9AsiPCJ1pL
+  FFiXHhY7zf/4ZT1GDOQFfwOXbLsy2xZ6y1wnEuYTlrdchJkqQgC1a178etUgpnV4
+  6kAEJ44+15MeBNPMuRyKjeQPL7UELyFY02tEAoFRNovFZSKmrmUTALnzPCMlKSiu
+  At2z3dZJhGLgieaS6e93iTQTsokH0p7GQv8c0h7GDXAK1a2ZgHOcoLnQF7U=
   -----END CERTIFICATE-----
-```
+~~~
 
 Finally at this point we can sync down the pod images from quay.io to our local registry. To do this we need to perform a few steps below:
 
