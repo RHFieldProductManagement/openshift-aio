@@ -1,6 +1,8 @@
 # **Deploy OpenShift Virtualization**
 
-This section of the lab will focus on installing and configuring OpenShift Virtualization to enable the OpenShift cluster to run virtual machines alongside containerised applications. The mechanism for installation is to utilise the operator model and deploy via the OpenShift Operator Hub (Marketplace) in the web-console, just like we did with the storage section. Note, it's entirely possible to deploy via the CLI should you wish to do so, but we're not documenting that mechanism here.
+This lab will focus on installing and configuring OpenShift Virtualization to enable the AIO OpenShift cluster to run virtual machines alongside containerised applications. The mechanism for installation is to utilise the operator model, just like we did with the storage lab. Note, it's entirely possible to deploy via the web UI should you wish to do so, but we're not documenting that mechanism here.
+
+The first
 
 
 You can also watch via the CLI:
