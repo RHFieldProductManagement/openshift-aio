@@ -4,13 +4,112 @@ This lab will focus on installing and configuring OpenShift Virtualization to en
 
 The first
 
+~~~bash
+[root@ocp4-bastion ~]# cat << EOF > ~/openshift-cnv-operator-install.yaml
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: openshift-cnv
+---
+apiVersion: operators.coreos.com/v1
+kind: OperatorGroup
+metadata:
+  name: kubevirt-hyperconverged-group
+  namespace: openshift-cnv
+spec:
+  targetNamespaces:
+    - openshift-cnv
+---
+apiVersion: operators.coreos.com/v1alpha1
+kind: Subscription
+metadata:
+  name: hco-operatorhub
+  namespace: openshift-cnv
+spec:
+  source: redhat-operators
+  sourceNamespace: openshift-marketplace
+  name: kubevirt-hyperconverged
+  startingCSV: kubevirt-hyperconverged-operator.v2.6.5
+  channel: "stable"
+EOF
+~~~
 
-You can also watch via the CLI:
+~~~bash
+[root@ocp4-bastion ~]# cat  ~/openshift-cnv-operator-install.yaml 
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: openshift-cnv
+---
+apiVersion: operators.coreos.com/v1
+kind: OperatorGroup
+metadata:
+  name: kubevirt-hyperconverged-group
+  namespace: openshift-cnv
+spec:
+  targetNamespaces:
+    - openshift-cnv
+---
+apiVersion: operators.coreos.com/v1alpha1
+kind: Subscription
+metadata:
+  name: hco-operatorhub
+  namespace: openshift-cnv
+spec:
+  source: redhat-operators
+  sourceNamespace: openshift-marketplace
+  name: kubevirt-hyperconverged
+  startingCSV: kubevirt-hyperconverged-operator.v2.6.5
+  channel: "stable"
+~~~
 
-```bash
+~~~bash
+[root@ocp4-bastion ~]# oc create -f ~/openshift-cnv-operator-install.yaml 
+namespace/openshift-cnv created
+operatorgroup.operators.coreos.com/kubevirt-hyperconverged-group created
+subscription.operators.coreos.com/hco-operatorhub created
+~~~
+
+~~~bash
+[root@ocp4-bastion ~]# oc get pods -n openshift-cnv
+NAME                                               READY   STATUS              RESTARTS   AGE
+cdi-operator-7565b8bc7d-8bbmx                      0/1     ContainerCreating   0          6s
+cluster-network-addons-operator-55464d8f45-tlcjw   0/1     ContainerCreating   0          8s
+hco-operator-7b8c96b8b7-q7pl2                      0/1     ContainerCreating   0          9s
+hco-webhook-5c9854d5cb-qtcqm                       0/1     ContainerCreating   0          8s
+hostpath-provisioner-operator-695bf6fbd6-kl6cs     0/1     ContainerCreating   0          6s
+node-maintenance-operator-5485f89b66-z9n4s         0/1     ContainerCreating   0          6s
+ssp-operator-58fcc47b69-njlrx                      0/1     ContainerCreating   0          7s
+vm-import-operator-87df7f45b-b9wm5                 0/1     ContainerCreating   0          6s
+~~~
+
+We can also watch via the CLI as the operators come up:
+
+~~~bash
 [lab-user@provision ~]$ watch -n2 'oc get pods -n openshift-cnv'
 (...)
-```
+~~~
+
+> **NOTE**: It may take a few minutes for the pods to start up properly. Press **Ctrl+C** to exit the watch command.
+
+~~~bash
+[root@ocp4-bastion ~]# oc get pods -n openshift-cnv
+NAME                                               READY   STATUS    RESTARTS   AGE
+cdi-operator-7565b8bc7d-8bbmx                      1/1     Running   0          110s
+cluster-network-addons-operator-55464d8f45-tlcjw   1/1     Running   0          112s
+hco-operator-7b8c96b8b7-q7pl2                      1/1     Running   0          113s
+hco-webhook-5c9854d5cb-qtcqm                       1/1     Running   0          112s
+hostpath-provisioner-operator-695bf6fbd6-kl6cs     1/1     Running   0          110s
+node-maintenance-operator-5485f89b66-z9n4s         1/1     Running   0          110s
+ssp-operator-58fcc47b69-njlrx                      1/1     Running   0          111s
+virt-operator-768746dd9c-mknb7                     0/1     Running   0          29s
+virt-operator-768746dd9c-pm4jt                     0/1     Running   0          29s
+vm-import-operator-87df7f45b-b9wm5                 1/1     Running   0          110s
+~~~
+
+~~~
+
+
 
 > **NOTE**: It may take a few minutes for the pods to start up properly. Press **Ctrl+C** to exit the watch command.
 
