@@ -330,50 +330,49 @@ additionalTrustBundle: |
 
 Finally at this point we can sync down the pod images from quay.io to our local registry. To do this we need to perform a few steps below:
 
-```bash
-[lab-user@provision scripts]$ export UPSTREAM_REPO="quay.io/openshift-release-dev/ocp-release:$VERSION-x86_64"
-[lab-user@provision scripts]$ export PULLSECRET=$HOME/pull-secret.json
-[lab-user@provision scripts]$ export LOCAL_REG="provision.$GUID.dynamic.opentlc.com:5000"
-[lab-user@provision scripts]$ export LOCAL_REPO='ocp4/openshift4'
-```
+~~~bash
+[root@ocp4-bastion ~]# export UPSTREAM_REPO="quay.io/openshift-release-dev/ocp-release:$VERSION-x86_64"
+[root@ocp4-bastion ~]# export PULLSECRET=~/merged-pull-secret.json
+[root@ocp4-bastion ~]# export LOCAL_REG="ocp4-bastion.aio.example.com:5000"
+[root@ocp4-bastion ~]# export LOCAL_REPO='ocp4/openshift4'
+~~~
 
 So what did we do above?
 
-We used the VERSION variable we set earlier to help us set the correct upstream registry and repository for the 4.5.12 release. Further we set variables for our pull secret, local registry, and local repository.
+We used the VERSION variable we set earlier to help us set the correct upstream registry and repository for the 4.7.19 release. Further we set variables for our pull secret, local registry, and local repository.
 
 Now we can actually execute the mirroring:
 
-```bash
-[lab-user@provision scripts]$ oc adm release mirror -a $PULLSECRET --from=$UPSTREAM_REPO \
+~~~bash
+[root@ocp4-bastion ~]# oc adm release mirror -a $PULLSECRET --from=$UPSTREAM_REPO \
     --to-release-image=$LOCAL_REG/$LOCAL_REPO:$VERSION --to=$LOCAL_REG/$LOCAL_REPO
-
-info: Mirroring 110 images to provision.schmaustech.dynamic.opentlc.com:5000/ocp4/openshift4 ...
-provision.schmaustech.dynamic.opentlc.com:5000/
+info: Mirroring 130 images to ocp4-bastion.aio.example.com:5000/ocp4/openshift4 ...
+ocp4-bastion.aio.example.com:5000/
   ocp4/openshift4
-    manifests:
-      sha256:00edb6c1dae03e1870e1819b4a8d29b655fb6fc40a396a0db2d7c8a20bd8ab8d -> 4.5.12-local-storage-static-provisioner
-      sha256:0259aa5845ce43114c63d59cedeb71c9aa5781c0a6154fe5af8e3cb7bfcfa304 -> 4.5.12-machine-api-operator
-      sha256:07f11763953a2293bac5d662b6bd49c883111ba324599c6b6b28e9f9f74112be -> 4.5.12-cluster-kube-storage-version-migrator-operator
+    blobs:
+      quay.io/openshift-release-dev/ocp-release sha256:7df5b82029357ab3601bec214038b683e20603bbbd2e99e447aba5e50e56d607 1.701KiB
+      quay.io/openshift-release-dev/ocp-release sha256:64607cc74f9cbe0e12f167547df0cf661de5a8b1fb4ebe930a43b9f621ca457f 1.748KiB
+      quay.io/openshift-release-dev/ocp-release sha256:ef0beb9b789e9643af1ec4f5e726994f1cbf0bf4be22139f8d620efe7b9b5b61 483.9KiB
 (...)
-sha256:15be0e6de6e0d7bec726611f1dcecd162325ee57b993e0d886e70c25a1faacc3 provision.schmaustech.dynamic.opentlc.com:5000/ocp4/openshift4:4.5.12-openshift-controller-manager
-sha256:bc6c8fd4358d3a46f8df4d81cd424e8778b344c368e6855ed45492815c581438 provision.schmaustech.dynamic.opentlc.com:5000/ocp4/openshift4:4.5.12-hyperkube
-sha256:bcd6cd1559b62e4a8031cf0e1676e25585845022d240ac3d927ea47a93469597 provision.schmaustech.dynamic.opentlc.com:5000/ocp4/openshift4:4.5.12-machine-config-operator
-sha256:b05f9e685b3f20f96fa952c7c31b2bfcf96643e141ae961ed355684d2d209310 provision.schmaustech.dynamic.opentlc.com:5000/ocp4/openshift4:4.5.12-baremetal-installer
-info: Mirroring completed in 1.48s (0B/s)
+sha256:abd42e1de0b4febf4757d29921166ec777734db52f43ea59401b508d9a4c5962 ocp4-bastion.aio.example.com:5000/ocp4/openshift4:4.7.19-x86_64-openstack-cinder-csi-driver
+sha256:d41a0ca485c9bcb4ddd180d4020ff271d37b5fca4177f1ef4d8262496000ab12 ocp4-bastion.aio.example.com:5000/ocp4/openshift4:4.7.19-x86_64-machine-api-operator
+sha256:c016f3c5bb263f026492c1093517769beee4f9f80d8f2cdb32ef149a092fe356 ocp4-bastion.aio.example.com:5000/ocp4/openshift4:4.7.19-x86_64-jenkins
+info: Mirroring completed in 4m43.42s (26.74MB/s)
 
 Success
-Update image:  provision.schmaustech.dynamic.opentlc.com:5000/ocp4/openshift4:4.5.12
-Mirror prefix: provision.schmaustech.dynamic.opentlc.com:5000/ocp4/openshift4
+Update image:  ocp4-bastion.aio.example.com:5000/ocp4/openshift4:4.7.19
+Mirror prefix: ocp4-bastion.aio.example.com:5000/ocp4/openshift4
+Mirror prefix: ocp4-bastion.aio.example.com:5000/ocp4/openshift4:4.7.19
 
 To use the new mirrored repository to install, add the following section to the install-config.yaml:
 
 imageContentSources:
 - mirrors:
-  - provision.schmaustech.dynamic.opentlc.com:5000/ocp4/openshift4
-  source: quay.io/openshift-release-dev/ocp-v4.0-art-dev
+  - ocp4-bastion.aio.example.com:5000/ocp4/openshift4
+  source: quay.io/openshift-release-dev/ocp-release
 - mirrors:
-  - provision.schmaustech.dynamic.opentlc.com:5000/ocp4/openshift4
-  source: registry.svc.ci.openshift.org/ocp/release
+  - ocp4-bastion.aio.example.com:5000/ocp4/openshift4
+  source: quay.io/openshift-release-dev/ocp-v4.0-art-dev
 
 
 To use the new mirrored repository for upgrades, use the following to create an ImageContentSourcePolicy:
@@ -385,29 +384,41 @@ metadata:
 spec:
   repositoryDigestMirrors:
   - mirrors:
-    - provision.schmaustech.dynamic.opentlc.com:5000/ocp4/openshift4
-    source: quay.io/openshift-release-dev/ocp-v4.0-art-dev
+    - ocp4-bastion.aio.example.com:5000/ocp4/openshift4
+    source: quay.io/openshift-release-dev/ocp-release
   - mirrors:
-    - provision.schmaustech.dynamic.opentlc.com:5000/ocp4/openshift4
-    source: registry.svc.ci.openshift.org/ocp/release
-```
+    - ocp4-bastion.aio.example.com:5000/ocp4/openshift4
+    source: quay.io/openshift-release-dev/ocp-v4.0-art-dev
+~~~
 
-The above command takes a few minutes but once complete should have mirrored all the required images from the remote registry to our local registry. One key piece of output above is **imageContentSources**. That section is needed for the install-config.yaml file that is used for our OpenShift deployment and if you look at **~/scripts/install-config.yaml** you will notice those lines have already been added to the config for you.
+The above command takes a few minutes but once complete should have mirrored all the required images from the remote registry to our local registry. One key piece of output above is **imageContentSources**. That section is needed for the install-config.yaml file that is used for our OpenShift deployment.  Lets go ahead and add that information to the install-config.yaml:
+
+~~~bash
+[root@ocp4-bastion ~]# cat <<EOF >> ~/lab/install-config.yaml
+imageContentSources:
+- mirrors:
+  - ocp4-bastion.aio.example.com:5000/ocp4/openshift4
+  source: quay.io/openshift-release-dev/ocp-release
+- mirrors:
+  - ocp4-bastion.aio.example.com:5000/ocp4/openshift4
+  source: quay.io/openshift-release-dev/ocp-v4.0-art-dev
+EOF
+~~~
 
 Now that we have the images synced down we can move on to syncing the RHCOS images needed. There are two required: an RHCOS qemu image and RHCOS openstack image. The RHCOS qemu image is the image used for the bootstrap virtual machines that is created on the provisioning host during the initial phases of the deployment process. The openstack image is used to image the master and worker nodes during the deployment process.
 
 First, extract the commit ID from the installer output.
 
-```bash
-[lab-user@provision scripts]$ INSTALL_COMMIT=$(./openshift-baremetal-install version | grep commit | cut -d' ' -f4)
-```
+~~~bash
+[root@ocp4-bastion ~]# INSTALL_COMMIT=$( ~/openshift-baremetal-install version | grep commit | cut -d' ' -f4)
+~~~
 
 Save the machine image information (JSON) associated with this commit into an environment variable.
 
-```bash
-[lab-user@provision scripts]$ IMAGE_JSON=$(curl -s \
-	https://raw.githubusercontent.com/openshift/installer/${INSTALL_COMMIT}/data/data/rhcos.json)
-```
+~~~bash
+[root@ocp4-bastion ~]# IMAGE_JSON=$(curl -s \
+ https://raw.githubusercontent.com/openshift/installer/${INSTALL_COMMIT}/data/data/rhcos.json)
+~~~
 
 We're interested in several items in this JSON:
 
@@ -417,111 +428,109 @@ We're interested in several items in this JSON:
 
 Examine this information.
 
-```bash
-[lab-user@provision scripts]$ echo $IMAGE_JSON | jq .baseURI
-"https://releases-art-rhcos.svc.ci.openshift.org/art/storage/releases/rhcos-4.5/45.82.202008010929-0/x86_64/"
+~~~bash
+[root@ocp4-bastion ~]# echo $IMAGE_JSON | jq .baseURI
+"https://releases-art-rhcos.svc.ci.openshift.org/art/storage/releases/rhcos-4.7/47.83.202105220305-0/x86_64
 
-[lab-user@provision scripts]$ echo $IMAGE_JSON | jq .images.qemu
+[root@ocp4-bastion ~]# echo $IMAGE_JSON | jq .images.qemu
 {
-  "path": "rhcos-45.82.202008010929-0-qemu.x86_64.qcow2.gz",
-  "sha256": "80ab9b70566c50a7e0b5e62626e5ba391a5f87ac23ea17e5d7376dcc1e2d39ce",
-  "size": 898670890,
-  "uncompressed-sha256": "c9e2698d0f3bcc48b7c66d7db901266abf27ebd7474b6719992de2d8db96995a",
-  "uncompressed-size": 2449014784
+  "path": "rhcos-47.83.202105220305-0-qemu.x86_64.qcow2.gz",
+  "sha256": "4be67c5c1a3ac7ca67154244325f2bbf4d2ca872716e650c79e52eff4c512140",
+  "size": 941849543,
+  "uncompressed-sha256": "d3e6f4e1182789480dcb81fc8cdf37416ec9afa34b4be1056426b21b62272248",
+  "uncompressed-size": 2399993856
 }
-
-[lab-user@provision scripts]$ echo $IMAGE_JSON | jq .images.openstack
+[root@ocp4-bastion ~]# echo $IMAGE_JSON | jq .images.openstack
 {
-  "path": "rhcos-45.82.202008010929-0-openstack.x86_64.qcow2.gz",
-  "sha256": "359e7c3560fdd91e64cd0d8df6a172722b10e777aef38673af6246f14838ab1a",
-  "size": 896764070,
-  "uncompressed-sha256": "036a497599863d9470d2ca558cca3c4685dac06243709afde40ad008dce5a8ac",
-  "uncompressed-size": 2400518144
+  "path": "rhcos-47.83.202105220305-0-openstack.x86_64.qcow2.gz",
+  "sha256": "156e695b0a834cc9efe1ef95609cec078c65f8030be8c68b8fe946f82a65dd3a",
+  "size": 940770428,
+  "uncompressed-sha256": "94058cc4cff50e63ebeba8e044215c1591d0a4daea2ffdb778836d013290868e",
+  "uncompressed-size": 2366046208
 }
-```
+~~~
 
 Store the useful bits in variables.
 
-```bash
-[lab-user@provision scripts]$ URL_BASE=$(echo $IMAGE_JSON | jq -r .baseURI)
-[lab-user@provision scripts]$ QEMU_IMAGE_NAME=$(echo $IMAGE_JSON | jq -r .images.qemu.path)
-[lab-user@provision scripts]$ QEMU_IMAGE_SHA256=$(echo $IMAGE_JSON | jq -r .images.qemu.sha256)
-[lab-user@provision scripts]$ QEMU_IMAGE_UNCOMPRESSED_SHA256=$(echo $IMAGE_JSON | jq -r '.images.qemu."uncompressed-sha256"')
-[lab-user@provision scripts]$ OPENSTACK_IMAGE_NAME=$(echo $IMAGE_JSON | jq -r .images.openstack.path)
-[lab-user@provision scripts]$ OPENSTACK_IMAGE_SHA256=$(echo $IMAGE_JSON | jq -r .images.openstack.sha256)
-```
+~~~bash
+[root@ocp4-bastion ~]# URL_BASE=$(echo $IMAGE_JSON | jq -r .baseURI)
+[root@ocp4-bastion ~]# QEMU_IMAGE_NAME=$(echo $IMAGE_JSON | jq -r .images.qemu.path)
+[root@ocp4-bastion ~]# QEMU_IMAGE_SHA256=$(echo $IMAGE_JSON | jq -r .images.qemu.sha256)
+[root@ocp4-bastion ~]# QEMU_IMAGE_UNCOMPRESSED_SHA256=$(echo $IMAGE_JSON | jq -r '.images.qemu."uncompressed-sha256"')
+[root@ocp4-bastion ~]# OPENSTACK_IMAGE_NAME=$(echo $IMAGE_JSON | jq -r .images.openstack.path)
+[root@ocp4-bastion ~]# OPENSTACK_IMAGE_SHA256=$(echo $IMAGE_JSON | jq -r .images.openstack.sha256)
+~~~
 
 Download the images into the local cache.
 
-```bash
-[lab-user@provision scripts]$ curl -L -o ${IRONIC_DATA_DIR}/html/images/${QEMU_IMAGE_NAME} \
-	${URL_BASE}/${QEMU_IMAGE_NAME}
- % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
-                                 Dload  Upload   Total   Spent    Left  Speed
-100   161  100   161    0     0    463      0 --:--:-- --:--:-- --:--:--   463
-100  857M  100  857M    0     0  28.2M      0  0:00:30  0:00:30 --:--:-- 48.7M
-
-[lab-user@provision scripts]$ curl -L -o ${IRONIC_DATA_DIR}/html/images/${OPENSTACK_IMAGE_NAME} \
-	${URL_BASE}/${OPENSTACK_IMAGE_NAME}
+~~~bash
+[root@ocp4-bastion ~]# curl -L -o ${IRONIC_DATA_DIR}/html/images/${QEMU_IMAGE_NAME} \
+ ${URL_BASE}/${QEMU_IMAGE_NAME}
   % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
-100   161  100   161    0     0    958      0 --:--:-- --:--:-- --:--:--   958
-100  855M  100  855M    0     0  47.0M      0  0:00:18  0:00:18 --:--:-- 49.3M
-```
+                                 Dload  Upload   Total   Spent    Left  Speed
+100   145  100   145    0     0    464      0 --:--:-- --:--:-- --:--:--   463
+100  898M  100  898M    0     0  37.6M      0  0:00:23  0:00:23 --:--:-- 45.6M
+
+[root@ocp4-bastion ~]# curl -L -o ${IRONIC_DATA_DIR}/html/images/${OPENSTACK_IMAGE_NAME} \
+ ${URL_BASE}/${OPENSTACK_IMAGE_NAME}
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100   145  100   145    0     0   2589      0 --:--:-- --:--:-- --:--:--  2589
+100  897M  100  897M    0     0  45.9M      0  0:00:19  0:00:19 --:--:-- 53.4M
+~~~
 
 Check the images against the checksums from the JSON.
 
-```bash
-[lab-user@provision scripts]$ echo "$QEMU_IMAGE_SHA256 ${IRONIC_DATA_DIR}/html/images/${QEMU_IMAGE_NAME}" \
-	| sha256sum -c
-/nfs/ocp/ironic/html/images/rhcos-45.82.202008010929-0-qemu.x86_64.qcow2.gz: OK
+~~~bash
+[root@ocp4-bastion ~]# echo "$QEMU_IMAGE_SHA256 ${IRONIC_DATA_DIR}/html/images/${QEMU_IMAGE_NAME}" \
+ | sha256sum -c
+/nfs/ocp/ironic/html/images/rhcos-47.83.202105220305-0-qemu.x86_64.qcow2.gz: OK
 
-[lab-user@provision scripts]$ echo "$OPENSTACK_IMAGE_SHA256 ${IRONIC_DATA_DIR}/html/images/${OPENSTACK_IMAGE_NAME}" \
-	| sha256sum -c
-/nfs/ocp/ironic/html/images/rhcos-45.82.202008010929-0-openstack.x86_64.qcow2.gz: OK
-```
+[root@ocp4-bastion ~]# echo "$OPENSTACK_IMAGE_SHA256 ${IRONIC_DATA_DIR}/html/images/${OPENSTACK_IMAGE_NAME}" \
+ | sha256sum -c
+/nfs/ocp/ironic/html/images/rhcos-47.83.202105220305-0-openstack.x86_64.qcow2.gz: OK
+~~~
 
 `install-config.yaml` has already been partly customized to refer to the local RHCOS image cache.
 
-```bash
-[lab-user@provision scripts]$ grep http://10.20.0.2 install-config.yaml
-    bootstrapOSImage: http://10.20.0.2/images/RHCOS_QEMU_IMAGE
-    clusterOSImage: http://10.20.0.2/images/RHCOS_OPENSTACK_IMAGE
-```
+~~~bash
+[root@ocp4-bastion ~]# grep Image: ~/lab/install-config.yaml
+    bootstrapOSImage: RHCOS_QEMU_IMAGE
+    clusterOSImage: RHCOS_OPENSTACK_IMAGE
+~~~
 
 We need to replace `RHCOS_QEMU_IMAGE` and `RHCOS_OPENSTACK_IMAGE` with the actual file names **and** checksums.  In the case of the QEMU image used by the bootstrap VM, the checksum must be that of the uncompressed image.
 
-```bash
-[lab-user@provision scripts]$ RHCOS_QEMU_IMAGE=${QEMU_IMAGE_NAME}?sha256=${QEMU_IMAGE_UNCOMPRESSED_SHA256}
+~~~bash
+[root@ocp4-bastion ~]# RHCOS_QEMU_IMAGE=http://ocp4-bastion.aio.example.com/images/${QEMU_IMAGE_NAME}?sha256=${QEMU_IMAGE_UNCOMPRESSED_SHA256}
 
-[lab-user@provision scripts]$ RHCOS_OPENSTACK_IMAGE=${OPENSTACK_IMAGE_NAME}?sha256=${OPENSTACK_IMAGE_SHA256}
+[root@ocp4-bastion ~]# RHCOS_OPENSTACK_IMAGE=http://ocp4-bastion.aio.example.com/images/${OPENSTACK_IMAGE_NAME}?sha256=${OPENSTACK_IMAGE_SHA256}
 
-[lab-user@provision scripts]$ sed -i "s/RHCOS_QEMU_IMAGE/$RHCOS_QEMU_IMAGE/g" \
-	$HOME/scripts/install-config.yaml
+[root@ocp4-bastion ~]# sed -i "s*RHCOS_QEMU_IMAGE*$RHCOS_QEMU_IMAGE*g" ~/lab/install-config.yaml
 
-[lab-user@provision scripts]$ sed -i "s/RHCOS_OPENSTACK_IMAGE/$RHCOS_OPENSTACK_IMAGE/g" \
-	$HOME/scripts/install-config.yaml
-```
+[root@ocp4-bastion ~]# sed -i "s*RHCOS_OPENSTACK_IMAGE*$RHCOS_OPENSTACK_IMAGE*g" ~/lab/install-config.yaml
+~~~
 
-Check the results.
+Check the results:
 
-```bash
-[lab-user@provision scripts]$ grep http://10.20.0.2 install-config.yaml
-    bootstrapOSImage: http://10.20.0.2/images/rhcos-45.82.202008010929-0-qemu.x86_64.qcow2.gz?sha256=c9e2698d0f3bcc48b7c66d7db901266abf27ebd7474b6719992de2d8db96995a
-    clusterOSImage: http://10.20.0.2/images/rhcos-45.82.202008010929-0-openstack.x86_64.qcow2.gz?sha256=359e7c3560fdd91e64cd0d8df6a172722b10e777aef38673af6246f14838ab1a
-```
+~~~bash
+[root@ocp4-bastion ~]# grep Image: ~/lab/install-config.yaml
+    bootstrapOSImage: http://ocp4-bastion.aio.example.com/images/rhcos-47.83.202105220305-0-qemu.x86_64.qcow2.gz?sha256=d3e6f4e1182789480dcb81fc8cdf37416ec9afa34b4be1056426b21b62272248
+    clusterOSImage: http://ocp4-bastion.aio.example.com/images/rhcos-47.83.202105220305-0-openstack.x86_64.qcow2.gz?sha256=156e695b0a834cc9efe1ef95609cec078c65f8030be8c68b8fe946f82a65dd3a
+~~~
 
 Finally, ensure that we are able to retrieve the images from those URLs.
 
-```bash
-[lab-user@provision scripts]$ curl -o /dev/null http://10.20.0.2/images/${RHCOS_QEMU_IMAGE}
+~~~bash
+[root@ocp4-bastion ~]# curl -o /dev/null http://ocp4-bastion.aio.example.com/images/${RHCOS_QEMU_IMAGE}
   % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
                                  Dload  Upload   Total   Spent    Left  Speed
-100  857M  100  857M    0     0  2279M      0 --:--:-- --:--:-- --:--:-- 2279M
-[lab-user@provision scripts]$ curl -o /dev/null http://10.20.0.2/images/${RHCOS_OPENSTACK_IMAGE}
+100   196  100   196    0     0  39200      0 --:--:-- --:--:-- --:--:-- 39200
+[root@ocp4-bastion ~]# curl -o /dev/null http://ocp4-bastion.aio.example.com/images/${RHCOS_OPENSTACK_IMAGE}
   % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
                                  Dload  Upload   Total   Spent    Left  Speed
-100  855M  100  855M    0     0  2221M      0 --:--:-- --:--:-- --:--:-- 2221M
-```
+100   196  100   196    0     0  49000      0 --:--:-- --:--:-- --:--:-- 65333
+~~~
 
 As you can see it is rather easy to build a local registry and httpd cache for the pod images and RHCOS images. In the next lab we will leverage this content with a deployment of OpenShift!
 
