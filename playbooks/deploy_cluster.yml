@@ -209,6 +209,29 @@
         - "/root/ocp-install/worker.ign"
       when: deploy_type == "upi"
 
+    - name: Pull required images for OpenShift logging
+      containers.podman.podman_image:
+        name: "quay.io/roxenham/frontail"
+
+    - name: Run frontail for OpenShift installation log
+      containers.podman.podman_container:
+        name: frontail
+        state: present
+        image: quay.io/roxenham/frontail
+        volume: "/root/ocp-install:/log/"
+        net: host
+        privileged: true
+        command: "/log/.openshift_install.log -n 6000"
+
+    - name: Print OpenShift Installation log location
+      vars:
+        msg: |
+          You can watch the OpenShift installation logs by opening the following URL:
+
+          http://{{ groups['target'][0] }}:9001
+      debug:
+        msg: "{{ msg.split('\n') }}"
+
     - name: Run OpenShift Installation for IPI
       ansible.builtin.command: >
         /root/openshift-baremetal-install

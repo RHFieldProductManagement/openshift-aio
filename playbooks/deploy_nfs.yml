@@ -4,7 +4,6 @@
 - name: Reload inventory for bastion host
   hosts: localhost
   tasks:
-
     - meta: refresh_inventory
 
 - name: Deploy NFS Storage when OCS is disabled

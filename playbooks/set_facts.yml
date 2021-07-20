@@ -1,17 +1,10 @@
 
 - name: Set fact for OCP deployment if requesting dependents
   set_fact:
-    deploy_ocp: true
+    override_deploy_ocp: true
   when: deploy_ocs or deploy_cnv or deploy_acm
-
-- name: Set facts for variants if requesting OCP Plus
-  set_fact:
-    deploy_ocp: true
-    deploy_acm: true
-    deploy_acs: true
-  when: deploy_ocp_plus
 
 - name: Enable NFS storage when OCS is disabled
   set_fact:
-    deploy_nfs: true
+    override_deploy_nfs: true
   when: not deploy_ocs

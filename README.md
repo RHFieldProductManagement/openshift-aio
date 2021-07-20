@@ -65,7 +65,7 @@ The list of available options (exposed as Ansible variables) is described below-
 | Name of Option / Variable | Purpose                                                      |
 | ------------------------- | ------------------------------------------------------------ |
 | `baremetal_provider`      | Select the baremetal provider that you want to use, i.e. which platform is providing your infrastructure. <br /><br />Choices are between "**prebuilt**" and "**packet**", where "prebuilt" will take a machine that you've already deployed with an EL8 compatible distribution and pre-configured SSH-keys, or "packet" where it will dynamically provision a new baremetal system on Packet, at your own cost.<br /><br />**Default**: There is <u>no default</u>. You must specify an option here manually. |
-| `prebuilt_ip`             | Enter the IP address of the target baremetal system if you're using "prebuilt" with `baremetal_provider`. Do not enter a hostname for this. This has not been tested with IPv6 but it should work just fine.<br /><br />**Default**: There is <u>no default</u>. You must specify an option here manually. |
+| `prebuilt_ip`             | Enter the IP address (or hostname) of the target baremetal system if you're using "prebuilt" with `baremetal_provider`. This has not been tested with IPv6 but it should work just fine.<br /><br />**Default**: There is <u>no default</u>. You must specify an option here manually. |
 | `packet_api_token`        | If you're using "packet" for `baremetal_provider`, enter your API token so that the dynamic provisioner can deploy a baremetal instance with your credentials. Your API token can be found here: https://metal.equinix.com/developers/api/<br /><br />**Default**: There is <u>no default</u>. You must specify an option here manually. |
 | `packet_project_name`     | If you're using "*packet*" for `baremetal_provider`, enter the name of the project you would like to use; if it doesn't exist it will be created. <br /><br />**Default**: There is <u>no default</u>. You must specify an option here manually. |
 | `packet_delete_project`   | Select whether you want the destroy process to clean up and remove the Packet project. Warning, if this is set to true, existing instances that aren't part of this deployment may be removed when the project is deleted; use with caution.<br /><br />**Default**: false |
@@ -92,10 +92,14 @@ The list of available options (exposed as Ansible variables) is described below-
 
 
 
-If you wish to deploy the Guacamole UI, you'll need to make sure you've either got Ansible 2.10+, or you've installed the Podman module:
+If you wish to deploy the Guacamole UI, you'll need to make sure you've either got Ansible 2.10+, or you've installed the Podman module. Either install via `ansible-galaxy` or install the RPM:
 
 ~~~bash
 $ ansible-galaxy collection install containers.podman
+
+-or-
+
+$ sudo dnf install -y ansible-collection-containers-podman.noarch
 ~~~
 
 When you're ready to deploy a cluster, call `main.yml` making sure you specify your variables and the dynamic inventory (don't worry that it doesn't exist yet):

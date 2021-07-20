@@ -1,7 +1,7 @@
 # Set baremetal provider to use, options are currently: packet, prebuilt
 baremetal_provider: prebuilt
 
-# Set the prebuilt IP address (please setup ssh-keys first)
+# Set the prebuilt IP address or hostname (please setup ssh-keys first)
 # Do not run this against 127.0.0.1 - execute against remote system
 prebuilt_ip: 10.0.0.1
 

@@ -13,7 +13,7 @@
   hosts: target
   tasks:
 
-    - name: Install required base packages
+    - name: Install podman for Guac containers
       dnf:
         name:
           - podman
@@ -206,7 +206,7 @@
   hosts: bastion
   tasks:
 
-    - name: Install required base packages
+    - name: Install GUI packages for Guac VNC session
       dnf:
         name:
           - "@Server with GUI"

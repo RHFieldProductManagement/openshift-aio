@@ -268,6 +268,19 @@
         - firewalld_avail.rc !=	4
         - deploy_type == "ipi"
 
+    - name: Enable port 9001 forwarding to bastion:9001 with firewalld
+      firewalld:
+        port_forward:
+          port: "9001"
+          proto: tcp
+          toaddr: 192.168.123.100
+          toport: "9001"
+        zone: public
+        permanent: yes
+        state: enabled
+      when:
+        - firewalld_avail.rc != 4
+
     - name: Enable iptables ports for IPI deployments
       ansible.builtin.iptables:
         chain: LIBVIRT_INP
@@ -277,6 +290,27 @@
       when:
         - firewalld_avail.rc == 4
         - deploy_type == "ipi"
+
+    - name: Enable port 9001 on host with iptables
+      ansible.builtin.iptables:
+        chain: FORWARD
+        protocol: tcp
+        action: insert
+        destination_port: "9001"
+        jump: ACCEPT
+      when: firewalld_avail.rc == 4
+
+    - name: Forward port 9001 to bastion:9001 with iptables
+      ansible.builtin.iptables:
+        action: insert
+        table: nat
+        chain: PREROUTING
+        protocol: tcp
+        match: tcp
+        destination_port: "9001"
+        jump: DNAT
+        to_destination: 192.168.123.100:9001
+      when: firewalld_avail.rc == 4
 
     - name: Add VBMC entries for IPI deployments
       ansible.builtin.command: "{{ item }}"
