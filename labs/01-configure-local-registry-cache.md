@@ -542,4 +542,4 @@ Finally, ensure that we are able to retrieve the images from those URLs.
 
 As you can see it is rather easy to build a local registry and httpd cache for the pod images and RHCOS images. In the next lab we will leverage this content with a deployment of OpenShift!
 
-[Move on to Creating an OpenShift Cluster](https://github.com/RHFieldProductManagement/baremetal-ipi-lab/blob/master/02-deploying-cluster.md)!
+[Move on to Creating an OpenShift Cluster](https://github.com/RHFieldProductManagement/baremetal-ipi-lab/blob/master/02-deploy-cluster.md)!
