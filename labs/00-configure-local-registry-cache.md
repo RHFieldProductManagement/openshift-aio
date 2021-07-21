@@ -41,16 +41,17 @@ Now that we have examined the oc and openshift-baremetal-install binaries we are
 The first step is to validate that podman, httpd and httpd-tools are installed.  They should be but its always wise to confirm:
 
 ~~~bash
-[root@ocp4-bastion ~]# rpm -qa podman httpd httpd-tools
+[root@ocp4-bastion ~]# rpm -qa podman httpd httpd-tools podman-docker
 httpd-tools-2.4.37-39.module_el8.4.0+778+c970deab.x86_64
 httpd-2.4.37-39.module_el8.4.0+778+c970deab.x86_64
 podman-3.0.1-7.module_el8.4.0+830+8027e1c4.x86_64
+podman-docker-3.0.1-7.module_el8.4.0+830+8027e1c4.noarch
 ~~~
 
 If by chance those packages are not installed use the following to install them:
 
 ~~~bash
-[root@ocp4-bastion ~]# sudo dnf -y install podman httpd httpd-tools
+[root@ocp4-bastion ~]# sudo dnf -y install podman httpd httpd-tools podman-docker
 Last metadata expiration check: 1 day, 0:42:29 ago on Wed 14 Jul 2021 06:25:33 PM UTC.
 Package podman-3.0.1-7.module_el8.4.0+830+8027e1c4.x86_64 is already installed.
 Package httpd-2.4.37-39.module_el8.4.0+778+c970deab.x86_64 is already installed.
