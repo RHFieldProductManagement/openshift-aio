@@ -1,5 +1,7 @@
 # **Running Workloads in the Environment**
 
+REWORK STILL REQUIRED
+
 Let's get into actually testing some workloads on our environment... we've spent all of this time building it up but we haven't even proven that it's working properly yet! In this section we're going to be deploying some pods as well as deploying a VM using OpenShift Virtualization.
 
 ## Deploying a Virtual Machine
