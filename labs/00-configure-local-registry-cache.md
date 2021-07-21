@@ -97,7 +97,7 @@ writing new private key to '/nfs/registry/certs/domain.key'
 Once the certificate has been created copy it into your home directory and also into the trust anchors on the provisioning node. We will also need to run the update-ca-trust command:
 
 ~~~bash
-[root@ocp4-bastion ~]# cp /nfs/registry/certs/domain.crt /root/domain.crt
+[root@ocp4-bastion ~]# cp /nfs/registry/certs/domain.crt ~/domain.crt
 [root@ocp4-bastion ~]# cp /nfs/registry/certs/domain.crt /etc/pki/ca-trust/source/anchors/
 [root@ocp4-bastion ~]# update-ca-trust extract
 ~~~
@@ -286,7 +286,7 @@ Verify that the pull secret in `install-config.yaml` now includes the credential
 Because our registry has a self signed certificate we will also need to add the certificate to our trust bundles in our install-config.yaml as well:
 
 ~~~bash
-[root@ocp4-bastion ~]# sed -i -e 's/^/  /' $(pwd)/domain.crt
+[root@ocp4-bastion ~]# sed -i -e 's/^/  /' ~/domain.crt
 [root@ocp4-bastion ~]# echo "additionalTrustBundle: |" >> ~/lab/install-config.yaml
 [root@ocp4-bastion ~]# cat ~/domain.crt >> ~/lab//install-config.yaml
 ~~~
