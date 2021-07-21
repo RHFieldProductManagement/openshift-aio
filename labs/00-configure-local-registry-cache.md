@@ -110,7 +110,7 @@ Adding password for user dummy
 
 Now that we have a directory structure, certificate, and a user configured for authentication we can go ahead and create the registry pod. The command below will pull down the pod and mount the appropriate directory mount points we created earlier.
 
-However we will first need to login:
+However we will first need to login to [docker.io](https://www.docker.com/increase-rate-limits):
 
 ~~~bash
 [root@ocp4-bastion ~]# docker login docker.io
