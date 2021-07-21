@@ -20,6 +20,13 @@ The output above shows us we have the 4.5.12 client for oc. This will determine 
 4.7.19
 ~~~
 
+Before we move further along lets make sure we have the correct version of the Openshift baremetal installer in our home directory.  To do that we will need to set the version variable and extract it from the remote registry:
+
+~~~bash
+[root@ocp4-bastion ~]# export VERSION=4.7.19
+[root@ocp4-bastion ~]# oc adm release extract --registry-config /root/pull-secret.json --command=openshift-baremetal-install --to /root $VERSION
+~~~
+
 Now lets examine the version of the openshift-baremetal-install binary version. The **commit number** is important as that will be used to determine what version of the RHCOS image is pulled down later on in the lab.
 
 ~~~bash
