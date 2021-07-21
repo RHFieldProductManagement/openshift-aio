@@ -1,0 +1,22 @@
+---
+# vim: set ft=ansible:
+
+- name: Reload inventory for bastion host
+  hosts: localhost
+  tasks:
+
+    - meta: refresh_inventory
+
+- name: Deploy OpenShift Image Registry
+  gather_facts: false
+  hosts: bastion
+  tasks:
+
+    - name: Enable Image Registry on Cluster
+      ansible.builtin.shell: >
+        oc patch configs.imageregistry.operator.openshift.io cluster --type merge --patch '{"spec":{"managementState":"Managed"}}'
+
+    - name: Enable PVC based storage for Image Registry
+      ansible.builtin.shell: >
+        oc patch configs.imageregistry.operator.openshift.io cluster --type merge --patch '{"spec":{"storage":{"pvc":{}}}}'
+

@@ -47,5 +47,9 @@
 - import_playbook: deploy_acs.yml
   when: deploy_acs or deploy_ocp_plus
 
-# Step 11: Print Output to User
+# Step 11: Deploy Internal OpenShift Image Registry
+- import_playbook: deploy_imgreg.yml
+  when: deploy_ocp or hostvars['localhost']['override_deploy_ocp']
+
+# Step 12: Print Output to User
 - import_playbook: finish.yml

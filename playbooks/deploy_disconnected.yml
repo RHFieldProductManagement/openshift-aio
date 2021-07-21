@@ -1,0 +1,122 @@
+---
+# vim: set ft=ansible:
+
+- name: Deploy Bastion machine
+  gather_facts: false
+  hosts: bastion
+  tasks:
+
+    - name: Ensure Bastion machine is available
+      wait_for_connection:
+        timeout: 120
+      register: result
+      until: result is succeeded
+      retries: 3
+      delay: 30
+
+    - name: Install podman for Disconnected Registry
+      dnf:
+        name:
+          - podman
+        state: latest
+      become: True
+
+    - name: Enable Disconnected Registry port in firewall
+      firewalld:
+        permanent: yes
+        state: enabled
+        port: "5000/tcp"
+
+    - name: Reload Firewalld
+      ansible.builtin.command: firewall-cmd --reload
+      register: firewalld_return
+      failed_when: firewalld_return.rc > 0
+
+    - name: Make Disconnected Registry directories
+      file:
+        path: "{{ item }}"
+        state: directory
+        mode: 0777
+        recurse: yes
+      loop:
+        - "/nfs/registry/auth"
+        - "/nfs/registry/certs"
+        - "/nfs/registry/data"
+
+    - name: Copy over k8s-aio env requirements.txt
+      ansible.builtin.copy:
+        src: ../conf/k8s/requirements.txt
+        dest: /tmp/requirements.txt
+
+    - name: "Create k8s-aio venv"
+      pip:
+        requirements: "/tmp/requirements.txt"
+        virtualenv: "/opt/virtualenvs/k8s-aio"
+        virtualenv_site_packages: true
+        virtualenv_command: "/usr/bin/virtualenv"
+
+    - name: "Set Ansible interpreter to venv"
+      set_fact:
+        ansible_python_interpreter: /opt/virtualenvs/k8s-aio/bin/python
+
+    - name: Generate OpenSSL private key
+      openssl_privatekey:
+        path: /nfs/registry/certs/domain.key
+        size: 2048
+
+    - name: Generate OpenSSL certficate signing requests
+      openssl_csr:
+        path: /nfs/registry/certs/domain.csr
+        privatekey_path: /nfs/registry/certs/domain.key
+
+    - name: Generate a Self Signed OpenSSL certificate
+      openssl_certificate:
+        state: present
+        subject: "/C=US/ST=NorthCarolina/L=Raleigh/O=Red Hat/OU=Marketing/CN=ocp4-bastion.aio.example.com"
+        subjectAltName: "DNS:ocp4-bastion.aio.example.com"
+        signature_algorithms:
+          - sha256WithRSAEncryption
+        extended_key_usage:
+          - 1.2.3.4
+        path: /nfs/registry/certs/domain.crt
+        privatekey_path: /nfs/registry/certs/domain.key
+        csr_path: /nfs/registry/certs/domain.csr
+        has_expired: false
+        provider: selfsigned
+
+    - name: Copy SSL certificate to trust store
+      ansible.builtin.copy:
+        remote_src: yes
+        src: /nfs/registry/certs/domain.crt
+        dest: /etc/pki/ca-trust/source/anchors/
+
+    - name: Update the CA trust
+      ansible.builtin.command: /usr/bin/update-ca-trust extract
+
+    - name: Generate htpasswd file for dummy user
+      htpasswd:
+        path: /nfs/registry/auth/htpasswd
+        name: dummy
+        password: dummy
+
+    - name: Pull the Disconnected Registry container image
+      containers.podman.podman_image:
+        name: "quay.io/roxenham/registry:3"
+
+    - name: Start the registry server via Podman
+      containers.podman.podman_container:
+        name: disconnected-registry
+        state: present
+        image: quay.io/roxenham/registry:3
+        volume:
+          - "/nfs/registry/data:/var/lib/registry:z"
+          - "/nfs/registry/auth:/auth:z"
+          - "/nfs/registry/certs:/certs:z"
+        net: host
+        env:
+          REGISTRY_AUTH: htpasswd
+          REGISTRY_AUTH_HTPASSWD_REALM: Registry
+          REGISTRY_HTTP_SECRET: ALongRandomSecretForRegistry
+          REGISTRY_AUTH_HTPASSWD_PATH: /auth/htpasswd
+          REGISTRY_HTTP_TLS_CERTIFICATE: /certs/domain.crt
+          REGISTRY_HTTP_TLS_KEY: /certs/domain.key

@@ -56,3 +56,37 @@ spec:
   persistentVolumeReclaimPolicy: Delete
   storageClassName: nfs
   volumeMode: Filesystem
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: nfs-pv4
+spec:
+  accessModes:
+  - ReadWriteOnce
+  - ReadWriteMany
+  capacity:
+    storage: 100Gi
+  nfs:
+    path: /nfs/pv4
+    server: 192.168.123.100
+  persistentVolumeReclaimPolicy: Delete
+  storageClassName: nfs
+  volumeMode: Filesystem
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: nfs-pv5
+spec:
+  accessModes:
+  - ReadWriteOnce
+  - ReadWriteMany
+  capacity:
+    storage: 100Gi
+  nfs:
+    path: /nfs/pv5
+    server: 192.168.123.100
+  persistentVolumeReclaimPolicy: Delete
+  storageClassName: nfs
+  volumeMode: Filesystem
