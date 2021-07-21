@@ -199,4 +199,4 @@ ocp4-worker3.aio.example.com   Ready    worker   3m51s   v1.20.0+87cc9a4
 
 That's it! We've successfully scaled our "baremetal" cluster using the baremetal operator.
 
-Now that we have this worker, we can go ahead and use it. [Move on to the next lab to Deploy OpenShift Container Storage on to your cluster](https://github.com/RHFieldProductManagement/baremetal-ipi-lab/blob/master/07-deployocs.md).
+Now that we have this worker, we can go ahead and use it. [Move on to the next lab to Deploy OpenShift Container Storage on to your cluster](https://github.com/RHFieldProductManagement/openshift-aio/blob/main/labs/04-deployocs.md).

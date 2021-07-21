@@ -20,6 +20,13 @@ The output above shows us we have the 4.5.12 client for oc. This will determine 
 4.7.19
 ~~~
 
+Before we move further along lets make sure we have the correct version of the Openshift baremetal installer in our home directory.  To do that we will need to set the version variable and extract it from the remote registry:
+
+~~~bash
+[root@ocp4-bastion ~]# export VERSION=4.7.19
+[root@ocp4-bastion ~]# oc adm release extract --registry-config /root/pull-secret.json --command=openshift-baremetal-install --to /root $VERSION
+~~~
+
 Now lets examine the version of the openshift-baremetal-install binary version. The **commit number** is important as that will be used to determine what version of the RHCOS image is pulled down later on in the lab.
 
 ~~~bash
@@ -34,16 +41,17 @@ Now that we have examined the oc and openshift-baremetal-install binaries we are
 The first step is to validate that podman, httpd and httpd-tools are installed.  They should be but its always wise to confirm:
 
 ~~~bash
-[root@ocp4-bastion ~]# rpm -qa podman httpd httpd-tools
+[root@ocp4-bastion ~]# rpm -qa podman httpd httpd-tools podman-docker
 httpd-tools-2.4.37-39.module_el8.4.0+778+c970deab.x86_64
 httpd-2.4.37-39.module_el8.4.0+778+c970deab.x86_64
 podman-3.0.1-7.module_el8.4.0+830+8027e1c4.x86_64
+podman-docker-3.0.1-7.module_el8.4.0+830+8027e1c4.noarch
 ~~~
 
 If by chance those packages are not installed use the following to install them:
 
 ~~~bash
-[root@ocp4-bastion ~]# sudo dnf -y install podman httpd httpd-tools
+[root@ocp4-bastion ~]# sudo dnf -y install podman httpd httpd-tools podman-docker
 Last metadata expiration check: 1 day, 0:42:29 ago on Wed 14 Jul 2021 06:25:33 PM UTC.
 Package podman-3.0.1-7.module_el8.4.0+830+8027e1c4.x86_64 is already installed.
 Package httpd-2.4.37-39.module_el8.4.0+778+c970deab.x86_64 is already installed.
@@ -89,7 +97,7 @@ writing new private key to '/nfs/registry/certs/domain.key'
 Once the certificate has been created copy it into your home directory and also into the trust anchors on the provisioning node. We will also need to run the update-ca-trust command:
 
 ~~~bash
-[root@ocp4-bastion ~]# cp /nfs/registry/certs/domain.crt /root/domain.crt
+[root@ocp4-bastion ~]# cp /nfs/registry/certs/domain.crt ~/domain.crt
 [root@ocp4-bastion ~]# cp /nfs/registry/certs/domain.crt /etc/pki/ca-trust/source/anchors/
 [root@ocp4-bastion ~]# update-ca-trust extract
 ~~~
@@ -103,7 +111,7 @@ Adding password for user dummy
 
 Now that we have a directory structure, certificate, and a user configured for authentication we can go ahead and create the registry pod. The command below will pull down the pod and mount the appropriate directory mount points we created earlier.
 
-However we will first need to login:
+However we will first need to login to [docker.io](https://www.docker.com/increase-rate-limits):
 
 ~~~bash
 [root@ocp4-bastion ~]# docker login docker.io
@@ -182,7 +190,7 @@ And now run the pod:
 
 ~~~bash
 [root@ocp4-bastion ~]# podman run -d --net host --privileged --name httpd --pod ironic-pod \
->     -v $IRONIC_DATA_DIR:/shared --entrypoint /bin/runhttpd ${IRONIC_IMAGE}
+     -v $IRONIC_DATA_DIR:/shared --entrypoint /bin/runhttpd ${IRONIC_IMAGE}
 Trying to pull quay.io/metal3-io/ironic:master...
 Getting image source signatures
 Copying blob 7a0437f04f83 done  
@@ -278,7 +286,7 @@ Verify that the pull secret in `install-config.yaml` now includes the credential
 Because our registry has a self signed certificate we will also need to add the certificate to our trust bundles in our install-config.yaml as well:
 
 ~~~bash
-[root@ocp4-bastion ~]# sed -i -e 's/^/  /' $(pwd)/domain.crt
+[root@ocp4-bastion ~]# sed -i -e 's/^/  /' ~/domain.crt
 [root@ocp4-bastion ~]# echo "additionalTrustBundle: |" >> ~/lab/install-config.yaml
 [root@ocp4-bastion ~]# cat ~/domain.crt >> ~/lab//install-config.yaml
 ~~~
@@ -534,4 +542,4 @@ Finally, ensure that we are able to retrieve the images from those URLs.
 
 As you can see it is rather easy to build a local registry and httpd cache for the pod images and RHCOS images. In the next lab we will leverage this content with a deployment of OpenShift!
 
-[Move on to Creating an OpenShift Cluster](https://github.com/RHFieldProductManagement/baremetal-ipi-lab/blob/master/04-deploying-cluster.md)!
+[Move on to Creating an OpenShift Cluster](https://github.com/RHFieldProductManagement/openshift-aio/blob/main/labs/02-deploy-cluster.md)!
