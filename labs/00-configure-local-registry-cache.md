@@ -190,7 +190,7 @@ And now run the pod:
 
 ~~~bash
 [root@ocp4-bastion ~]# podman run -d --net host --privileged --name httpd --pod ironic-pod \
->     -v $IRONIC_DATA_DIR:/shared --entrypoint /bin/runhttpd ${IRONIC_IMAGE}
+     -v $IRONIC_DATA_DIR:/shared --entrypoint /bin/runhttpd ${IRONIC_IMAGE}
 Trying to pull quay.io/metal3-io/ironic:master...
 Getting image source signatures
 Copying blob 7a0437f04f83 done  
