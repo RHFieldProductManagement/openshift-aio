@@ -23,33 +23,37 @@
 - import_playbook: deploy_guac.yml
   when: deploy_guacamole
 
-# Step 5: Deploy the OpenShift cluster if requested
+# Step 5: Deploy Disconnected Registry
+- import_playbook: deploy_disconnected.yml
+  when: deploy_disconnected
+
+# Step 6: Deploy the OpenShift cluster if requested
 - import_playbook: deploy_cluster.yml
   when: deploy_ocp or hostvars['localhost']['override_deploy_ocp']
 
-# Step 6: Deploy OpenShift Container Storage
+# Step 7: Deploy OpenShift Container Storage
 - import_playbook: deploy_ocs.yml
   when: deploy_ocs
 
-# Step 7: Deploy NFS Storage (when OCS not used)
+# Step 8: Deploy NFS Storage (when OCS not used)
 - import_playbook: deploy_nfs.yml
   when: deploy_nfs or hostvars['localhost']['override_deploy_nfs']
 
-# Step 8: Deploy OpenShift Virtualization
+# Step 9: Deploy OpenShift Virtualization
 - import_playbook: deploy_cnv.yml
   when: deploy_cnv
 
-# Step 9: Deploy Advanced Cluster Manager
+# Step 10: Deploy Advanced Cluster Manager
 - import_playbook: deploy_acm.yml
   when: deploy_acm or deploy_ocp_plus
 
-# Step 10: Deploy Advanced Cluster Security
+# Step 11: Deploy Advanced Cluster Security
 - import_playbook: deploy_acs.yml
   when: deploy_acs or deploy_ocp_plus
 
-# Step 11: Deploy Internal OpenShift Image Registry
+# Step 12: Deploy Internal OpenShift Image Registry
 - import_playbook: deploy_imgreg.yml
   when: deploy_ocp or hostvars['localhost']['override_deploy_ocp']
 
-# Step 12: Print Output to User
+# Step 13: Print Output to User
 - import_playbook: finish.yml

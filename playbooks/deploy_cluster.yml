@@ -22,7 +22,7 @@
       when: deploy_type == "ipi"
 
     - set_fact:
-        ocp_client_version: "{{ ocp_client_output.stdout.split(':')[1] | trim }}"
+        ocp_client_version: "{{ ocp_client_output.stdout.split('\n')[0].split(':')[1] | trim }}"
       when: deploy_type == "ipi"
 
     - name: Check if OpenShift Installer binary exists

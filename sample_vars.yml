@@ -39,6 +39,9 @@ ssh_key: ''
 # Enter OpenShift Pull Secret
 pull_secret: ''
 
+# Set whether you want to deploy a disconnected registry
+deploy_disconnected: false
+
 # Set whether you want to deploy guacamole for console
 deploy_guacamole: true
 
