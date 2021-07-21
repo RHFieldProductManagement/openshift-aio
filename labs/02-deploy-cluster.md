@@ -478,5 +478,5 @@ node-ca-ktzl6                                      1/1     Running     0        
 node-ca-vmcq2                                      1/1     Running     0          18h
 ~~~
 
-At this point you are now ready to move onto the next lab where we will look at the Machine Config Operator (aka Baremetal Operator). [Continue to the Baremetal Operator lab!](https://github.com/RHFieldProductManagement/baremetal-ipi-lab/blob/master/05-baremetal.md)
+At this point you are now ready to move onto the next lab where we will look at the Machine Config Operator (aka Baremetal Operator). [Continue to the Add Worker lab!](https://github.com/RHFieldProductManagement/openshift-aio/blob/main/labs/03-addworker.md)
 
