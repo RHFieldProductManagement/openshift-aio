@@ -1,7 +1,5 @@
 # **Creating an OpenShift Cluster**
 
-REWORK STILL REQUIRED
-
 The AIO environment can deploy the OpenShift cluster automatically if one is not interested in understanding how the deployment process works.  However in this lab we walk through the process of taking the disconnected registry created in the previous lab and the install-config.yaml that the AIO generated along with the modifications we have been making in the previous lab.
 
 Before we begin our dpeloyment lets look at a few parts of the install-config.yaml configuration file.  In the file we can see there some interesting sections and attributes which we call out with the "**<===**" notation below:
