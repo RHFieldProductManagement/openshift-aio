@@ -645,4 +645,4 @@ exit
 
 
 
-Now it's time to do some fun stuff with all this infrastructure! [In the next lab you will get to deploy OpenShift Virtualization!](https://github.com/RHFieldProductManagement/baremetal-ipi-lab/blob/master/08-deploycnv.md)
+Now it's time to do some fun stuff with all this infrastructure! [In the next lab you will get to deploy OpenShift Virtualization!](https://github.com/RHFieldProductManagement/openshift-aio/blob/main/labs/05-deploycnv.md)
