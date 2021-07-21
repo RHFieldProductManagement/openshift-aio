@@ -362,4 +362,4 @@ When OpenShift Virtualization is deployed it adds additional components to OpenS
 
 > **NOTE**: Please don't try and create any virtual machines just yet, we'll get to that shortly!
 
-Ready to test out this cool new environment and deploy some VM workloads onto your new cluster? Well, that's just what we are going to do in the next lab: [Running Workloads in the Environment](https://github.com/RHFieldProductManagement/baremetal-ipi-lab/blob/master/09-workloads.md).
+Ready to test out this cool new environment and deploy some VM workloads onto your new cluster? Well, that's just what we are going to do in the next lab: [Running Workloads in the Environment](https://github.com/RHFieldProductManagement/openshift-aio/blob/main/labs/06-deploy-workloads-cnv.md).
