@@ -1,6 +1,6 @@
 # **Deploy OpenShift Virtualization**
 
-This lab will focus on installing and configuring OpenShift Virtualization to enable the AIO OpenShift cluster to run virtual machines alongside containerised applications. The mechanism for installation is to utilise the operator model, just like we did with the storage lab. Note, it's entirely possible to deploy via the web UI should you wish to do so, but we're not documenting that mechanism here.
+This lab will focus on installing and configuring OpenShift Virtualization to enable the AIO OpenShift cluster to run virtual machines alongside containerised applications. The AIO deployment does allow for Containerized virtualization deployment during the Ansible playbook run however the documentation here allows one to manually experience the installation process.  The mechanism for installation is to utilise the operator model via the cli, just like we did with the storage lab. Note, it's entirely possible to deploy via the web UI should you wish to do so, but we're not documenting that mechanism here.
 
 The first
 
