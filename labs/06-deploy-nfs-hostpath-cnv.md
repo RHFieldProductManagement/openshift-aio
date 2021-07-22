@@ -5,8 +5,8 @@ In this lab we are going to setup two different types of storage, firstly standa
 First ensure we are in the default project:
 
 ~~~bash
-$ oc project default
-Now using project "default" on server "https://172.30.0.1:443".
+[root@ocp4-bastion ~]# oc project default
+Already on project "default" on server "https://api.aio.example.com:6443".
 ~~~
 
 >**NOTE**: If you don't use the default project for the next few lab steps, it's likely that you'll run into some errors - some resources are scoped, i.e. aligned to a namespace, and others are not. Ensuring you're in the default namespace now will ensure that all of the coming lab steps should flow together.
@@ -14,7 +14,7 @@ Now using project "default" on server "https://172.30.0.1:443".
 Now let's setup a storage class for NFS backed volumes, utilising the `kubernetes.io/no-provisioner` as the provisioner; to be clear this mean **no** dynamic provisioning of volumes on demand of a PVC:
 
 ~~~bash
-$ cat << EOF | oc apply -f -
+[root@ocp4-bastion ~]# cat << EOF | oc apply -f -
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
@@ -25,9 +25,9 @@ EOF
 
 storageclass.storage.k8s.io/nfs created
 
-$ oc get sc                                                                                                                                            
-NAME   PROVISIONER                    RECLAIMPOLICY   VOLUMEBINDINGMODE   ALLOWVOLUMEEXPANSION   AGE                                                       
-nfs    kubernetes.io/no-provisioner   Delete          Immediate           false                  14s
+[root@ocp4-bastion ~]# oc get sc nfs
+NAME   PROVISIONER                    RECLAIMPOLICY   VOLUMEBINDINGMODE   ALLOWVOLUMEEXPANSION   AGE
+nfs    kubernetes.io/no-provisioner   Delete          Immediate           false                  20s
 ~~~
 
 
@@ -36,7 +36,7 @@ Next we will create two physical volumes (PVs): **nfs-pv1** and **nfs-pv2**:
 Create nfs-pv1:
 
 ~~~bash
-$ cat << EOF | oc apply -f -
+[root@ocp4-bastion ~]# cat << EOF | oc apply -f -
 apiVersion: v1
 kind: PersistentVolume
 metadata:
@@ -61,7 +61,7 @@ persistentvolume/nfs-pv1 created
 Create nfs-pv2:
 
 ~~~bash
-$ cat << EOF | oc apply -f -
+[root@ocp4-bastion ~]# cat << EOF | oc apply -f -
 apiVersion: v1
 kind: PersistentVolume
 metadata:
@@ -88,11 +88,10 @@ persistentvolume/nfs-pv2 created
 Check the PV's:
 
 ~~~bash
-$ oc get pv
-NAME                    CAPACITY   ACCESS MODES   RECLAIM POLICY   STATUS      CLAIM                                             STORAGECLASS   REASON   AGE
-nfs-pv1                 40Gi       RWO,RWX        Delete           Available                                                     nfs                     18s
-nfs-pv2                 40Gi       RWO,RWX        Delete           Available                                                     nfs                     12s
-openshift-registry-pv   100Gi      RWX            Retain           Bound       openshift-image-registry/image-registry-storage                           13h
+[root@ocp4-bastion ~]# oc get pv |grep nfs
+NAME       CAPACITY   ACCESS MODES   RECLAIM POLICY   STATUS      CLAIM       STORAGECLASS                  REASON   AGE
+nfs-pv1    40Gi       RWO,RWX        Delete           Available               nfs                                    3m32s
+nfs-pv2    40Gi       RWO,RWX        Delete           Available               nfs                                    3m3s
 ~~~
 
 
