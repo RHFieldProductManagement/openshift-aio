@@ -241,7 +241,6 @@ spec:
   name: local-storage-operator
   source: redhat-operators
   sourceNamespace: openshift-marketplace
-EOF
 ~~~
 
 We can see from the above subscription yaml file we will be subscribed to the 4.6 release and the operator will run under the openshift-local-storage namespace.  Now lets go ahead and create the subscription:
@@ -598,7 +597,7 @@ At this point you have a fully functional OpenShift Container Storage cluster to
 
 ~~~bash
 [root@ocp4-bastion ~]# oc patch OCSInitialization ocsinit -n openshift-storage \
->     --type json --patch '[{ "op": "replace", "path": "/spec/enableCephTools", "value": true }]'
+     --type json --patch '[{ "op": "replace", "path": "/spec/enableCephTools", "value": true }]'
 ocsinitialization.ocs.openshift.io/ocsinit patched
 ~~~
 
