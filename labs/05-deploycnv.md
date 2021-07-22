@@ -113,7 +113,7 @@ virt-operator-768746dd9c-pm4jt                     0/1     Running   0          
 vm-import-operator-87df7f45b-b9wm5                 1/1     Running   0          110s
 ~~~
 
-At this point we are now ready to to deploy a HyperConverged configuration which assumes OCS/ODF was deployed in the previous lab or by default with the AIO playbook as a storage source for the virtual machines.  If this is not the case, NFS or hostpath provisioner, which is a local storage provisioner designed for OpenShift Virtualization, must be enabled first.  The instructions for that can be found [here](https://github.com/RHFieldProductManagement/openshift-aio/blob/main/labs/00-deploy-hostpath-cnv.md)
+At this point we are now ready to to deploy a HyperConverged configuration which assumes OCS/ODF was deployed in the previous lab or by default with the AIO playbook as a storage source for the virtual machines.  If this is not the case, NFS or hostpath provisioner, which is a local storage provisioner designed for OpenShift Virtualization, must be enabled first.  The instructions for that can be found [here](https://github.com/RHFieldProductManagement/openshift-aio/blob/main/labs/06-deploy-nfs-hostpath-cnv.md)
 
 To configure a HyperConverged deployment we first need to create the following resource yaml:
 
@@ -416,4 +416,4 @@ networkattachmentdefinition.k8s.cni.cncf.io/tuning-bridge-fixed created
 
 Once those have been applied we can now move forward in the lab.
 
-Ready to test out this cool new environment and deploy some VM workloads onto your new cluster? Well, that's just what we are going to do in the next lab: [Running Workloads in the Environment](https://github.com/RHFieldProductManagement/openshift-aio/blob/main/labs/06-deploy-workloads-cnv.md).
+Ready to test out this cool new environment and deploy some VM workloads onto your new cluster? Well, that's just what we are going to do in the next lab: [Deploying Additional NFS And Hostpath Storage](https://github.com/RHFieldProductManagement/openshift-aio/blob/main/labs/06-deploy-nfs-hostpath-cnv.md).
