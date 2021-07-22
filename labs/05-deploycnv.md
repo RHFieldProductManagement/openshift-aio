@@ -1,8 +1,8 @@
 # **Deploy OpenShift Virtualization**
 
-This lab will focus on installing and configuring OpenShift Virtualization to enable the AIO OpenShift cluster to run virtual machines alongside containerised applications. The AIO deployment does allow for Containerized virtualization deployment during the Ansible playbook run however the documentation here allows one to manually experience the installation process.  The mechanism for installation is to utilise the operator model via the cli, just like we did with the storage lab. Note, it's entirely possible to deploy via the web UI should you wish to do so, but we're not documenting that mechanism here.
+This lab will focus on installing and configuring OpenShift Virtualization to enable the AIO OpenShift cluster to run virtual machines alongside containerised applications. The AIO deployment does allow for Containerized Virtualization deployment during the Ansible playbook run however the documentation here allows one to manually experience the installation process.  The mechanism for installation is to utilise the operator model via the cli, just like we did with the storage lab. Note, it's entirely possible to deploy via the web UI should you wish to do so, but we're not documenting that mechanism here.
 
-The first
+The first step for installing Containerized Virtualization is to prepare the a yaml that will configure the namespace, operator group and subscription to install the operator.  We can accomplish that by creating the file below:
 
 ~~~bash
 [root@ocp4-bastion ~]# cat << EOF > ~/openshift-cnv-operator-install.yaml
@@ -34,6 +34,8 @@ spec:
 EOF
 ~~~
 
+If we take a quick look at the file again we can distinctly see that the first section is about creating the namespace openshift-cnv, the second section is about creating the kubevirt-hyperconverged-group operator group and the last portion is for defining the subscription which ultimately installs the operator.
+
 ~~~bash
 [root@ocp4-bastion ~]# cat  ~/openshift-cnv-operator-install.yaml 
 apiVersion: v1
@@ -63,12 +65,16 @@ spec:
   channel: "stable"
 ~~~
 
+Lets go ahead and create the resources using the yaml we defined above:
+
 ~~~bash
 [root@ocp4-bastion ~]# oc create -f ~/openshift-cnv-operator-install.yaml 
 namespace/openshift-cnv created
 operatorgroup.operators.coreos.com/kubevirt-hyperconverged-group created
 subscription.operators.coreos.com/hco-operatorhub created
 ~~~
+
+We can see this generates multiple operator pods related to Containerized Virtualization:
 
 ~~~bash
 [root@ocp4-bastion ~]# oc get pods -n openshift-cnv
@@ -83,10 +89,10 @@ ssp-operator-58fcc47b69-njlrx                      0/1     ContainerCreating   0
 vm-import-operator-87df7f45b-b9wm5                 0/1     ContainerCreating   0          6s
 ~~~
 
-We can also watch via the CLI as the operators come up:
+If we add a watch to our oc statement we can watch as each pod gets to a running state:
 
 ~~~bash
-[lab-user@provision ~]$ watch -n2 'oc get pods -n openshift-cnv'
+[root@ocp4-bastion ~]# watch -n2 'oc get pods -n openshift-cnv'
 (...)
 ~~~
 
@@ -107,53 +113,71 @@ virt-operator-768746dd9c-pm4jt                     0/1     Running   0          
 vm-import-operator-87df7f45b-b9wm5                 1/1     Running   0          110s
 ~~~
 
+At this point we are now ready to to deploy a HyperConverged configuration which assumes OCS/ODF was deployed in the previous lab or by default with the AIO playbook as a storage source for the virtual machines.  If this is not the case, NFS or hostpath provisioner, which is a local storage provisioner designed for OpenShift Virtualization, must be enabled first.  The instructions for that can be found [here](https://github.com/RHFieldProductManagement/openshift-aio/blob/main/labs/00-deploy-hostpath-cnv.md)
+
+To configure a HyperConverged deployment we first need to create the following resource yaml:
+
+~~~bash
+[root@ocp4-bastion ~]# cat << EOF > ~/openshift-cnv-hyperconverged.yaml
+apiVersion: hco.kubevirt.io/v1beta1
+kind: HyperConverged
+metadata:
+  name: kubevirt-hyperconverged
+  namespace: openshift-cnv
+spec:
+EOF
 ~~~
 
+Next lets apply this resource yaml to our cluster:
 
-
-> **NOTE**: It may take a few minutes for the pods to start up properly. Press **Ctrl+C** to exit the watch command.
+~~~bash
+[root@ocp4-bastion ~]# oc create -f openshift-cnv-hyperconverged.yaml
+hyperconverged.hco.kubevirt.io/kubevirt-hyperconverged created
+~~~
 
 During this process you will see a lot of pods create and terminate, which will look something like the following depending on when you view it; it's always changing:
 
-```bash
-Every 2.0s: oc get pods -n openshift-cnv                                                                                                                                       provision: Fri Sep 25 14:59:01 2020
-
+~~~bash
+[root@ocp4-bastion ~]# oc get pods -n openshift-cnv
 NAME                                                  READY   STATUS    RESTARTS   AGE
-bridge-marker-65kv5                                   1/1     Running   0          5m13s
-bridge-marker-9ckff                                   1/1     Running   0          5m10s
-bridge-marker-fk96v                                   1/1     Running   0          5m12s
-bridge-marker-kt4sw                                   1/1     Running   0          5m12s
-bridge-marker-m68cs                                   1/1     Running   0          5m9s
-bridge-marker-sklxs                                   1/1     Running   0          5m10s
-cdi-apiserver-7c4566c98c-4qkph                        1/1     Running   0          5m15s
+bridge-marker-chrz8                                   1/1     Running   0          7m11s
+bridge-marker-gf2bl                                   1/1     Running   0          7m10s
+bridge-marker-grhfx                                   1/1     Running   0          7m10s
+bridge-marker-j4nqm                                   1/1     Running   0          7m10s
+bridge-marker-r8qgj                                   1/1     Running   0          7m10s
+bridge-marker-zwphx                                   1/1     Running   0          7m10s
+cdi-apiserver-778c8749d5-tnxq7                        1/1     Running   0          7m8s
+cdi-deployment-cf8bf58b9-8j65d                        1/1     Running   0          7m6s
+cdi-operator-7565b8bc7d-bd2rh                         1/1     Running   0          9m40s
+cdi-uploadproxy-5cd7794458-whpng                      1/1     Running   0          7m5s
 (...)
-```
+~~~
 
 This will continue for some time, depending on your environment. You will know the process is complete when you see in the CLI that the operator installation has been successful by running the following command and getting the "**Succeeded**" output:
 
-```bash
-[lab-user@provision ~]$ oc get csv -n openshift-cnv
-NAME                                      DISPLAY                    VERSION   REPLACES   PHASE
-kubevirt-hyperconverged-operator.v2.4.2   OpenShift Virtualization   2.4.2                Succeeded
-```
+~~~bash
+[root@ocp4-bastion ~]# oc get csv -n openshift-cnv
+NAME                                      DISPLAY                    VERSION   REPLACES                                  PHASE
+kubevirt-hyperconverged-operator.v2.6.5   OpenShift Virtualization   2.6.5     kubevirt-hyperconverged-operator.v2.6.4   Succeeded
+~~~
 
 If you do not see `Succeeded` in the `PHASE` column then the deployment may still be progressing, or has failed. You will not be able to proceed until the installation has been successful. Once the `PHASE` changes to `Succeeded` you can validate that the required resources and the additional components have been deployed across the nodes. First let's check the pods deployed in the `openshift-cnv` namespace:
 
-```bash
-[lab-user@provision ~]$ oc get pods -n openshift-cnv
+~~~bash
+[root@ocp4-bastion ~]# oc get pods -n openshift-cnv
 NAME                                                  READY   STATUS    RESTARTS   AGE
-bridge-marker-65kv5                                   1/1     Running   0          6m12s
-bridge-marker-9ckff                                   1/1     Running   0          6m9s
-bridge-marker-fk96v                                   1/1     Running   0          6m11s
-bridge-marker-kt4sw                                   1/1     Running   0          6m11s
-bridge-marker-m68cs                                   1/1     Running   0          6m8s
-bridge-marker-sklxs                                   1/1     Running   0          6m9s
-cdi-apiserver-7c4566c98c-4qkph                        1/1     Running   0          6m14s
-cdi-deployment-79fdcfdccb-prhfc                       1/1     Running   1          6m12s
-cdi-operator-75dc489559-mx49s                         1/1     Running   2          13m
-cdi-uploadproxy-5d4cc54b4c-ntj2x                      1/1     Running   0          6m11s
+bridge-marker-chrz8                                   1/1     Running   0          7m11s
+bridge-marker-gf2bl                                   1/1     Running   0          7m10s
+bridge-marker-grhfx                                   1/1     Running   0          7m10s
+bridge-marker-j4nqm                                   1/1     Running   0          7m10s
+bridge-marker-r8qgj                                   1/1     Running   0          7m10s
+bridge-marker-zwphx                                   1/1     Running   0          7m10s
+cdi-apiserver-778c8749d5-tnxq7                        1/1     Running   0          7m8s
+cdi-deployment-cf8bf58b9-8j65d                        1/1     Running   0          7m6s
+cdi-operator-7565b8bc7d-bd2rh                         1/1     Running   0          9m40s
+cdi-uploadproxy-5cd7794458-whpng                      1/1     Running   0          7m5s
 (...)
-```
+~~~
 
 > **NOTE**: All pods shown from this command should be in the `Running` state. You will have many different types, the above snippet is just an example of the output at one point in time, you may have more or less at any one point. Below we discuss some of the pod types and what they do.
 
@@ -351,15 +375,5 @@ networkattachmentdefinition.k8s.cni.cncf.io/tuning-bridge-fixed created
 ```
 
 Once those have been applied we can now move forward in the lab.
-
-
-
-## Viewing the OpenShift Virtualization Dashboard
-
-When OpenShift Virtualization is deployed it adds additional components to OpenShift's web-console so you can interact with objects and custom resources defined by OpenShift Virtualization, including `VirtualMachine` types, and all of their dependencies. You can now navigate to "**Workloads**" --> "**Virtualization**" on the left-hand side panel and you should see the new snap-in component for OpenShift Virtualization but with no Virtual Machines running.
-
-![](img/ocpvirt-dashboard.png)
-
-> **NOTE**: Please don't try and create any virtual machines just yet, we'll get to that shortly!
 
 Ready to test out this cool new environment and deploy some VM workloads onto your new cluster? Well, that's just what we are going to do in the next lab: [Running Workloads in the Environment](https://github.com/RHFieldProductManagement/openshift-aio/blob/main/labs/06-deploy-workloads-cnv.md).
