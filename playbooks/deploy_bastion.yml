@@ -111,6 +111,7 @@
           - syslinux-tftpboot
           - firewalld
           - python3-virtualenv
+          - podman
         state: latest
 
     - name: Upgrade all packages
@@ -253,7 +254,7 @@
         dest: /etc/haproxy/haproxy.cfg
         mode: 0644
       when:
-        - deploy_compact | bool
+        - deploy_compact or hostvars['localhost']['override_deploy_compact']
         - deploy_type == "upi"
 
     - name: Copy over DNS zone files for UPI
@@ -542,7 +543,7 @@
         regexp: '^(.*)replicas:(.*)$'
         replace: '  replicas: 0'
         before: 'controlPlane'
-      when: deploy_compact | bool
+      when: deploy_compact or hostvars['localhost']['override_deploy_compact']
 
     - name: Update compute replica count to 3 in install-config for OCS
       ansible.builtin.replace:
@@ -562,7 +563,7 @@
         - "worker1"
         - "worker2"
         - "worker3"
-      when: deploy_compact | bool
+      when: deploy_compact or hostvars['localhost']['override_deploy_compact']
 
     - name: Remove worker3 from install-config if ocp_workers is 2
       ansible.builtin.command:

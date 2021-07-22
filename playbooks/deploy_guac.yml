@@ -13,13 +13,6 @@
   hosts: target
   tasks:
 
-    - name: Install podman for Guac containers
-      dnf:
-        name:
-          - podman
-        state: latest
-      become: True
-
     - name: Check if firewalld is available
       ansible.builtin.command: systemctl status firewalld
       register: firewalld_avail

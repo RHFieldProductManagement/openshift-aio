@@ -6,7 +6,7 @@ We do this for simplicity and for ease of scale when we need to - we have full c
 
 The following diagram helps to visualise the configuration:
 
-(WIP ADD DIAGRAM)
+(**WIP** ADD DIAGRAM)
 
 
 
@@ -29,6 +29,8 @@ With the current implementation it's possible to achieve the following-
   * [Advanced Cluster Security](https://www.redhat.com/en/resources/advanced-cluster-security-for-kubernetes-datasheet) (ACS)
 * Deploy a [Red Hat OpenShift Platform Plus](https://www.openshift.com/products/platform-plus) deployment (combination of OpenShift, ACM, and ACS)
 * Deploy an optional [Apache Guacamole](https://guacamole.apache.org/) instance for easy browser-based interaction with the cluster
+* Deploy a *disconneted* cluster in which the OpenShift cluster relies on a dedicated image registry
+* Deploy NFS-based "basic" persistent volume storage for when OCS/ODF is not enabled
 * (**WIP**) Deploy the cluster in a pre-determined state to support self-paced labs and demonstration for-
   * Baremetal IPI cluster deployment & post-deployment utilisation
   * OpenShift Virtualization (CNV) deployment and utilisation
@@ -75,22 +77,21 @@ The list of available options (exposed as Ansible variables) is described below-
 | `packet_spot_bid`         | Select the cost per hour that you're bidding when using `packet_deploy_type: spot`. If your bid is accepted by Packet, your instance will provision, but as mentioned above, be aware of the instance revoking rules.<br /><br />**Default**: "0.70", i.e. $0.70/hour (US), which based on "s3.xlarge.x86" instance type is significantly under market pricing and would be considered fairly risky. |
 | `packet_facility`         | Specify the Packet facility (datacentre) that you want to utilise for deployment of your instance. There are many to choose from, but not all facilities have access to all of the instance types, so please ensure availability of the type via their [website](https://metal.equinix.com/developers/docs/locations/facilities/). <br /><br />**Default**: "am6" (Amsterdam, NL) |
 | `packet_runtime_hours`    | Specify how long you want the Packet instance to run for; this helps take some of the risk out of accidentally leaving the Packet system running after you're done. This flag is used to set a termination date for the instance. Note that whilst this flag should be honoured, we can take no responsibility for any costs incurred. <br /><br />**Default**: "3", i.e. 3 hours from instance request, not from Playbook completion; sometimes the playbooks can take >1hr to run, depending on the configuration requested. |
-| `ssh_key`                 | created. <br /><br />**Default**: There is <u>no default</u>. You must specify an option here manually. |
-| `pull_secret`             | created. <br /><br />**Default**: There is <u>no default</u>. You must specify an option here manually. |
-| `deploy_guacamole`        | created. <br /><br />**Default**: There is <u>no default</u>. You must specify an option here manually. |
-| `deploy_compact`          | created. <br /><br />**Default**: There is <u>no default</u>. You must specify an option here manually. |
-| `deploy_ocp`              | created. <br /><br />**Default**: There is <u>no default</u>. You must specify an option here manually. |
-| `deploy_ocp_plus`         | created. <br /><br />**Default**: There is <u>no default</u>. You must specify an option here manually. |
-| `deploy_cnv`              | created. <br /><br />**Default**: There is <u>no default</u>. You must specify an option here manually. |
-| `deploy_ocs`              | created. <br /><br />**Default**: There is <u>no default</u>. You must specify an option here manually. |
-| `deploy_acm`              | created. <br /><br />**Default**: There is <u>no default</u>. You must specify an option here manually. |
-| `deploy_acs`              | created. <br /><br />**Default**: There is <u>no default</u>. You must specify an option here manually. |
-| `deploy_nfs`              | created. <br /><br />**Default**: There is <u>no default</u>. You must specify an option here manually. |
-| `ocp_version`             | created. <br /><br />**Default**: There is <u>no default</u>. You must specify an option here manually. |
-| `ocp_workers`             | created. <br /><br />**Default**: '2' - we'd rather save capacity on the baremetal host, and two is the minimum number of workers in a non-compact cluster. |
-| `deploy_type`             | created. <br /><br />**Default**: There is <u>no default</u>. You must specify an option here manually. |
-
-
+| `ssh_key`                 | Specify the public ssh-key that you want to use, **not** the location to the file, e.g. `ssh_key: 'ssh-rsa AAAA....'`, making sure that you place single quotes around the entry. This key will be injected into the instance if using `baremetal_provider: packet` and also be used for authentication during the installation. <br /><br />**Default**: There is <u>no default</u>. You must specify an option here manually. |
+| `pull_secret`             | Specify your OpenShift *pull secret* so we can pull OpenShift images. This is a **json** formatted string with all of the necessary authentication and authorisation secrets and is linked to your specific username/email-address. This can be downloaded from [cloud.redhat.com](https://cloud.redhat.com/) (with instructions [here](https://access.redhat.com/solutions/4844461)). <br /><br />**Default**: There is <u>no default</u>. You must specify an option here manually. |
+| `deploy_guacamole`        | Specify whether you want to deploy [Apache Guacamole](https://guacamole.apache.org/) as part of the deployment. This will provide access to the remote cluster via a web-browser, both CLI and GUI access, without having to configure a proxy server locally. This is useful for demo or lab purposes, but is completely optional.<br /><br />**Default**: false |
+| `deploy_disconnected`     | Specify whether you want to use a *disconnected* image registry as part of the installation to mimic a disconnected installation  - this can speed up the deployment time and also limit the amount of bandwidth consumed as the image pull for the OpenShift bits themselves only happens once. If set to *true*, a registry will be deployed for you and all images for the specified version (`ocp_version`) will be pulled.<br /><br />**Default**: false |
+| `deploy_compact`          | Specify whether you want to deploy a compact cluster, i.e. three nodes that are simultaneously master and worker nodes, i.e. no separate worker nodes. This is useful when you want to minimise resource utilisation or mimic small "edge type" clusters. <br /><br />**Default**: false |
+| `deploy_ocp`              | Specify whether you want the automation to actually deploy an OpenShift cluster as part of the playbook run. By default this is set to *true*, but you can set this to *false* if you only want the base infrastructure to be configured; this is useful in scenarios in which you want to run through the deployment of an OpenShift cluster yourself.<br /><br />**Default**: true |
+| `deploy_ocp_plus`         | This is the same variable as `deploy_ocp` but it also enforces the automated deployment of Red Hat Advanced Cluster Security (ACS) and Red Hat Advanced Cluster Manager (ACM), via `deploy_acs` and `deploy_acm`. So if this option is enabled, settings for OCP/ACM/ACS are overridden.  **NOTE**: We're working to add Quay support. <br /><br />**Default**: false |
+| `deploy_cnv`              | Specify whether you want to automatically deploy the OpenShift Virtualization (CNV) operator as part of the OpenShift installation. This does nothing other than deploying the operator and any required core components, e.g. CNV HyperConverged.<br /><br />**Default**: false |
+| `deploy_ocs`              | Specify whether you want to automatically deploy the OpenShift Container Storage (OCS), now known as OpenShift Data Foundations (ODF), operator as part of the OpenShift installation. This does nothing other than deploying the operator and any required core components, e.g. OCS Storage Cluster. <br /><br />**Default**: false |
+| `deploy_acm`              | Specify whether you want to automatically deploy the Red Hat Advanced Cluster Manager (ACM) operator as part of the OpenShift installation. This does nothing other than deploying the operator and any required core components, e.g. ACM MultiClusterHub. <br /><br />**Default**: false |
+| `deploy_acs`              | Specify whether you want to automatically deploy the Red Hat Advanced Cluster Security operator as part of the OpenShift installation. This does nothing other than deploying the operator and any required core components, e.g. ACS Central. <br /><br />**Default**: false |
+| `deploy_nfs`              | Specify whether you want to deploy basic NFS-based storage for your cluster; this will create an NFS storage class as well as some empty PV's to use as NFS doesn't use a dynamic provisioner. Note, if `deploy_ocs` is set to *false*, `deploy_nfs` is set to *true* by default. If both are enabled, OCS becomes the default storage class, but both will be available in the resulting cluster.<br /><br />**Default**: false |
+| `ocp_version`             | Specify the version of OpenShift that you wish to use, this can be an exact version of OpenShift, e.g. *"4.7.19"*, or it can be specified as a latest major release, e.g. *"latest-4.6"*. If  `deploy_ocp: true` (or `deploy_ocp_plus: true`) a cluster with this version will be deployed, otherwise just the client/installer binaries and any required images will be pulled for you. <br /><br />**Default**: There is <u>no default</u>. You must specify an option here manually. |
+| `ocp_workers`             | Specify the number of workers that you'd like to use between 1-3; there's some work in progress to expand this further, but right now the minimum is *'2'*, although *'1'* can be used if you **manually** enable schedulable masters during installation. <br /><br />* If you specify *'0'* here, `deploy_compact` is forced to *true*. <br />* If `deploy_ocs` is set to *true*, `ocp_workers` will be forced to *'3'*  <br /><br />**Default**: '2' - we'd rather save capacity on the baremetal host, and two is the minimum number of workers in a non-compact cluster. |
+| `deploy_type`             | Specify the deployment type that you want to use; you can choose from a UPI or an IPI type deployment, in which the "baremetal" type will be used for both. With a UPI installation, there's no provider integration and is considered a more agnostic deployment approach, whereas IPI uses the IPMI-based management to provide a more integrated baremetal management interface via [Metal3](https://metal3.io/). <br /><br />**Default**: "ipi" (Installer Provisioned Infrastructure) |
 
 If you wish to deploy the Guacamole UI, you'll need to make sure you've either got Ansible 2.10+, or you've installed the Podman module. Either install via `ansible-galaxy` or install the RPM:
 
@@ -113,3 +114,9 @@ To destroy your cluster, call `destroy.yml`, again making sure to specify your v
 ~~~bash
 $ ansible-playbook playbooks/destroy.yml -e @my_vars.yml -i inventory.yml
 ~~~
+
+
+
+# Feedback
+
+If you have any questions or other feedback, please raise a GitHub issue for this, or alternatively submit a PR, we always welcome contributions! Thanks a lot for giving it a try.

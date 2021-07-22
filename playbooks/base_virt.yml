@@ -356,7 +356,7 @@
         virsh attach-disk ocp4-{{ item.key }} --source /var/lib/libvirt/images/ocp4-worker{{ my_idx | int + 1 }}-osd1.qcow2
         --target vdb --type disk --targetbus virtio --driver qemu --subdriver qcow2 --persistent
       with_dict: "{{ vms['masters'] }}"
-      when: deploy_compact | bool
+      when: deploy_compact or hostvars['localhost']['override_deploy_compact']
       loop_control:
         index_var: my_idx
       register: osd_attach
@@ -367,7 +367,7 @@
         virsh attach-disk ocp4-{{ item.key }} --source /var/lib/libvirt/images/ocp4-worker{{ my_idx | int + 1 }}-osd2.qcow2
         --target vdc --type disk --targetbus virtio --driver qemu --subdriver qcow2 --persistent
       with_dict: "{{ vms['masters'] }}"
-      when: deploy_compact | bool
+      when: deploy_compact or hostvars['localhost']['override_deploy_compact']
       loop_control:
         index_var: my_idx
       register: osd_attach
@@ -377,25 +377,25 @@
       ansible.builtin.command:
         cmd: "virsh setmaxmem ocp4-{{ item.key }} 33554415 --config"
       with_dict: "{{ vms['masters'] }}"
-      when: deploy_compact | bool
+      when: deploy_compact or hostvars['localhost']['override_deploy_compact']
 
     - name: Update master memory for compact mode
       ansible.builtin.command:
         cmd: "virsh setmem ocp4-{{ item.key }} 33554415 --config"
       with_dict: "{{ vms['masters'] }}"
-      when: deploy_compact | bool
+      when: deploy_compact or hostvars['localhost']['override_deploy_compact']
 
     - name: Update master max vcpus for compact mode
       ansible.builtin.command:
         cmd: "virsh setvcpus --maximum ocp4-{{ item.key }} 16 --config"
       with_dict: "{{ vms['masters'] }}"
-      when: deploy_compact | bool
+      when: deploy_compact or hostvars['localhost']['override_deploy_compact']
 
     - name: Update master vcpus for compact mode
       ansible.builtin.command:
         cmd: "virsh setvcpus ocp4-{{ item.key }} 16 --config"
       with_dict: "{{ vms['masters'] }}"
-      when: deploy_compact | bool
+      when: deploy_compact or hostvars['localhost']['override_deploy_compact']
 
     - name: Remove additional extra NIC for masters when not compact
       ansible.builtin.command: >

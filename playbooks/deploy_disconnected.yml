@@ -14,13 +14,6 @@
       retries: 3
       delay: 30
 
-    - name: Install podman for Disconnected Registry
-      dnf:
-        name:
-          - podman
-        state: latest
-      become: True
-
     - name: Enable Disconnected Registry port in firewall
       firewalld:
         permanent: yes
