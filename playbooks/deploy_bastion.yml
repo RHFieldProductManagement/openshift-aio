@@ -614,7 +614,7 @@
         create: yes
         attributes: +i
 
-- name:	Copy over the CentOS/RHEL8 KVM image over to bastion
+- name: Copy over the CentOS/RHEL8 KVM image over to bastion
   remote_user: root
   hosts: target
   gather_facts: false
