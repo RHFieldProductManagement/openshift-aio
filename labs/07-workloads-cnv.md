@@ -4,7 +4,7 @@ REWORK STILL REQUIRED
 
 Let's get into actually testing some workloads on our environment... we've spent all of this time building it up but we haven't even proven that it's working properly yet! In this section we're going to be deploying some pods as well as deploying a VM using OpenShift Virtualization.
 
-## Deploying a Virtual Machine
+## Deploying a Virtual Machine Using OCS and Bridge Net
 
 In the previous deploy OpenShift Virtualization lab we installed the OpenShift Virtualization operator and created a virtualization cluster.  We also configured an external bridge so that our virtual machines can be connected to the outside network.  
 
@@ -499,7 +499,11 @@ rtt min/avg/max/mdev = 1.886/2.192/2.807/0.370 ms
 
 As you can see we were able to access the outside world!
 
-Feel free to play around with the OpenShift Web Console and the Virtualization menu's - this was a quick play around with all of this, but should time allow, go ahead and see what you can do.
+## Deploying a Virtual Machine Using NFS and Bridge
+
+## Deploying a Virtual Machine Using Hostpath and Bridge
+
+
 
 ## Success!
 
