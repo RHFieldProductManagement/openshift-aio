@@ -241,7 +241,6 @@ spec:
   name: local-storage-operator
   source: redhat-operators
   sourceNamespace: openshift-marketplace
-EOF
 ~~~
 
 We can see from the above subscription yaml file we will be subscribed to the 4.6 release and the operator will run under the openshift-local-storage namespace.  Now lets go ahead and create the subscription:
