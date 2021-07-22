@@ -204,38 +204,22 @@ _[virt-template-validator](https://kubernetes.io/blog/2018/05/22/getting-to-know
 
 There's also a few custom resources that get defined too, for example the `NodeNetworkState` (`nns` for short) definitions that can be used with the `nmstate-handler` pods to ensure that the NetworkManager state on each node is configured as required, e.g. for defining interfaces/bridges on each of the machines for connectivity for both the physical machine itself and for providing network access for pods (and virtual machines) within OpenShift/Kubernetes:
 
-```bash
-[lab-user@provision ~]$ oc get nns -A
-NAME                                 AGE
-master-0.nlm9j.dynamic.opentlc.com   117s
-master-1.nlm9j.dynamic.opentlc.com   2m
-master-2.nlm9j.dynamic.opentlc.com   2m8s
-worker-0.nlm9j.dynamic.opentlc.com   2m14s
-worker-1.nlm9j.dynamic.opentlc.com   2m11s
-worker-2.nlm9j.dynamic.opentlc.com   2m15s
+~~~bash
+[root@ocp4-bastion ~]# oc get nns -A
+NAME                           AGE
+ocp4-master1.aio.example.com   127m
+ocp4-master2.aio.example.com   127m
+ocp4-master3.aio.example.com   127m
+ocp4-worker1.aio.example.com   127m
+ocp4-worker2.aio.example.com   127m
+ocp4-worker3.aio.example.com   127m
 
-[lab-user@provision ~]$ oc get nns/worker-2.$GUID.dynamic.opentlc.com -o yaml
-apiVersion: nmstate.io/v1alpha1
-kind: NodeNetworkState
-metadata:
-  creationTimestamp: "2020-09-25T18:54:17Z"
-  generation: 1
-(...)
-  name: worker-2
-(...)
-   interfaces:
-- ipv4:
-        enabled: false
-      ipv6:
-        enabled: false
-      mac-address: 92:0a:eb:3f:f2:4e
-      mtu: 1400
-      name: br-ext
-      state: down
-      type: ovs-interface
-    - ipv4:
+[root@ocp4-bastion ~]# oc get nns/ocp4-worker1.aio.example.com -o yaml
+- ethernet:
+        auto-negotiation: false
+      ipv4:
         address:
-        - ip: 172.22.0.48
+        - ip: 172.22.0.69
           prefix-length: 24
         auto-dns: true
         auto-gateway: true
@@ -244,7 +228,7 @@ metadata:
         enabled: true
       ipv6:
         address:
-        - ip: fe80::5f23:c69d:ee2b:88a2
+        - ip: fe80::e5bb:5e92:82ed:ed2c
           prefix-length: 64
         auto-dns: true
         auto-gateway: true
@@ -252,30 +236,89 @@ metadata:
         autoconf: true
         dhcp: true
         enabled: true
-      mac-address: DE:AD:BE:EF:00:52
+      lldp:
+        enabled: false
+      mac-address: DE:AD:BE:EF:00:04
       mtu: 1500
-      name: ens4
+      name: enp1s0
       state: up
       type: ethernet
-
+    - ethernet:
+        auto-negotiation: false
+      ipv4:
+        address:
+        - ip: 192.168.123.104
+          prefix-length: 24
+        - ip: 192.168.123.11
+          prefix-length: 32
+        auto-dns: true
+        auto-gateway: true
+        auto-routes: true
+        dhcp: true
+        enabled: true
+      ipv6:
+        address:
+        - ip: fe80::b556:94d9:4725:1f38
+          prefix-length: 64
+        auto-dns: true
+        auto-gateway: true
+        auto-routes: true
+        autoconf: true
+        dhcp: true
+        enabled: true
+      lldp:
+        enabled: false
+      mac-address: "52:54:00:00:00:04"
+      mtu: 1500
+      name: enp2s0
+      state: up
+      type: ethernet
+    - ethernet:
+        auto-negotiation: false
+      ipv4:
+        address:
+        - ip: 192.168.123.61
+          prefix-length: 24
+        auto-dns: true
+        auto-gateway: true
+        auto-routes: true
+        dhcp: true
+        enabled: true
+      ipv6:
+        address:
+        - ip: fe80::589a:5b52:8e6c:6f8
+          prefix-length: 64
+        auto-dns: true
+        auto-gateway: true
+        auto-routes: true
+        autoconf: true
+        dhcp: true
+        enabled: true
+      lldp:
+        enabled: false
+      mac-address: "52:54:00:00:01:04"
+      mtu: 1500
+      name: enp3s0
+      state: up
+      type: ethernet
 (...)
-```
+~~~
 
 Here you can see the current state of the node (some of the output has been cut), the interfaces attached, and their physical/logical addresses. Before we move on from this lab we need to ensure that we have setup a proper bridge for our VMs to get direct access to the external network that our workers are on, making it easy for us to connect to any VM's we decide to create. We can do this by creating a **NodeNetworkConfigurationPolicy** (nncp):
 
-```bash
-[lab-user@provision ocp]$ cat << EOF | oc apply -f -
+~~~bash
+[root@ocp4-bastion ~]# cat << EOF | oc apply -f -
 apiVersion: nmstate.io/v1alpha1
 kind: NodeNetworkConfigurationPolicy
 metadata:
-  name: worker-brext-ens3
+  name: worker-brext-enp3s0
 spec:
   nodeSelector:
     node-role.kubernetes.io/worker: ""
   desiredState:
     interfaces:
       - name: brext
-        description: brext with ens3
+        description: brext with enp3s0
         type: linux-bridge
         state: up
         ipv4:
@@ -286,69 +329,67 @@ spec:
             stp:
               enabled: false
           port:
-            - name: ens3
+            - name: enp3s0
 EOF
-nodenetworkconfigurationpolicy.nmstate.io/worker-brext-ens3 created
-```
+nodenetworkconfigurationpolicy.nmstate.io/worker-brext-enp3s0 created
+~~~
 
 The above policy will attach the "brext" bridge to the external network interface **ens3**. We can watch the progress by requesting the **NodeNetworkConfigurationEnactment** (nnce) by running the following a few times:
 
-```bash
-[lab-user@provision ocp]$ oc get nnce
-NAME                                                   STATUS
-master-0.hhnfk.dynamic.opentlc.com.worker-brext-ens3   NodeSelectorNotMatching
-master-1.hhnfk.dynamic.opentlc.com.worker-brext-ens3   NodeSelectorNotMatching
-master-2.hhnfk.dynamic.opentlc.com.worker-brext-ens3   NodeSelectorNotMatching
-worker-0.hhnfk.dynamic.opentlc.com.worker-brext-ens3   ConfigurationProgressing
-worker-1.hhnfk.dynamic.opentlc.com.worker-brext-ens3   ConfigurationProgressing
-worker-2.hhnfk.dynamic.opentlc.com.worker-brext-ens3   ConfigurationProgressing
+~~~bash
+[root@ocp4-bastion ~]# oc get nnce
+NAME                                               STATUS
+ocp4-master1.aio.example.com.worker-brext-enp3s0   NodeSelectorNotMatching
+ocp4-master2.aio.example.com.worker-brext-enp3s0   NodeSelectorNotMatching
+ocp4-master3.aio.example.com.worker-brext-enp3s0   NodeSelectorNotMatching
+ocp4-worker1.aio.example.com.worker-brext-enp3s0   AllSelectorsMatching
+ocp4-worker2.aio.example.com.worker-brext-enp3s0   AllSelectorsMatching
+ocp4-worker3.aio.example.com.worker-brext-enp3s0   ConfigurationProgressing
 
-[lab-user@provision ocp]$ oc get nnce
-NAME                                                   STATUS
-master-0.hhnfk.dynamic.opentlc.com.worker-brext-ens3   NodeSelectorNotMatching
-master-1.hhnfk.dynamic.opentlc.com.worker-brext-ens3   NodeSelectorNotMatching
-master-2.hhnfk.dynamic.opentlc.com.worker-brext-ens3   NodeSelectorNotMatching
-worker-0.hhnfk.dynamic.opentlc.com.worker-brext-ens3   SuccessfullyConfigured
-worker-1.hhnfk.dynamic.opentlc.com.worker-brext-ens3   SuccessfullyConfigured
-worker-2.hhnfk.dynamic.opentlc.com.worker-brext-ens3   SuccessfullyConfigured
-```
+[root@ocp4-bastion ~]# oc get nnce
+NAME                                               STATUS
+ocp4-master1.aio.example.com.worker-brext-enp3s0   NodeSelectorNotMatching
+ocp4-master2.aio.example.com.worker-brext-enp3s0   NodeSelectorNotMatching
+ocp4-master3.aio.example.com.worker-brext-enp3s0   NodeSelectorNotMatching
+ocp4-worker1.aio.example.com.worker-brext-enp3s0   SuccessfullyConfigured
+ocp4-worker2.aio.example.com.worker-brext-enp3s0   SuccessfullyConfigured
+ocp4-worker3.aio.example.com.worker-brext-enp3s0   SuccessfullyConfigured
+
+~~~
 
 > **NOTE**: You may need to run the `oc get nnce` a fair few times before all three of your workers are "SuccessfullyConfigured".
 
-
-
 If we debug one of the worker nodes we can see that a "brext" interface has been created:
 
-```bash
-[lab-user@provision ~]$ oc debug node/worker-0.$GUID.dynamic.opentlc.com
-Starting pod/worker-0xcs2vdynamicopentlccom-debug ...
+~~~bash
+[root@ocp4-bastion ~]# oc debug node/ocp4-worker1.aio.example.com
+Starting pod/ocp4-worker1aioexamplecom-debug ...
 To use host binaries, run `chroot /host`
-Pod IP: 10.20.0.200
+Pod IP: 192.168.123.104
 If you don't see a command prompt, try pressing enter.
-sh-4.2# chroot /host
-
+sh-4.4# chroot /host
 sh-4.4# ip a show brext
-49: brext: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 8942 qdisc noqueue state UP group default qlen 1000
-    link/ether ba:dc:0f:fe:e0:50 brd ff:ff:ff:ff:ff:ff
-    inet 172.22.0.48/24 brd 10.20.0.255 scope global dynamic noprefixroute brext
-       valid_lft 43118sec preferred_lft 43118sec
-
+170: brext: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue state UP group default qlen 1000
+    link/ether 52:54:00:00:01:04 brd ff:ff:ff:ff:ff:ff
+    inet 192.168.123.61/24 brd 192.168.123.255 scope global dynamic noprefixroute brext
+       valid_lft 43095sec preferred_lft 43095sec
 sh-4.4# exit
 exit
-sh-4.2# exit
+sh-4.4# exit
 exit
 
 Removing debug pod ...
-```
+~~~
+
 >  **NOTE**: Make sure to exit out of the worker's debug pod before proceeding.
 
 Once the bridges have been successfully configured we can then add a **NetworkAttachmentDefinition** which will tell OpenShift about this new bridge that can be consumed for virtual machines (note the "cnv-bridge" type):
 
-```bash
-[lab-user@provision ocp]$ oc project default
-Now using project "default" on server "https://api.xcs2v.dynamic.opentlc.com:6443".
+~~~bash
+[root@ocp4-bastion ~]# oc project default
+Now using project "default" on server "https://api.aio.example.com:6443".
 
-[lab-user@provision ocp]$ cat << EOF | oc apply -f -
+[root@ocp4-bastion ~]# cat << EOF | oc apply -f -
 apiVersion: "k8s.cni.cncf.io/v1"
 kind: NetworkAttachmentDefinition
 metadata:
@@ -370,9 +411,8 @@ spec:
     ]
   }'
 EOF
-
 networkattachmentdefinition.k8s.cni.cncf.io/tuning-bridge-fixed created
-```
+~~~
 
 Once those have been applied we can now move forward in the lab.
 
