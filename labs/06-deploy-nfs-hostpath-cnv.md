@@ -1,8 +1,8 @@
 # **Deploying NFS Shared Storage and HostPath Storage**
 
-In this lab we are going to setup two different types of storage, firstly standard NFS shared storage, and also `hostpath` storage which uses the hypervisor's local disks, somewhat akin to ephemeral storage provided by OpenStack.
+In this lab we are going to setup two different types of storage in addition to OCS/ODF which may have been configured either via AIO or a previous lab. The first storage is standard NFS shared storage, and the second is `hostpath` storage which uses the hypervisor's local disks, somewhat akin to ephemeral storage provided by OpenStack.
 
-First ensure we are in the default project:
+First for NFS storage ensure we are in the default project:
 
 ~~~bash
 [root@ocp4-bastion ~]# oc project default
@@ -33,7 +33,7 @@ nfs    kubernetes.io/no-provisioner   Delete          Immediate           false 
 
 Next we will create two physical volumes (PVs): **nfs-pv1** and **nfs-pv2**:
 
-Create nfs-pv1:
+Create nfs-pv1 with the following resource yaml:
 
 ~~~bash
 [root@ocp4-bastion ~]# cat << EOF | oc apply -f -
@@ -58,7 +58,7 @@ EOF
 persistentvolume/nfs-pv1 created
 ~~~
 
-Create nfs-pv2:
+Create nfs-pv2 with the following resource yaml:
 
 ~~~bash
 [root@ocp4-bastion ~]# cat << EOF | oc apply -f -
@@ -83,9 +83,7 @@ EOF
 persistentvolume/nfs-pv2 created
 ~~~
 
-
-
-Check the PV's:
+Check that the PV's are created and available:
 
 ~~~bash
 [root@ocp4-bastion ~]# oc get pv |grep nfs
@@ -93,7 +91,6 @@ NAME       CAPACITY   ACCESS MODES   RECLAIM POLICY   STATUS      CLAIM       ST
 nfs-pv1    40Gi       RWO,RWX        Delete           Available               nfs                                    3m32s
 nfs-pv2    40Gi       RWO,RWX        Delete           Available               nfs                                    3m3s
 ~~~
-
 
 Now let's create a new NFS-based Peristent Volume Claim (PVC). 
 
@@ -108,7 +105,7 @@ In addition to triggering the CDI utility we also specify the storage class we c
 OK, let's create the PVC with all this included!
 
 ~~~bash
-$ cat << EOF | oc apply -f -
+[root@ocp4-bastion ~]# cat << EOF | oc apply -f -
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
@@ -126,81 +123,50 @@ spec:
     requests:
       storage: 40Gi
 EOF
-
 persistentvolumeclaim/rhel8-nfs created
 ~~~
 
 Once created, CDI triggers the importer pod automatically to take care of the conversion for you:
 
 ~~~bash
-$ oc get pods
-NAME                   READY   STATUS              RESTARTS   AGE
-importer-rhel8-nfs     0/1     ContainerCreating   0          1s
+[root@ocp4-bastion ~]# oc get pods
+NAME                 READY   STATUS              RESTARTS   AGE
+importer-rhel8-nfs   0/1     ContainerCreating   0          15s
 ~~~
 
 Watch the logs and you can see the process:
 
 ~~~bash
-$ oc logs importer-rhel8-nfs -f
-I0316 22:15:51.149275       1 importer.go:51] Starting importer
-I0316 22:15:51.150113       1 importer.go:107] begin import process
-I0316 22:15:51.171501       1 data-processor.go:275] Calculating available size
-I0316 22:15:51.173289       1 data-processor.go:283] Checking out file system volume size.
-I0316 22:15:51.173513       1 data-processor.go:287] Request image size not empty.
-I0316 22:15:51.173537       1 data-processor.go:292] Target size 40Gi.
-I0316 22:15:51.174024       1 data-processor.go:205] New phase: TransferDataFile
-I0316 22:15:51.177518       1 util.go:170] Writing data...
-I0316 22:15:52.174786       1 prometheus.go:69] 2.30
-I0316 22:15:53.174905       1 prometheus.go:69] 3.98
-I0316 22:15:54.175025       1 prometheus.go:69] 5.64
+[root@ocp4-bastion ~]# oc logs importer-rhel8-nfs -f
+I0722 21:08:31.696805       1 importer.go:52] Starting importer
+I0722 21:08:31.698159       1 importer.go:134] begin import process
+I0722 21:08:31.702940       1 data-processor.go:324] Calculating available size
+I0722 21:08:31.703825       1 data-processor.go:336] Checking out file system volume size.
+I0722 21:08:31.704194       1 data-processor.go:344] Request image size not empty.
+I0722 21:08:31.704222       1 data-processor.go:349] Target size 40Gi.
+I0722 21:08:31.705436       1 data-processor.go:232] New phase: TransferDataFile
+I0722 21:08:31.727374       1 util.go:161] Writing data...
+I0722 21:08:32.705842       1 prometheus.go:69] 3.61
+I0722 21:08:33.706218       1 prometheus.go:69] 6.86
+I0722 21:08:34.706365       1 prometheus.go:69] 9.20
 (...)
-I0317 11:46:56.253155       1 prometheus.go:69] 98.24
-I0317 11:46:57.253350       1 prometheus.go:69] 100.00
-I0317 11:47:00.195494       1 data-processor.go:205] New phase: Resize
-I0317 11:47:00.524989       1 data-processor.go:268] Expanding image size to: 40Gi
-I0317 11:47:00.878420       1 data-processor.go:205] New phase: Complete
+I0722 21:09:21.732036       1 prometheus.go:69] 95.42
+I0722 21:09:22.732273       1 prometheus.go:69] 98.01
+I0722 21:09:23.732657       1 prometheus.go:69] 100.00
+I0722 21:09:37.952573       1 data-processor.go:232] New phase: Resize
+W0722 21:09:39.094796       1 data-processor.go:311] Available space less than requested size, resizing image to available space 40587440640.
+I0722 21:09:39.094825       1 data-processor.go:317] Expanding image size to: 40587440640
+I0722 21:09:39.120150       1 data-processor.go:238] Validating image
+I0722 21:09:39.134054       1 data-processor.go:232] New phase: Complete
+I0722 21:09:39.134248       1 importer.go:212] Import Complete
 ~~~
 
-If you're quick, you can view the structure of the importer pod to get some of the configuration it's using:
+Once this process has completed the PVC is ready to be consumed:
 
 ~~~bash
-$ oc describe pod $(oc get pods | awk '/importer/ {print $1;}')
-Name:         importer-rhel8-nfs
-Namespace:    default
-Priority:     0
-Node:         ocp4-worker2.cnv.example.com/192.168.123.105
-Start Time:   Wed, 18 Mar 2020 14:27:13 -0400
-Labels:       app=containerized-data-importer
-              cdi.kubevirt.io=importer
-              cdi.kubevirt.io/storage.import.importPvcName=rhel8-nfs
-              prometheus.cdi.kubevirt.io=
-(...)
-   Environment:
-      IMPORTER_SOURCE:       http
-      IMPORTER_ENDPOINT:     http://192.168.123.100:81/rhel8-kvm.img
-      IMPORTER_CONTENTTYPE:  kubevirt
-      IMPORTER_IMAGE_SIZE:   40Gi
-      OWNER_UID:             63f629f6-963f-4d5b-8eda-e28455cd8999
-      INSECURE_TLS:          false
-    Mounts:
-      /data from cdi-data-vol (rw)
-(...)
-Volumes:
-  cdi-data-vol:
-    Type:       PersistentVolumeClaim (a reference to a PersistentVolumeClaim in the same namespace)
-    ClaimName:  rhel8-nfs
-    ReadOnly:   false
-(...)
-~~~
-
-Here we can see the importer settings we requested through our claims, such as `IMPORTER_SOURCE`, `IMPORTER_ENDPOINT`, and `IMPORTER_IMAGE_SIZE`. 
-
-Once this process has completed you'll notice that your PVC is ready to use:
-
-~~~bash
-$ oc get pvc
+[root@ocp4-bastion ~]# oc get pvc
 NAME        STATUS   VOLUME    CAPACITY   ACCESS MODES   STORAGECLASS   AGE
-rhel8-nfs   Bound    nfs-pv2   40Gi       RWO,RWX        nfs            10h
+rhel8-nfs   Bound    nfs-pv1   40Gi       RWO,RWX        nfs            5m11s
 ~~~
 
 > **NOTE**: In your environment it may be bound to `nfs-pv1` or `nfs-pv2` - we simply created two earlier for convenience, so don't worry if your output is not exactly the same here. The important part is that it's showing as `Bound`.
@@ -208,11 +174,10 @@ rhel8-nfs   Bound    nfs-pv2   40Gi       RWO,RWX        nfs            10h
 This same configuration should be reflected when asking OpenShift for a list of persistent volumes (`PV`), noting that one of the PV's we created earlier is still showing as `Available` and one is `Bound` to the claim we just requested:
 
 ~~~bash
-$ oc get pv
-NAME                    CAPACITY   ACCESS MODES   RECLAIM POLICY   STATUS      CLAIM                                             STORAGECLASS   REASON   AGE
-nfs-pv1                 40Gi       RWO,RWX        Delete           Available                                                     nfs                     10h
-nfs-pv2                 40Gi       RWO,RWX        Delete           Bound       default/rhel8-nfs                                 nfs                     10h
-openshift-registry-pv   100Gi      RWX            Retain           Bound       openshift-image-registry/image-registry-storage                           23h
+[root@ocp4-bastion ~]# oc get pv |grep nfs
+NAME      CAPACITY   ACCESS MODES   RECLAIM POLICY   STATUS      CLAIM                             STORAGECLASS   REASON   AGE
+nfs-pv1   40Gi       RWO,RWX        Delete           Bound       default/rhel8-nfs                 nfs                     73m
+nfs-pv2   40Gi       RWO,RWX        Delete           Available                                     nfs                     72m
 ~~~
 
 Recall that when we setup the `PV` resources we specified the location and path of the NFS server that we wanted to utilise:
@@ -225,26 +190,25 @@ Recall that when we setup the `PV` resources we specified the location and path 
 
 If we have a look on our NFS server we can make sure that it's using this correctly
 
-> **NOTE**: In your environment, if your image was 'pv1' rather than 'pv2', adjust the commands to match your setup. 
+> **NOTE**: In your environment, if your image was 'pv2' rather than 'pv1', adjust the commands to match your setup. 
 
 ~~~bash
-$ ssh root@192.168.123.100
-(password is 'redhat')
+[root@ocp4-bastion ~]# ls -l /nfs/pv1
+total 10495876
+-rw-rw----. 1 root root 40587440640 Jul 22 21:09 disk.img
 
-# ls /nfs/pv2 
-disk.img
+[root@ocp4-bastion ~]# ls -l /nfs/pv1
+total 10495876
+-rw-rw----. 1 root root 40587440640 Jul 22 21:09 disk.img
 
-# qemu-img info /nfs/pv2/disk.img
-image: /nfs/pv2/disk.img
+[root@ocp4-bastion ~]# qemu-img info /nfs/pv1/disk.img
+image: /nfs/pv1/disk.img
 file format: raw
-virtual size: 40G (42949672960 bytes)
+virtual size: 37.8 GiB (40587440640 bytes)
+disk size: 10 GiB
 
-# file /nfs/pv2/disk.img
-/nfs/pv2/disk.img: DOS/MBR boot sector
-
-# exit
-logout
-Connection to 192.168.123.100 closed.
+[root@ocp4-bastion ~]# file /nfs/pv1/disk.img
+/nfs/pv1/disk.img: DOS/MBR boot sector
 ~~~
 
 We'll use this NFS-based RHEL8 image when we provision a virtual machine in one of the next steps.
@@ -254,10 +218,10 @@ We'll use this NFS-based RHEL8 image when we provision a virtual machine in one 
 
 Now let's create a second storage type based on `hostpath` storage. We'll follow a similar approach to setting this up, but we won't be using shared storage, so all of the data that we create on hostpath type volumes is essentially ephemeral, and resides on the local disk of the hypervisors (OpenShift worker's) themselves. As we're not using a pre-configured shared storage pool for this we need to ask OpenShift's `MachineConfigOperator` to do some work for us directly on our worker nodes.
 
-Run the following in the terminal window - it will generate a new `MachineConfig` that the cluster will enact, recognising that we only match on the worker nodes (`machineconfiguration.openshift.io/role: worker`):
+Run the following from the command line - it will generate a new `MachineConfig` that the cluster will enact, recognising that we only match on the worker nodes (`machineconfiguration.openshift.io/role: worker`):
 
 ~~~bash
-$ cat << EOF | oc apply -f -
+[root@ocp4-bastion ~]# cat << EOF | oc apply -f -
 apiVersion: machineconfiguration.openshift.io/v1
 kind: MachineConfig
 metadata:
@@ -290,50 +254,33 @@ EOF
 machineconfig.machineconfiguration.openshift.io/50-set-selinux-for-hostpath-provisioner-worker created
 ~~~
 
-This deploys a new `systemd` unit file on the worker nodes to create a new directory at `/var/hpvolumes` and relabels it with the correct SELinux contexts at boot-time, ensuring that OpenShift can leverage that directory for local storage. We do this via a `MachineConfig` as the CoreOS machine is immutable. You should first start to witness OpenShift starting to drain the worker nodes and disable scheduling on them so the nodes can be rebooted safely:
+This deploys a new `systemd` unit file on the worker nodes to create a new directory at `/var/hpvolumes` and relabels it with the correct SELinux contexts at boot-time, ensuring that OpenShift can leverage that directory for local storage. We do this via a `MachineConfig` as the CoreOS machine is immutable. We should first start to witness OpenShift starting to drain the worker nodes and disable scheduling on them so the nodes can be rebooted safely:
 
 ~~~bash
-$ oc get nodes
-NAME                           STATUS                        ROLES    AGE   VERSION
-ocp4-master1.cnv.example.com   Ready                         master   16h   v1.17.1+912792b
-ocp4-master2.cnv.example.com   Ready                         master   16h   v1.17.1+912792b
-ocp4-master3.cnv.example.com   Ready                         master   16h   v1.17.1+912792b
-ocp4-worker1.cnv.example.com   Ready                         worker   16h   v1.17.1+912792b
-ocp4-worker2.cnv.example.com   NotReady,SchedulingDisabled   worker   16h   v1.17.1+912792b
-~~~
-
-
-
-> **NOTE**: This will take a few minutes to reflect on the cluster, and causes the worker nodes to reboot. You'll witness a disruption on the lab guide functionality where you will see the consoles hang and/or display a "Closed" image. In some cases we have needed to refresh the entire browser.
->
-> <img src="img/disconnected-terminal.png"/>
-
-> It should automatically reconnect but if it doesn't, you can try reloading the terminal by clicking the three bars in the top right hand corner:
-
-<img src="img/reload-terminal.png"/>
-
-
-
-When you're able to issue commands again, make sure you're in the correct namespace again:
-
-~~~bash
-$ oc project default
-Now using project "default" on server "https://172.30.0.1:443".
+[root@ocp4-bastion ~]# oc get nodes
+NAME                           STATUS                     ROLES    AGE     VERSION
+ocp4-master1.aio.example.com   Ready                      master   25h     v1.20.0+87cc9a4
+ocp4-master2.aio.example.com   Ready                      master   25h     v1.20.0+87cc9a4
+ocp4-master3.aio.example.com   Ready                      master   25h     v1.20.0+87cc9a4
+ocp4-worker1.aio.example.com   Ready                      worker   25h     v1.20.0+87cc9a4
+ocp4-worker2.aio.example.com   Ready,SchedulingDisabled   worker   25h     v1.20.0+87cc9a4
+ocp4-worker3.aio.example.com   Ready                      worker   7h23m   v1.20.0+87cc9a4
 ~~~
 
 Now wait for the following command to return `True` as it indicates when the `MachineConfigPool`'s worker has been updated with the latest `MachineConfig` requested: 
 
 ~~~bash
-$ oc get machineconfigpool worker -o=jsonpath="{.status.conditions[?(@.type=='Updated')].status}{\"\n\"}"
+[root@ocp4-bastion ~]# oc get machineconfigpool worker -o=jsonpath="{.status.conditions[?(@.type=='Updated')].status}{\"\n\"}"
+False
+
+[root@ocp4-bastion ~]# oc get machineconfigpool worker -o=jsonpath="{.status.conditions[?(@.type=='Updated')].status}{\"\n\"}"
 True
 ~~~
 
-
 Now we can set the HostPathProvisioner configuration itself, i.e. telling the operator what path to actually use - the systemd file we just applied merely ensures that the directory is present and has the correct SELinux labels applied to it:
 
-
 ~~~bash
-$ cat << EOF | oc apply -f -
+[root@ocp4-bastion ~]# cat << EOF | oc apply -f -
 apiVersion: hostpathprovisioner.kubevirt.io/v1beta1
 kind: HostPathProvisioner
 metadata:
@@ -344,23 +291,23 @@ spec:
     path: "/var/hpvolumes"
     useNamingPrefix: false
 EOF
-
 hostpathprovisioner.hostpathprovisioner.kubevirt.io/hostpath-provisioner created
 ~~~
 
 When you've applied this config, an additional pod will be spawned on each of the worker nodes; this pod is responsible for managing the hostpath access on the respective host; note the shorter age (42s in the example below):
 
 ~~~bash
-$ oc get pods -n openshift-cnv | grep hostpath
-hostpath-provisioner-operator-55595cb9b7-dsp94        1/1     Running   0          15m
-hostpath-provisioner-rvxkk                            1/1     Running   0          42s
-hostpath-provisioner-z95lr                            1/1     Running   0          42s
+[root@ocp4-bastion ~]# oc get pods -n openshift-cnv | grep hostpath
+hostpath-provisioner-df5b9                            1/1     Running   0          25s
+hostpath-provisioner-operator-695bf6fbd6-46ks5        1/1     Running   0          11m
+hostpath-provisioner-wnbvz                            1/1     Running   0          25s
+hostpath-provisioner-xjvzp                            1/1     Running   0          25s
 ~~~
 
 We're now ready to configure a new `StorageClass` for the HostPath based storage:
 
 ~~~bash
-$ cat << EOF | oc apply -f -
+[root@ocp4-bastion ~]# cat << EOF | oc apply -f -
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
@@ -369,15 +316,22 @@ provisioner: kubevirt.io/hostpath-provisioner
 reclaimPolicy: Delete
 volumeBindingMode: WaitForFirstConsumer
 EOF
-
 storageclass.storage.k8s.io/hostpath-provisioner created
+~~~
+
+Confirm the storageclass was created:
+
+~~~bash
+[root@ocp4-bastion ~]# oc get sc hostpath-provisioner
+NAME                   PROVISIONER                        RECLAIMPOLICY   VOLUMEBINDINGMODE      ALLOWVOLUMEEXPANSION   AGE
+hostpath-provisioner   kubevirt.io/hostpath-provisioner   Delete          WaitForFirstConsumer   false                  31s
 ~~~
 
 You'll note that this storage class **does** have a provisioner (as opposed to the previous use of `kubernetes.io/no-provisioner`), and therefore it can create persistent volumes dynamically when a claim is submitted by the user, let's validate that by creating a new hostpath based PVC and checking that it creates the associated PV:
 
 
 ~~~bash
-$ cat << EOF | oc apply -f -
+[root@ocp4-bastion ~]# cat << EOF | oc apply -f -
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
