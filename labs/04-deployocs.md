@@ -597,7 +597,7 @@ At this point you have a fully functional OpenShift Container Storage cluster to
 
 ~~~bash
 [root@ocp4-bastion ~]# oc patch OCSInitialization ocsinit -n openshift-storage \
->     --type json --patch '[{ "op": "replace", "path": "/spec/enableCephTools", "value": true }]'
+     --type json --patch '[{ "op": "replace", "path": "/spec/enableCephTools", "value": true }]'
 ocsinitialization.ocs.openshift.io/ocsinit patched
 ~~~
 
