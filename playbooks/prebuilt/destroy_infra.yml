@@ -1,4 +1,37 @@
 ---
+
+- name: Build inventory if required
+  hosts: localhost
+  gather_facts: false
+  tasks:
+
+  - name: Check if inventory file exists
+    ansible.builtin.stat:
+      path: ../../inventory.yml
+    register: inventory_file
+
+  - name: Unknown host or empty inventory file!
+    pause:
+      prompt: |
+
+        It looks like we haven't built server {{ prebuilt_ip }}!
+
+        Do you want to attempt to clean it up? (Return, or Ctrl-C then A to cancel)
+    when: not inventory_file.stat.exists
+
+  - name: Build new inventory file for server
+    ini_file:
+      dest: ../../inventory.yml
+      section: target
+      option: "{{ prebuilt_ip }} ansible_ssh_common_args='-o StrictHostKeyChecking=no'"
+      mode: 0666
+      state: present
+      backup: no
+      allow_no_value: yes
+    when: not inventory_file.stat.exists
+
+  - meta: refresh_inventory
+
 - name: Destroy Baremetal instance in provider {{ baremetal_provider }}
   hosts: target
   remote_user: root
