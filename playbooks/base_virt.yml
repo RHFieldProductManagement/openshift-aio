@@ -348,14 +348,17 @@
         force: no
       when: not root_ssh_key.stat.exists
 
-    - name: Remove the workers in a compact deployment
-      vars:
-        vm_name: "ocp4-{{ item.key }}"
+    - name: Remove the workers in a compact deployment when overridden
       virt:
-        name: "ocp4-{{ item.key }}"
+        name: "ocp4-{{ item }}"
         command: undefine
-      with_dict: "{{ vms['workers'] }}"
-      when: vm_name in vm_list.list_vms
+      loop:
+        - "worker1"
+        - "worker2"
+        - "worker3"
+      when:
+        - hostvars['localhost']['override_deploy_compact']
+        - not deploy_compact
 
     - name: Attach OCS disks to master nodes for compact mode (osd1)
       ansible.builtin.command: >
