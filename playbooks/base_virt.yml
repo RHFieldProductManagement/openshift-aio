@@ -337,7 +337,7 @@
     - name: Check if ssh-key already exists
       ansible.builtin.stat:
         path: "/root/.ssh/id_rsa"
-      register: ssh_key
+      register: root_ssh_key
 
     - name: Generate ssh-key for connectivity across deployments
       openssh_keypair:
@@ -346,7 +346,7 @@
         size: 4096
         state: present
         force: no
-      when: not ssh_key.stat.exists
+      when: not root_ssh_key.stat.exists
 
     - name: Remove the workers in a compact deployment
       vars:
