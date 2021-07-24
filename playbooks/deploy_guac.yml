@@ -13,6 +13,13 @@
   hosts: target
   tasks:
 
+    - name: Ensure podman is available
+      dnf:
+        name:
+          - podman
+        state: latest
+      become: True
+
     - name: Check if firewalld is available
       ansible.builtin.command: systemctl status firewalld
       register: firewalld_avail

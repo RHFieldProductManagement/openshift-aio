@@ -41,7 +41,7 @@ With the current implementation it's possible to achieve the following-
 
 # Getting Started
 
-Note, these playbooks are expected to be operated from your workstation/laptop, and not executed on the target host directly, therefore please don't clone this repository on the baremetal system you want to use, clone them locally and execute **against** a target machine.
+Note, these playbooks are expected to be operated from your workstation/laptop, and not executed on the target host directly, however, if you clone this repository on the baremetal system you want to use, make sure that your `prebuilt_ip` is the IP or hostname of the machine, and *not* `127.0.0.1`; when you're executing against a remote server or running the playbooks locally, you will need to make sure that the user in which you execute the playbooks with has password-free root access to the target by ensuring that ssh-keys are exchanged prior to operation.
 
 To get started, first clone this repository:
 

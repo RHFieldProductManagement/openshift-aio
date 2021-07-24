@@ -2,7 +2,8 @@
 baremetal_provider: prebuilt
 
 # Set the prebuilt IP address or hostname (please setup ssh-keys first)
-# Do not run this against 127.0.0.1 - execute against remote system
+# If you're running against a local system, don't use 127.0.0.1, still
+# use the IP/hostname as if you were running against a remote system.
 prebuilt_ip: 10.0.0.1
 
 # Set Packet API Token

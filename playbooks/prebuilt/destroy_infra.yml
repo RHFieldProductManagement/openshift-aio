@@ -129,6 +129,14 @@
       loop: "{{ disks_found_list }}"
       when: disks_found_list is defined
 
+    - name: Remove any disks created for CNV
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - "/var/lib/libvirt/images/centos8-kvm-cnv.qcow2"
+        - "/var/lib/libvirt/images/centos8-kvm-cnv.img"
+
     - name: Remove VBMC entries if IPI
       ansible.builtin.command: "vbmc delete {{ item }}"
       loop: "{{ vm_list.list_vms }}"

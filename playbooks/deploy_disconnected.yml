@@ -6,6 +6,13 @@
   hosts: bastion
   tasks:
 
+    - name: Ensure podman is available
+      dnf:
+        name:
+          - podman
+        state: latest
+      become: True
+
     - name: Ensure Bastion machine is available
       wait_for_connection:
         timeout: 120

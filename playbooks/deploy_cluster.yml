@@ -232,12 +232,24 @@
       debug:
         msg: "{{ msg.split('\n') }}"
 
-    - name: Run OpenShift Installation for IPI
+    # Ignore errors here to avoid timeout issues and run wait-for install-complete
+    - name: Run OpenShift Installation for IPI with 1hr timeout
       ansible.builtin.command: >
         /root/openshift-baremetal-install
         --dir=/root/ocp-install/ --log-level=debug
         create cluster
       when: deploy_type == "ipi"
+      ignore_errors: true
+      register: ipi_install
+
+    - name: Wait for install-complete for IPI when first failed
+      ansible.builtin.command: >
+        /root/openshift-baremetal-install
+        --dir=/root/ocp-install/ --log-level=debug
+        wait-for install-complete
+      when:
+        - deploy_type == "ipi"
+        - ipi_install is failed
 
 - name: Power up nodes for UPI installation
   hosts: target

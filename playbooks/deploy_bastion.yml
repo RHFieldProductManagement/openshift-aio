@@ -645,6 +645,7 @@
 
     - name: Copy CentOS8 base image to bastion machine
       ansible.builtin.shell: >
-        scp /var/lib/libvirt/images/centos8-kvm-cnv.img
+        scp -o "StrictHostKeyChecking no"
+        /var/lib/libvirt/images/centos8-kvm-cnv.img
         root@192.168.123.100:/var/www/html/rhel8-kvm.img
       when: not centos8_cnv.stat.exists
