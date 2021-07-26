@@ -20,7 +20,7 @@ packet_spot_type: s3.xlarge.x86
 packet_spot_bid: 0.70
 
 # Set the type of Packet deployment to do (ondemand/spot)
-packet_deploy_type: spot
+packet_deploy_type: ondemand
 
 # Set the Packet facility to use
 packet_facility: am6
