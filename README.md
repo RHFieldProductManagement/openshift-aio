@@ -43,6 +43,20 @@ With the current implementation it's possible to achieve the following-
 
 Note, these playbooks are expected to be operated from your workstation/laptop, and not executed on the target host directly, however, if you clone this repository on the baremetal system you want to use, make sure that your `prebuilt_ip` is the IP or hostname of the machine, and *not* `127.0.0.1`; when you're executing against a remote server or running the playbooks locally, you will need to make sure that the user in which you execute the playbooks with has password-free root access to the target by ensuring that ssh-keys are exchanged prior to operation.
 
+## Software prerequisites
+
+Installation requires either Ansible 2.10+ or you'll need to install the **Podman module** for lower versions. This can be done via `ansible-galaxy` or an RPM:
+
+~~~bash
+$ ansible-galaxy collection install containers.podman
+
+-or-
+
+$ sudo dnf install -y ansible-collection-containers-podman.noarch
+~~~
+
+## Configure  
+
 To get started, first clone this repository:
 
 ~~~bash
@@ -93,15 +107,7 @@ The list of available options (exposed as Ansible variables) is described below-
 | `ocp_workers`             | Specify the number of workers that you'd like to use between 1-3; there's some work in progress to expand this further, but right now the minimum is *'2'*, although *'1'* can be used if you **manually** enable schedulable masters during installation. <br /><br />* If you specify *'0'* here, `deploy_compact` is forced to *true*. <br />* If `deploy_ocs` is set to *true*, `ocp_workers` will be forced to *'3'*  <br /><br />**Default**: '2' - we'd rather save capacity on the baremetal host, and two is the minimum number of workers in a non-compact cluster. |
 | `deploy_type`             | Specify the deployment type that you want to use; you can choose from a UPI or an IPI type deployment, in which the "baremetal" type will be used for both. With a UPI installation, there's no provider integration and is considered a more agnostic deployment approach, whereas IPI uses the IPMI-based management to provide a more integrated baremetal management interface via [Metal3](https://metal3.io/). <br /><br />**Default**: "ipi" (Installer Provisioned Infrastructure) |
 
-If you wish to deploy the Guacamole UI, you'll need to make sure you've either got Ansible 2.10+, or you've installed the Podman module. Either install via `ansible-galaxy` or install the RPM:
-
-~~~bash
-$ ansible-galaxy collection install containers.podman
-
--or-
-
-$ sudo dnf install -y ansible-collection-containers-podman.noarch
-~~~
+## Deployment
 
 When you're ready to deploy a cluster, call `main.yml` making sure you specify your variables and the dynamic inventory (don't worry that it doesn't exist yet):
 
