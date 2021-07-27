@@ -92,6 +92,7 @@
     - name: Install required base packages
       dnf:
         name:
+          - bash-completion
           - qemu-img
           - jq
           - git
