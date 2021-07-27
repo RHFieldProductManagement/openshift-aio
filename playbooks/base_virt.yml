@@ -270,11 +270,7 @@
 
     - name: Enable port 9001 forwarding to bastion:9001 with firewalld
       firewalld:
-        port_forward:
-          port: "9001"
-          proto: tcp
-          toaddr: 192.168.123.100
-          toport: "9001"
+        rich_rule: rule family=ipv4 forward-port port=9001 protocol=tcp to-addr=192.168.123.100 to-port=9001
         zone: public
         permanent: yes
         state: enabled
