@@ -1,4 +1,6 @@
 my_vars.yml
+generated/
+inventory.yml
 
 # https://github.com/github/gitignore/blob/master/Python.gitignore
 
