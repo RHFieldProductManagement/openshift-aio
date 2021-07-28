@@ -52,6 +52,18 @@ cd openshift-aio
 
 ## Software prerequisites
 
+Setup a Python virtual environment for ansible:
+
+~~~bash
+python3 -m venv venv
+. venv/bin/activate
+
+pip install pip -U
+pip install -r requirements.txt
+~~~
+
+-or-
+
 Installation requires either Ansible 2.10+ or you'll need to install the **Podman module** for lower versions. This can be done via `ansible-galaxy` or an RPM:
 
 ~~~bash
@@ -62,18 +74,6 @@ ansible-galaxy collection install containers.podman
 
 ~~~bash
 sudo dnf install -y ansible-collection-containers-podman.noarch
-~~~
-
--or-
-
-Setup a Python virtual environment for ansible:
-
-~~~bash
-python3 -m venv venv
-. venv/bin/activate
-
-pip install pip -U
-pip install -r requirements.txt
 ~~~
 
 ## Configure  
