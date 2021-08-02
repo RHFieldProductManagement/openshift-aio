@@ -77,6 +77,12 @@ submariner-addon-6d96c55d7c-fqk9d                                 0/1     Contai
 ~~~
 
 ~~~bash
+[root@ocp4-bastion ~]# oc get csv -n open-cluster-management
+NAME                                 DISPLAY                                      VERSION   REPLACES                             PHASE
+advanced-cluster-management.v2.2.5   Advanced Cluster Management for Kubernetes   2.2.5     advanced-cluster-management.v2.2.4   Succeeded
+~~~
+
+~~~bash
 [root@ocp4-bastion ~]# oc get pods -n open-cluster-management
 NAME                                                              READY   STATUS    RESTARTS   AGE
 cluster-manager-7cfffb878b-5pwgf                                  1/1     Running   0          3m6s
@@ -89,4 +95,20 @@ multicluster-operators-hub-subscription-d98c978cc-dbg2z           1/1     Runnin
 multicluster-operators-standalone-subscription-69b755cf4d-z2w4x   1/1     Running   0          3m3s
 multiclusterhub-operator-5b56686f4d-z9vf6                         1/1     Running   0          3m6s
 submariner-addon-6d96c55d7c-fqk9d                                 1/1     Running   0          3m5s
+~~~
+
+~~~bash
+[root@ocp4-bastion ~]# cat << EOF > ~/acm-multiclusterhub.yaml
+apiVersion: operator.open-cluster-management.io/v1
+kind: MultiClusterHub
+metadata:
+  name: multiclusterhub
+  namespace: open-cluster-management
+spec:
+  imagePullSecret: pull-secret
+EOF
+~~~
+
+~~~
+
 ~~~
