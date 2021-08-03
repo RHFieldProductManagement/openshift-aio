@@ -4,6 +4,8 @@ Red Hat Advanced Cluster Management (RHACM) offers end-to-end visibility and con
 
 This lab will focus on installing and configuring Red Hat Advanced Cluster Management (RHACM) to enable the AIO OpenShift deployed cluster to provide observability, governement and application management. The mechanism for installation is to utilise the operator model via the cli, just like we did in many of our previous labs. Note, it's entirely possible to deploy via the web UI should you wish to do so, but we're not documenting that mechanism here.
 
+> **NOTE**: Due to memory requirements the RHACM lab cannot be used simultaneously with the OCS/CNV labs 
+
 ~~~bash
 [root@ocp4-bastion ~]# oc create namespace open-cluster-management
 namespace/open-cluster-management created
