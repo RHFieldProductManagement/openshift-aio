@@ -6,6 +6,8 @@ This lab will focus on installing and configuring Red Hat Advanced Cluster Manag
 
 > **NOTE**: Due to memory requirements the RHACM lab cannot be used simultaneously with the OCS/CNV labs 
 
+To begin the deployment process for RHACM we first need to configure a namespace.  By default when using Operator Hub to install RHACM it will use the open-cluster-management namespace.  Therefore we will go ahead and create that namespace here and then use that project:
+
 ~~~bash
 [root@ocp4-bastion ~]# oc create namespace open-cluster-management
 namespace/open-cluster-management created
@@ -13,11 +15,14 @@ namespace/open-cluster-management created
 Now using project "open-cluster-management" on server "https://api.aio.example.com:6443".
 ~~~
 
+Once we have created the namespace we also need to configure a pull-secret secret that can be consumed by the namespace.  We can do this by creating the following generic secret and point it to our pull-secret.json file that is already on the system when AIO did the initial deployment of the environment:
 
 ~~~bash
 [root@ocp4-bastion ~]# oc create secret generic pull-secret -n open-cluster-management --from-file=.dockerconfigjson=/root/pull-secret.json --type=kubernetes.io/dockerconfigjson
 secret/pull-secret created
 ~~~
+
+
 
 ~~~bash
 [root@ocp4-bastion ~]# cat << EOF > ~/acm-operator-group.yaml
