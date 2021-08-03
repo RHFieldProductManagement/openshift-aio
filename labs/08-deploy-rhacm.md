@@ -22,7 +22,7 @@ Once we have created the namespace we also need to configure a pull-secret secre
 secret/pull-secret created
 ~~~
 
-
+Now we need to proceed by creating an operator group.  To do that we need to construct the following operator group yaml file:
 
 ~~~bash
 [root@ocp4-bastion ~]# cat << EOF > ~/acm-operator-group.yaml
@@ -36,11 +36,14 @@ secret/pull-secret created
  EOF
 ~~~
 
+Next we can create the operator group with the yaml we constructed:
 
 ~~~bash
 [root@ocp4-bastion ~]# oc create -f acm-operator-group.yaml
 operatorgroup.operators.coreos.com/acm-operator created
 ~~~
+
+Finally we need to build a RHACM operator subscription yaml which instructs which operator to install and at what version from Operator Hub:
 
 ~~~bash
 [root@ocp4-bastion ~]# cat << EOF > ~/acm-operator-subscription.yaml
@@ -51,22 +54,28 @@ metadata:
 spec:
   sourceNamespace: openshift-marketplace
   source: redhat-operators
-  channel: release-2.2
+  channel: release-2.3
   installPlanApproval: Automatic
   name: advanced-cluster-management
 EOF
 ~~~
+
+With the file created we can go ahead and apply it to the the OCP cluster:
 
 ~~~bash
 [root@ocp4-bastion ~]# oc create -f acm-operator-subscription.yaml
 subscription.operators.coreos.com/acm-operator-subscription created
 ~~~
 
+At this point the RHACM operator should be installing onto our AIO deployed OCP cluster.  We can see that by issuing a oc get csv against the open-cluster-management namespace:
+
 ~~~bash
 [root@ocp4-bastion ~]# oc get csv -n open-cluster-management
 NAME                                 DISPLAY                                      VERSION   REPLACES                             PHASE
 advanced-cluster-management.v2.2.5   Advanced Cluster Management for Kubernetes   2.2.5     advanced-cluster-management.v2.2.4   Installing
 ~~~
+
+Further if we look at the pods in the open-cluster-management namespace we can see there are containers in a creating stage:
 
 ~~~bash
 [root@ocp4-bastion ~]# oc get pods -n open-cluster-management
@@ -83,11 +92,15 @@ multiclusterhub-operator-5b56686f4d-z9vf6                         0/1     Contai
 submariner-addon-6d96c55d7c-fqk9d                                 0/1     ContainerCreating   0          21s
 ~~~
 
+After a few minutes the operator installation should complete.  We can confirm this by looking at the oc get csv again which should be marked as succeeded:
+
 ~~~bash
 [root@ocp4-bastion ~]# oc get csv -n open-cluster-management
 NAME                                 DISPLAY                                      VERSION   REPLACES                             PHASE
 advanced-cluster-management.v2.2.5   Advanced Cluster Management for Kubernetes   2.2.5     advanced-cluster-management.v2.2.4   Succeeded
 ~~~
+
+We can further verify that our pods are running by issuing an oc get pods in the open-cluster-management namespace:
 
 ~~~bash
 [root@ocp4-bastion ~]# oc get pods -n open-cluster-management
@@ -103,6 +116,8 @@ multicluster-operators-standalone-subscription-69b755cf4d-z2w4x   1/1     Runnin
 multiclusterhub-operator-5b56686f4d-z9vf6                         1/1     Running   0          3m6s
 submariner-addon-6d96c55d7c-fqk9d                                 1/1     Running   0          3m5s
 ~~~
+
+Now that the operator is installed its time to actually configure the multicluster hub of the RHACM product.   
 
 ~~~bash
 [root@ocp4-bastion ~]# cat << EOF > ~/acm-multiclusterhub.yaml
