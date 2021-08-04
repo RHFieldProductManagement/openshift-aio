@@ -4,7 +4,7 @@ Red Hat Advanced Cluster Management (RHACM) offers end-to-end visibility and con
 
 This lab will focus on installing and configuring Red Hat Advanced Cluster Management (RHACM) to enable the AIO OpenShift deployed cluster to provide observability, governement and application management. The mechanism for installation is to utilise the operator model via the cli, just like we did in many of our previous labs. Note, it's entirely possible to deploy via the web UI should you wish to do so, but we're not documenting that mechanism here.
 
-> **NOTE**: Due to memory requirements the RHACM lab cannot be used simultaneously with the OCS/CNV labs 
+> **NOTE**: Due to memory requirements the RHACM lab cannot be used simultaneously with the OCS/CNV labs.  However NFS storage does need to be configured to provide a PV that can be consumed.  See the following for how to configure NFS: [Deploying Additional NFS And Hostpath Storage](https://github.com/RHFieldProductManagement/openshift-aio/blob/main/labs/06-deploy-nfs-hostpath-cnv.md).
 
 To begin the deployment process for RHACM we first need to configure a namespace.  By default when using Operator Hub to install RHACM it will use the open-cluster-management namespace.  Therefore we will go ahead and create that namespace here and then use that project:
 
@@ -36,7 +36,7 @@ Now we need to proceed by creating an operator group.  To do that we need to con
  EOF
 ~~~
 
-Next we can create the operator group with the yaml we constructed:
+Next we can create the operator group with the resource yaml we constructed:
 
 ~~~bash
 [root@ocp4-bastion ~]# oc create -f acm-operator-group.yaml
@@ -60,7 +60,7 @@ spec:
 EOF
 ~~~
 
-With the file created we can go ahead and apply it to the the OCP cluster:
+With the subscription file created we can go ahead and apply it to the the OCP cluster:
 
 ~~~bash
 [root@ocp4-bastion ~]# oc create -f acm-operator-subscription.yaml
@@ -117,7 +117,7 @@ multiclusterhub-operator-5b56686f4d-z9vf6                         1/1     Runnin
 submariner-addon-6d96c55d7c-fqk9d                                 1/1     Running   0          3m5s
 ~~~
 
-Now that the operator is installed its time to actually configure the multicluster hub of the RHACM product.   
+Now that the operator is installed its time to actually configure the multicluster hub of the RHACM product.  First lets prepare a multiclusterhub resource yaml with the following content: 
 
 ~~~bash
 [root@ocp4-bastion ~]# cat << EOF > ~/acm-multiclusterhub.yaml
@@ -131,10 +131,14 @@ spec:
 EOF
 ~~~
 
+Once we have the resource yaml created we can apply it to the cluster:
+
 ~~~bash
 [root@ocp4-bastion ~]# oc create -f acm-multiclusterhub.yaml 
 multiclusterhub.operator.open-cluster-management.io/multiclusterhub created
 ~~~
+
+We can view the status of the multiclusterhub configuration by looking at the mch status:
 
 ~~~bash
 [root@ocp4-bastion ~]# oc get mch -n open-cluster-management
@@ -142,6 +146,7 @@ NAME              STATUS       AGE
 multiclusterhub   Installing   4s
 ~~~
 
+And if we look at the pods under the open-cluster-management namespace we can see additional pods around the multiclusterhub are being created:
 
 ~~~bash
 [root@ocp4-bastion ~]# oc get pods -n open-cluster-management
@@ -172,6 +177,8 @@ ocm-webhook-7ffccc5cd6-4xktw                                      0/1     Contai
 ocm-webhook-7ffccc5cd6-87hmn                                      0/1     ContainerCreating   0          1s
 submariner-addon-6d96c55d7c-fqk9d                                 1/1     Running             0          20h
 ~~~
+
+
 
 ~~~bash
 [root@ocp4-bastion ~]# oc get pods -n open-cluster-management
