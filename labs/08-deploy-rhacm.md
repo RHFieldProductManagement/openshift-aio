@@ -178,7 +178,7 @@ ocm-webhook-7ffccc5cd6-87hmn                                      0/1     Contai
 submariner-addon-6d96c55d7c-fqk9d                                 1/1     Running             0          20h
 ~~~
 
-
+After about 5 minutes we should eventually see all the pods running.   If there are pods in a Pending status please invenstigate those to determine why.  In most cases it is because there is not enough memory on the master nodes being used in the AIO environment.  This can be remediated by increasing the memory of each master node in the lab and rebooting the masters one by one.
 
 ~~~bash
 [root@ocp4-bastion ~]# oc get pods -n open-cluster-management
@@ -244,10 +244,12 @@ topology-f68f8-topologyapi-6ddb677b6f-fpdw4                       1/1     Runnin
 topology-f68f8-topologyapi-6ddb677b6f-w7vff                       1/1     Running   0          2m33s
 ~~~
 
+We can also confirm the installation is completed by looking for the routes in the open-cluster-management namespace:
+
 ~~~bash
 [root@ocp4-bastion ~]# oc get routes -n open-cluster-management
 NAME                 HOST/PORT                                 PATH   SERVICES             PORT    TERMINATION            WILDCARD
 multicloud-console   multicloud-console.apps.aio.example.com          management-ingress   <all>   passthrough/Redirect   None
 ~~~
 
-
+If Guacomole was installed in the AIO environment we can take the multicloud-console.apps.aio.example.com url and paste it into a browser via the Guacomole UI to get the RHACM Console.
