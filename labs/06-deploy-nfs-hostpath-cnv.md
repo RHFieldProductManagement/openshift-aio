@@ -340,7 +340,7 @@ metadata:
     app: containerized-data-importer
   annotations:
     cdi.kubevirt.io/storage.import.endpoint: "http://192.168.123.100:81/rhel8-kvm.img"
-    volume.kubernetes.io/selected-node: ocp4-worker2.cnv.example.com                        
+    volume.kubernetes.io/selected-node: ocp4-worker3.aio.example.com                        
 spec:
   volumeMode: Filesystem
   storageClassName: hostpath-provisioner
@@ -357,12 +357,12 @@ persistentvolumeclaim/rhel8-hostpath created
 We use CDI to ensure the volume we're requesting uses a RHEL8 image that we're hosting on a pre-configured web-server on the bastion node, so we expect the importer image to run again:
 
 ~~~bash
-$ oc get pods
+[root@ocp4-bastion ~]#  oc get pods
 NAME                      READY   STATUS    RESTARTS   AGE
 importer-rhel8-hostpath   1/1     Running   0          88s
 ~~~
 
-> **NOTE**: You can watch the output of this importer pod with `$ oc logs -fimporter-rhel8-hostpath`.  Didn't see any pods? You likely just missed it. To be sure the PV was created continue to the next command.
+> **NOTE**: You can watch the output of this importer pod with `$ oc logs -f importer-rhel8-hostpath`.  Didn't see any pods? You likely just missed it. To be sure the PV was created continue to the next command.
 
 Once that pod has finished let's check the status of the PV's:
 
