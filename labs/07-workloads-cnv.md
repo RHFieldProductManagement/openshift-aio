@@ -496,12 +496,6 @@ Connection to 192.168.123.64 closed.
 
 As you can see we were able to access the outside world!
 
-## Deploying a Virtual Machine Using NFS and Bridge
-
-## Deploying a Virtual Machine Using Hostpath and Bridge
-
-
-
 ## Success!
 
 Congratulations ... if you've made it this far you've deployed KNI from the ground up, deployed OpenShift Container Storage, OpenShift Virtualization, and tested the solution with pods and VM's via the CLI and the OpenShift dashboard! We'd like to ***thank you*** for attending this lab and hope that it was a valuable use of your time and that you learnt a lot from doing it.
