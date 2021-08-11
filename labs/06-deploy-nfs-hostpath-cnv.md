@@ -357,9 +357,9 @@ persistentvolumeclaim/rhel8-hostpath created
 We use CDI to ensure the volume we're requesting uses a RHEL8 image that we're hosting on a pre-configured web-server on the bastion node, so we expect the importer image to run again:
 
 ~~~bash
-[root@ocp4-bastion ~]#  oc get pods
+[root@ocp4-bastion ~]# oc get pods
 NAME                      READY   STATUS    RESTARTS   AGE
-importer-rhel8-hostpath   1/1     Running   0          88s
+importer-rhel8-hostpath   1/1     Running   0          19s
 ~~~
 
 > **NOTE**: You can watch the output of this importer pod with `$ oc logs -f importer-rhel8-hostpath`.  Didn't see any pods? You likely just missed it. To be sure the PV was created continue to the next command.
@@ -367,17 +367,16 @@ importer-rhel8-hostpath   1/1     Running   0          88s
 Once that pod has finished let's check the status of the PV's:
 
 ~~~bash
-$ oc get pv
-NAME                                       CAPACITY   ACCESS MODES   RECLAIM POLICY   STATUS      CLAIM                                             STOR
-AGECLASS           REASON   AGE
-nfs-pv1                                    40Gi       RWO,RWX        Delete           Available                                                     nfs
-                            11h
-nfs-pv2                                    40Gi       RWO,RWX        Delete           Bound       default/rhel8-nfs                                 nfs
-                            11h
-openshift-registry-pv                      100Gi      RWX            Retain           Bound       openshift-image-registry/image-registry-storage
-                            24h
-pvc-8684d563-4e28-418d-b8c4-aa1b047fb966   79Gi       RWO            Delete           Bound       workbook/rhel8-hostpath                           host
-path-provisioner            37m
+[root@ocp4-bastion html]# oc get pv
+NAME                                       CAPACITY   ACCESS MODES   RECLAIM POLICY   STATUS   CLAIM                                           STORAGECLASS                  REASON   AGE
+local-pv-6751e4c7                          100Gi      RWO            Delete           Bound    openshift-storage/ocs-deviceset-0-data-09jqjr   localblock                             46m
+local-pv-759d6092                          100Gi      RWO            Delete           Bound    openshift-storage/ocs-deviceset-2-data-16d4zg   localblock                             46m
+local-pv-911d74ba                          100Gi      RWO            Delete           Bound    openshift-storage/ocs-deviceset-1-data-0dw2b5   localblock                             46m
+local-pv-9d4e1eb0                          100Gi      RWO            Delete           Bound    openshift-storage/ocs-deviceset-0-data-15rq28   localblock                             46m
+local-pv-be875671                          100Gi      RWO            Delete           Bound    openshift-storage/ocs-deviceset-2-data-0d8spr   localblock                             46m
+local-pv-e2c7f8a9                          100Gi      RWO            Delete           Bound    openshift-storage/ocs-deviceset-1-data-145ttc   localblock                             46m
+pvc-44178021-c910-42c5-bd27-17b31ddc95bf   50Gi       RWO            Delete           Bound    openshift-storage/db-noobaa-db-0                ocs-storagecluster-ceph-rbd            39m
+pvc-e252f333-330c-4193-a2b7-377c9bd06df3   79Gi       RWO            Delete           Bound    default/rhel8-hostpath                          hostpath-provisioner                   4m27s
 ~~~
 
 > **NOTE**: The capacity displayed above lists the available space on the host, not the actual size of the persistent volume when being used.
@@ -386,11 +385,11 @@ path-provisioner            37m
 Let's look more closely at the PV's. Describe the new hostpath PV (noting that you'll need to adapt for the `uuid` in your environment):
 
 ~~~bash
-$ oc describe pv/pvc-8684d563-4e28-418d-b8c4-aa1b047fb966
-Name:              pvc-8684d563-4e28-418d-b8c4-aa1b047fb966
+[root@ocp4-bastion html]# oc describe pv/pvc-e252f333-330c-4193-a2b7-377c9bd06df3
+Name:              pvc-e252f333-330c-4193-a2b7-377c9bd06df3
 Labels:            <none>
 Annotations:       hostPathProvisionerIdentity: kubevirt.io/hostpath-provisioner
-                   kubevirt.io/provisionOnNode: ocp4-worker1.cnv.example.com
+                   kubevirt.io/provisionOnNode: ocp4-worker3.aio.example.com
                    pv.kubernetes.io/provisioned-by: kubevirt.io/hostpath-provisioner
 Finalizers:        [kubernetes.io/pv-protection]
 StorageClass:      hostpath-provisioner
@@ -400,25 +399,25 @@ Reclaim Policy:    Delete
 Access Modes:      RWO
 VolumeMode:        Filesystem
 Capacity:          79Gi
-Node Affinity:
-  Required Terms:
-    Term 0:        kubernetes.io/hostname in [ocp4-worker1.cnv.example.com]
-Message:
+Node Affinity:     
+  Required Terms:  
+    Term 0:        kubernetes.io/hostname in [ocp4-worker3.aio.example.com]
+Message:           
 Source:
     Type:          HostPath (bare host directory volume)
-    Path:          /var/hpvolumes/pvc-8684d563-4e28-418d-b8c4-aa1b047fb966
-    HostPathType:
+    Path:          /var/hpvolumes/pvc-e252f333-330c-4193-a2b7-377c9bd06df3
+    HostPathType:  
 Events:            <none>
 ~~~
 
-There's a few important details here worth noting, namely the `kubevirt.io/provisionOnNode` annotation, and the path of the volume on that node. In the example above you can see that the volume was provisioned on *ocp4-worker1.cnv.example.com*, the first of our two worker nodes (in your environment it may have been scheduled onto the second worker). 
+There's a few important details here worth noting, namely the `kubevirt.io/provisionOnNode` annotation, and the path of the volume on that node. In the example above you can see that the volume was provisioned on *ocp4-worker3.aio.example.com*, the third of our three worker nodes (in your environment it may have been scheduled onto the second worker). 
 
 Let's look more closely to verify that this truly has been created for us on the designated worker.
 
-> **NOTE**: You may have to substitute `ocp4-worker1` with `ocp4-worker2` if your hostpath volume was scheduled to worker2. You'll need to also match the UUID to the one that was generated by your PVC. 
+> **NOTE**: You may have to substitute `ocp4-worker3` with `ocp4-worker[1-2]` if your hostpath volume was scheduled to worker[1-2]. You'll need to also match the UUID to the one that was generated by your PVC. 
 
 ~~~bash
-$ oc debug node/ocp4-worker1.cnv.example.com
+$ oc debug node/ocp4-worker3.aio.example.com
 Starting pod/ocp4-worker1cnvexamplecom-debug ...
 To use host binaries, run `chroot /host`
 Pod IP: 192.168.123.104
