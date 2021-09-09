@@ -1,12 +1,6 @@
 ---
 # vim: set ft=ansible:
 
-- name: Refresh inventory file
-  hosts: localhost
-  gather_facts: false
-  tasks:
-    - meta: refresh_inventory
-
 - name: Deploy base software configuration
   gather_facts: true
   remote_user: root

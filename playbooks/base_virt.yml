@@ -281,6 +281,15 @@
       when:
         - firewalld_avail.rc != 4
 
+    - name: Iptables flush libvirt forward filter
+      ansible.builtin.iptables:
+        chain: "{{ item }}"
+        flush: yes
+      with_items:  [ 'LIBVIRT_FWO', 'LIBVIRT_FWI' ]
+      when:
+        - firewalld_avail.rc == 4
+        - deploy_type == "ipi" or deploy_type == "sno-iso"
+
     - name: Enable iptables ports for IPI deployments
       ansible.builtin.iptables:
         chain: LIBVIRT_INP
@@ -311,6 +320,29 @@
         jump: DNAT
         to_destination: 192.168.123.100:9001
       when: firewalld_avail.rc == 4
+
+    - name: Enable port 8000 on host with iptables
+      ansible.builtin.iptables:
+        chain: FORWARD
+        protocol: tcp
+        action: insert
+        rule_num: "1"
+        destination_port: "8000"
+        jump: ACCEPT
+      when: firewalld_avail.rc == 4
+
+    - name: Forward port 8000 to bastion:22 with iptables
+      ansible.builtin.iptables:
+        action: insert
+        rule_num: "1"
+        table: nat
+        chain: PREROUTING
+        protocol: tcp
+        match: tcp
+        destination_port: "8000"
+        jump: DNAT
+        to_destination: 192.168.123.100:22
+      when: firewalld_avail.rc == 4   
 
     - name: Add VBMC entries for IPI deployments
       ansible.builtin.command: "{{ item }}"

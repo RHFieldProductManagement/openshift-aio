@@ -8,8 +8,22 @@
     - name: Dynamically add new Bastion VM to the inventory
       add_host:
         ansible_ssh_user: root
+        ansible_ssh_host: "{{ prebuilt_ip }}"
+        ansible_ssh_port: 8000
+        ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
         hostname: 192.168.123.100
         groups: bastion
+      when: baremetal_provider == "prebuilt"
+
+    - name: Dynamically add new Bastion VM to the inventory
+      add_host:
+        ansible_ssh_user: root
+        ansible_ssh_host: "{{ instance_ip }}"
+        ansible_ssh_port: 8000
+        ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
+        hostname: 192.168.123.100
+        groups: bastion
+      when: baremetal_provider == "packet"   
 
     - name: Insert bastion into inventory file
       ini_file:
@@ -30,8 +44,6 @@
         state: present
         backup: no
         allow_no_value: yes
-
-    - meta: refresh_inventory
 
 - name: Configure Bastion machine
   gather_facts: true

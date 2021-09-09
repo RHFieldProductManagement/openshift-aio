@@ -1,11 +1,6 @@
 ---
 # vim: set ft=ansible:
 
-- name: Reload inventory for bastion host
-  hosts: localhost
-  tasks:
-    - meta: refresh_inventory
-
 - name: Deploy NFS Storage when OCS is disabled
   gather_facts: false
   vars_files:

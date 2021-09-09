@@ -28,6 +28,13 @@
          backup: no
          allow_no_value: yes
 
+     - name: Add server to in-memory inventory
+       add_host:
+        ansible_ssh_user: root
+        hostname: "{{ prebuilt_ip }}"
+        groups: target
+        ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
+
      - name: Make generated directory
        ansible.builtin.file:
          path: "../../generated/"
