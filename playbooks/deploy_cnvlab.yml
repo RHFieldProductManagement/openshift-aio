@@ -1,12 +1,6 @@
 ---
 # vim: set ft=ansible:
 
-- name: Reload inventory for bastion host
-  hosts: localhost
-  tasks:
-
-    - meta: refresh_inventory
-
 - name: Deploy OpenShift Virtualization (CNV)
   gather_facts: false
   vars_files:
