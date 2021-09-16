@@ -84,7 +84,7 @@
     - "2-osd2"
     - "3-osd1"
     - "3-osd2"
-  when: filename not in ocs_file_list
+  when: filename not in ocs_created.files
 
 - name: Check if base RHEL/CentOS 8 already disk image exists
   stat:
