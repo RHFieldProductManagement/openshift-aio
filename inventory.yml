@@ -1,3 +1,0 @@
-
-[target]
-10.11.176.28 ansible_ssh_common_args='-o StrictHostKeyChecking=no'
