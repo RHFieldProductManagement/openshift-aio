@@ -11,17 +11,19 @@
 # Step 1: Deploy Base Infrastructure on provider
 - import_playbook: "./{{ baremetal_provider }}/base_infra.yml"
 
+# Step 2: Create inventory
 - hosts: localhost
   roles:
     - create_inventory
 
+# Step 3 : Prepare Base Host
 - hosts: target
   roles:
     - base_software
     - base_virt
     - prepare_bastion
 
-
+# Step 4 : Prepare Bastion VM 
 - hosts: bastion
   roles:
     - deploy_bastion
@@ -31,6 +33,7 @@
         name: deploy_guac
       when: deploy_guacamole
 
+# Step 5 : Deploy Openshift or SNO
     - name: deploy OCP
       include_role:
         name: deploy_ocp
@@ -38,121 +41,53 @@
 
 - hosts: target
   tasks:
-  
     - name: Deploy SNO
       include_role:
         name: deploy_ocp
       when: deploy_type == "sno-iso"
 
+# Step 5 : Get infos from deployments
 - hosts: localhost
   roles:
     - generate_configs
 
+# Step 6 : Deploy operators on OCP
 - hosts: bastion
-  roles:
-    - ocp4_role_nfsmount
-    - ocp4_role_imgreg
+  tasks:
 
-# - hosts: localhost
-#   tasks:
-#     - name: Create inventory
-#       include_role: 
-#         name: create_inventory
+    - name: Setting up OCS Storage
+      include_role:
+        name: ocp4_role_ocs
+      when: deploy_ocs 
 
-# - hosts: target
-#   tasks:
-#     - name: Setting up base software
-#       include_role:
-#         name: base_software
+    - name: Setting up NFS Storage
+      include_role: 
+        name: ocp4_role_nfsmount
+      when: not deploy_ocs
 
-#     - name: Setting up virtualization
-#       include_role:
-#         name: base_virt
-#       vars:
-#         ocs_file_list: []
+    - name: Installing ACM
+      include_role:
+        name: ocp4_role_acm
+      when: deploy_acm or deploy_ocp_plus
 
+    - name: Installing ACS
+      include_role:
+        name: ocp4_role_acs
+      when: deploy_acs or deploy_ocp_plus
 
-#     - name: Deploy bastion VM
-#       include_role:
-#         name: deploy_bastion
+    - name: Installing CNV
+      include_role:
+        name: ocp4_role_cnv
+      when: deploy_cnv
 
-#     - name: Deploying Guacamole
-#       include_role:
-#         name: deploy_guac
-#       when: deploy_guacamole
-
-# - hosts: bastion
-#   tasks:
-#     - name: Prepare Bastion VM
-#       include_role: 
-#         name: prepare_bastion
-
-#     - name: Deploy OCP
-#       include_role:
-#         name: deploy_ocp
-#       when: deploy_type == 'upi' or deploy_type == 'ipi'
-
-# - hosts: target
-#   tasks:
-#     - name: Deploy OCP
-#       include_role: 
-#         name: deploy_ocp
-#       when: deploy_type == 'sno-iso'
-
-# - hosts: localhost
-#   tasks: 
-#     - name: Generate config files
-#       include_role: 
-#         name: generate_configs
+    - name: Deploy internal registry
+      include_role:
+        name: ocp4_role_imgreg
   
-# Step 2: Deploy Base Software Configuration
-#- import_playbook: base_software.yml
-
-# Step 3: Deploy Base Virtualisation Configuration
-#- import_playbook: base_virt.yml
-
-# Step 4: Deploy Bastion VM for supporting services
-#- import_playbook: deploy_bastion.yml
-
-#- import_playbook: deploy_guac.yml
-#  when: deploy_guacamole
-
-# Step 5: Deploy Disconnected Registry
-#- import_playbook: deploy_disconnected.yml
-#  when: deploy_disconnected
-
-# Step 6: Deploy the OpenShift cluster if requested
-#- import_playbook: deploy_cluster.yml
-#  when: deploy_ocp or hostvars['localhost']['override_deploy_ocp']
-
-# Step 7: Deploy OpenShift Container Storage
-#- import_playbook: deploy_ocs.yml
-#  when: deploy_ocs
-
-# Step 8: Deploy NFS Storage (when OCS not used)
-#- import_playbook: deploy_nfs.yml
-#  when: deploy_nfs or hostvars['localhost']['override_deploy_nfs']
-
-# Step 9: Deploy OpenShift Virtualization
-#- import_playbook: deploy_cnv.yml
-#  when: deploy_cnv
-
-# Step 10: Deploy Advanced Cluster Manager
-#- import_playbook: deploy_acm.yml
-#  when: deploy_acm or deploy_ocp_plus
-
-# Step 11: Deploy Advanced Cluster Security
-#- import_playbook: deploy_acs.yml
-#  when: deploy_acs or deploy_ocp_plus
-
-# Step 12: Deploy Internal OpenShift Image Registry
-#- import_playbook: deploy_imgreg.yml
-#  when: deploy_ocp or hostvars['localhost']['override_deploy_ocp']
-
-# Step 13: Print Output to User
+# Step 7: Print Output to User
 - import_playbook: finish.yml
   when: not deploy_sno | bool
 
-# Step 13-SNO: Print Output to User
+# Step 7-SNO: Print Output to User
 - import_playbook: finish_sno.yml
   when: deploy_sno
