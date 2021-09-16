@@ -1,0 +1,88 @@
+---
+# vim: set ft=ansible:
+
+- name: Reload inventory for bastion host
+  gather_facts: false
+  hosts: localhost
+  tasks:
+
+    - name: Set fact for OCP deployment if requesting dependents
+      set_fact:
+        deploy_ocp: true
+      when: deploy_ocs or deploy_cnv or deploy_acm or deploy_sno
+
+    - name: Set facts for variants if requesting SNO
+      set_fact:
+        deploy_ocp: true
+        deploy_acm: true
+        deploy_acs: false
+      when: deploy_sno
+
+    - name: Print Deployment Complete
+      debug:
+        msg: "OpenShift AIO: Deployment has been Successful!"
+
+    - name: Print Deployment Specifics
+      vars:
+        msg: |
+           OpenShift Version: {{ ocp_version }}
+           Baremetal Provider: {{ baremetal_provider }}
+           Baremetal Server: {{ groups['target'][0] }}
+           Deployment Type: {{ deploy_type }}
+           Compact Deployment: {{ deploy_compact }}
+           Deploy CNV: {{ deploy_cnv }}
+           Deploy OCS: {{ deploy_ocs }}
+           Deploy ACM: {{ deploy_acm }}
+           Deploy ACS: {{ deploy_acs }}
+      debug:
+        msg: "{{ msg.split('\n') }}"
+
+    - name: Print Base Information
+      vars:
+        msg: |
+          To get started, you'll first need to connect to your {{ baremetal_provider }} system.
+          - Open a shell session to this machine: `ssh root@{{ groups['target'][0] }}`
+          - All tasks should then be performed on the bastion machine, hop to this: `ssh root@192.168.123.100`.
+          - Here you'll find all of the tools you'll likely need, feel free to install more.
+      debug:
+        msg: "{{ msg.split('\n') }}"
+
+    - name: Print Kube Configuration
+      vars:
+        msg: |
+          As you've requested OpenShift to be installed, you can access the console either via proxy or Guacamole (if enabled).
+          To access the environment via a Squid Proxy, open a port-forwarded session:
+
+          $ ssh root@{{ groups['target'][0] }} -L 8080:192.168.123.100:3128
+
+          Then set your local proxy server to localhost:8080 and enable DNS over SOCKS
+
+          The console for rhacm cluster is available at: https://console-openshift-console.apps.rhacm.example.com
+          The kubeadmin password is: {{ lookup('file', '/root/sno-rhacm/auth/kubeadmin-password') }}
+
+          The console for edge1 cluster is available at: https://console-openshift-console.apps.edge1.example.com
+          The kubeadmin password is: {{ lookup('file', '/root/sno-edge1/auth/kubeadmin-password') }}
+
+          The console for edge2 cluster is available at: https://console-openshift-console.apps.edge2.example.com
+          The kubeadmin password is: {{ lookup('file', '/root/sno-edge2/auth/kubeadmin-password') }}
+
+          If you'd like CLI access, the bastion host will have already been setup - `ssh root@192.168.123.100`
+          You should then automatically have oc/kubectl access to the cluster. Check out ~/sno-{rhacm,edge1,edge2}/auth/.
+      debug:
+        msg: "{{ msg.split('\n') }}"
+      when: deploy_ocp
+
+    - name: Print Guacamole Information
+      vars:
+        msg: |
+          As you've enabled Guacamole support, you can access everything you need without a proxy.
+          To access the environment via your web-browser only (Guacamole)
+
+          Use this URL: http://{{ groups['target'][0] }}:8080/guacamole
+          Username: guacadmin
+          Password: {{ lookup('file', '../generated/guacadmin-password.txt') }}
+
+          The 'Lab Desktop' will give you a GNOME desktop environment, and 'Bastion SSH' just CLI access.
+      debug:
+        msg: "{{ msg.split('\n') }}"
+      when: deploy_guacamole

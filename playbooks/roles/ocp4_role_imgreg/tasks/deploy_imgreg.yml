@@ -1,0 +1,11 @@
+---
+# vim: set ft=ansible:
+
+- name: Enable Image Registry on Cluster
+  ansible.builtin.shell: >
+    oc patch configs.imageregistry.operator.openshift.io cluster --type merge --patch '{"spec":{"managementState":"Managed"}}'
+
+- name: Enable PVC based storage for Image Registry
+  ansible.builtin.shell: >
+    oc patch configs.imageregistry.operator.openshift.io cluster --type merge --patch '{"spec":{"storage":{"pvc":{}}}}'
+

@@ -29,7 +29,7 @@
 
 - name: Copy install-config over to bastion for SNO
   ansible.builtin.copy:
-    src: ../../conf/k8s/install-config-sno.yaml
+    src: install-config-sno.yaml
     dest: /root/lab/install-config.yaml
 
 - name: Grab contents of Bastions SSH public key
@@ -162,3 +162,13 @@
   register: vbmc_return
   when: extra_sno_nodes
   failed_when: vbmc_return.rc > 1   
+
+- name: Copy SNO auths to bastion
+  ansible.builtin.shell: >
+    scp -r -o "StrictHostKeyChecking no"
+    "/root/sno-{{ item }}"<
+    "root@192.168.123.100:/root/}"
+  loop:
+    - rhacm
+    - edge1
+    - edge2

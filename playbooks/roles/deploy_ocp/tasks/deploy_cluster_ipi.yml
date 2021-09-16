@@ -158,13 +158,13 @@
     src: "{{ item }}"
     dest: /root/ocp-install/openshift
   loop:
-    - "../../conf/k8s/99_masters-chrony-configuration.yaml"
-    - "../../conf/k8s/99_workers-chrony-configuration.yaml"
-    - "../../conf/k8s/97_workers_empty_enp3s0.yaml"
+    - "99_masters-chrony-configuration.yaml"
+    - "99_workers-chrony-configuration.yaml"
+    - "97_workers_empty_enp3s0.yaml"
 
 - name: Copy over empty enp3s0 for masters on compact install
   ansible.builtin.copy:
-    src: ../../conf/k8s/97_masters_empty_enp3s0.yaml
+    src: 97_masters_empty_enp3s0.yaml
     dest: /root/ocp-install/openshift
   when: deploy_compact | bool
 

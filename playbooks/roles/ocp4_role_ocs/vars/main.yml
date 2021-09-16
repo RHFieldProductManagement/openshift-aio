@@ -1,0 +1,71 @@
+vms:
+  bastion:
+    mem: 16384
+    cpus: 8
+    base_network: "52:54:00:00:00:00"
+    prov_network: "de:ad:be:ef:00:00"
+  bootstrap:
+    mem: 16384
+    cpus: 8
+    base_network: "52:54:00:00:00:99"
+    prov_network: "ee:ee:ee:ee:00:00"
+  masters:
+    master1:
+      mem: 16384
+      cpus: 8
+      base_network: "52:54:00:00:00:01"
+      ext_network: "52:54:00:00:01:01"
+      prov_network: "de:ad:be:ef:00:01"
+    master2:
+      mem: 16384
+      cpus: 8
+      base_network: "52:54:00:00:00:02"
+      ext_network: "52:54:00:00:01:02"
+      prov_network: "de:ad:be:ef:00:02"
+    master3:
+      mem: 16384
+      cpus: 8
+      base_network: "52:54:00:00:00:03"
+      ext_network: "52:54:00:00:01:03"
+      prov_network: "de:ad:be:ef:00:03"
+  workers:  
+    worker1:
+      mem: 32768
+      cpus: 16
+      base_network: "52:54:00:00:00:04"
+      ext_network: "52:54:00:00:01:04"
+      prov_network: "de:ad:be:ef:00:04"
+    worker2:
+      mem: 32768
+      cpus: 16
+      base_network: "52:54:00:00:00:05"
+      ext_network: "52:54:00:00:01:05"
+      prov_network: "de:ad:be:ef:00:05"
+    worker3:
+      mem: 32768
+      cpus: 16
+      base_network: "52:54:00:00:00:06"
+      ext_network: "52:54:00:00:01:06"
+      prov_network: "de:ad:be:ef:00:06"
+  sno:
+    rhacm:
+      mem: 65535
+      cpus: 16
+      base_network: "ba:dc:0f:fe:ee:00"
+    edge1:
+      mem: 65535
+      cpus: 16
+      base_network: "ba:dc:0f:fe:ee:01"
+    edge2:
+      mem: 32768
+      cpus: 16
+      base_network: "ba:dc:0f:fe:ee:02"
+  sno-extended:
+    edge3:
+      mem: 32768
+      cpus: 16
+      base_network: "ba:dc:0f:fe:ee:03"
+    edge4:
+      mem: 32768
+      cpus: 16
+      base_network: "ba:dc:0f:fe:ee:04"

@@ -1,0 +1,24 @@
+---
+# vim: set ft=ansible:
+
+- name: Install OpenStack repo for VirtualBMC
+  dnf:
+    name:
+      - https://repos.fedorapeople.org/repos/openstack/openstack-victoria/rdo-release-victoria-3.el8.noarch.rpm
+    state: latest
+    disable_gpg_check: yes
+  become: true
+
+- name: Install VirtualBMC packages and dependencies
+  dnf:
+    name:
+      - python36
+      - python3-virtualbmc
+    state: latest
+  become: true
+
+- name: Enable VirtualBMC
+  ansible.builtin.systemd:
+    name: virtualbmc
+    enabled: yes
+    state: started

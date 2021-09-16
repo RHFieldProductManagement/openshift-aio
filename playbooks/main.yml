@@ -48,6 +48,11 @@
   roles:
     - generate_configs
 
+- hosts: bastion
+  roles:
+    - ocp4_role_nfsmount
+    - ocp4_role_imgreg
+
 # - hosts: localhost
 #   tasks:
 #     - name: Create inventory
@@ -141,8 +146,13 @@
 #  when: deploy_acs or deploy_ocp_plus
 
 # Step 12: Deploy Internal OpenShift Image Registry
-- import_playbook: deploy_imgreg.yml
+#- import_playbook: deploy_imgreg.yml
 #  when: deploy_ocp or hostvars['localhost']['override_deploy_ocp']
 
 # Step 13: Print Output to User
 - import_playbook: finish.yml
+  when: not deploy_sno | bool
+
+# Step 13-SNO: Print Output to User
+- import_playbook: finish_sno.yml
+  when: deploy_sno

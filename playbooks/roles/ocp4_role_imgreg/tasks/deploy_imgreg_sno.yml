@@ -1,0 +1,18 @@
+---
+# vim: set ft=ansible:
+
+- name: Enable Image Registry on Cluster
+  ansible.builtin.shell: >
+    oc --kubeconfig "/root/sno-{{ item }}/auth/kubeconfig" patch configs.imageregistry.operator.openshift.io cluster --type merge --patch '{"spec":{"managementState":"Managed"}}'
+  loop:
+    - rhacm
+    - edge1
+    - edge2
+
+- name: Enable PVC based storage for Image Registry
+  ansible.builtin.shell: >
+    oc --kubeconfig "/root/sno-{{ item }}/auth/kubeconfig" patch configs.imageregistry.operator.openshift.io cluster --type merge --patch '{"spec":{"storage":{"pvc":{}}}}'
+  loop:
+    - rhacm
+    - edge1
+    - edge2

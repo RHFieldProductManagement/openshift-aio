@@ -1,0 +1,49 @@
+---
+# vim: set ft=ansible:
+
+- name: "Wait for {{ baremetal_provider }} instance to come online..."
+  wait_for_connection:
+    timeout: 300
+
+- name: Check system matches requirements
+  assert:
+    that:
+      - ansible_memtotal_mb >= 100000
+      - ansible_facts['os_family'] == 'RedHat'
+      - ansible_facts['distribution_major_version'] == '8'
+
+- name: Install EPEL Repo
+  dnf:
+    name: epel-release
+    state: latest
+  become: True
+
+- name: Install required base packages
+  dnf:
+    name:
+      - wget
+      - libvirt
+      - qemu-kvm
+      - virt-manager
+      - virt-install
+      - libguestfs
+      - libguestfs-tools
+      - libguestfs-xfs
+      - net-tools
+      - sshpass
+      - virt-what
+      - nmap
+      - python3-libselinux
+    state: latest
+  become: True
+
+- name: Upgrade all packages
+  dnf:
+    name: "*"
+    state: latest
+
+- name: Enable Libvirt
+  ansible.builtin.systemd:
+    name: libvirtd
+    enabled: yes
+    state: started
