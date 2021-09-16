@@ -4,9 +4,8 @@
 
 - name: Deploy IPI cluster
   import_tasks: deploy_cluster_ipi.yml
-  when: deloy_type == 'ipi'
+  when: deploy_type == 'ipi'
 
 - name: deploy SNO cluster
   import_tasks: deploy_cluster_sno_iso.yml
   when: deploy_type == 'sno-iso'
-  
