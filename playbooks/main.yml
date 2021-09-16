@@ -68,12 +68,12 @@
     - name: Installing ACM
       include_role:
         name: ocp4_role_acm
-      when: deploy_acm or deploy_ocp_plus
+      when: deploy_acm or deploy_ocp_plus or deploy_sno
 
     - name: Installing ACS
       include_role:
         name: ocp4_role_acs
-      when: deploy_acs or deploy_ocp_plus
+      when: deploy_acs or deploy_ocp_plus or deploy_sno
 
     - name: Installing CNV
       include_role:
