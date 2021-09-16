@@ -109,6 +109,24 @@
       with_dict: "{{ vms['masters'] }}"
       when: vm_name in vm_list.list_vms
 
+    - name: Destroy the edge nodes
+      vars:
+        vm_name: "ocp4-{{ item.key }}"
+      virt:
+        name: "ocp4-{{ item.key }}"
+        command: destroy
+      with_dict: "{{ vms['sno'] }}"
+      when: vm_name in running_vm_list.list_vms
+
+    - name: Undefine the edge nodes
+      vars:
+        vm_name: "ocp4-{{ item.key }}"
+      virt:
+        name: "ocp4-{{ item.key }}"
+        command: undefine
+      with_dict: "{{ vms['sno'] }}"
+      when: vm_name in vm_list.list_vms
+
     - name: Get a list of disk images to delete
       ansible.builtin.find:
         paths: /var/lib/libvirt/images
