@@ -1,4 +1,10 @@
 
+- name: Get a list of all running VM's
+  virt:
+    command: list_vms
+    state: running
+  register: running_vm_list
+
 - name: Check if live ISO disk image already exists
   stat:
     path: /root/lab/base.iso
@@ -14,7 +20,7 @@
     url: https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/latest/latest/rhcos-4.8.2-x86_64-live.x86_64.iso
     dest: "/root/lab/base.iso"
     mode: 0644
-  when: not base_result.stat.exists
+  when: not embed_result.stat.exists
 
 - name: Copy live ISO to edge directory
   ansible.builtin.copy:
@@ -138,7 +144,7 @@
   --noautoconsole --wait=-1'
   with_dict: "{{ vms['sno'] }}"
   register: virt_output
-  when: deploy_type == "sno-iso"
+  when: vm_name not in running_vm_list.list_vms
 
 - name: Add VBMC entries for AI deployments
   ansible.builtin.command: "{{ item }}"
@@ -164,10 +170,7 @@
   failed_when: vbmc_return.rc > 1   
 
 - name: Copy SNO auths to bastion
-  ansible.builtin.shell: >
-    scp -r -o "StrictHostKeyChecking no"
-    "/root/sno-{{ item }}"<
-    "root@192.168.123.100:/root/}"
+  ansible.builtin.shell: 'scp -r -o "StrictHostKeyChecking no" "/root/sno-{{ item }}" root@192.168.123.100:/root/'
   loop:
     - rhacm
     - edge1

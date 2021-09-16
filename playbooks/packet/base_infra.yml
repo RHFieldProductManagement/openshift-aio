@@ -146,7 +146,7 @@
      - name: Add server to in-memory inventory
        add_host:
         ansible_ssh_user: root
-        hostname: {{ instance_ip }}
+        hostname: "{{ instance_ip }}"
         groups: target
         ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
 
