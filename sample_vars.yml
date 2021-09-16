@@ -52,7 +52,7 @@ deploy_compact: false
 # Select granular deployment options
 # NOTE: OCP Plus will force acm, acs, ocp on.
 #       deploy_ocs will force 3 workers on non-compact
-deploy_ocp: true
+deploy_ocp: false
 deploy_ocp_plus: false
 deploy_cnv: false
 deploy_ocs: false
@@ -60,15 +60,19 @@ deploy_acm: false
 deploy_acs: false
 deploy_ods: false
 deploy_nfs: false
+deploy_sno: true
 
 # Select OpenShift version for base cluster
-ocp_version: latest-4.7
+ocp_version: latest-4.8
 
 # Select number of workers for base cluster (1-3, for 0 use deploy_compact)
 ocp_workers: 2
 
-# Select deployment type (upi or ipi)
-deploy_type: ipi
+# Select deployment type (upi, ipi, sno-iso or sno-ai)
+deploy_type: sno-iso
 
 # Set output directory
 output_dir: /tmp/output_dir
+
+# Deploy extra SNO nodes for AI 
+extra_sno_nodes: false
