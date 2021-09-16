@@ -1,0 +1,23 @@
+@   IN  SOA     ocp4-bastion.edge4.example.com. root.edge4.example.com. (
+                                                1001    ;Serial
+                                                3H      ;Refresh
+                                                15M     ;Retry
+                                                1W      ;Expire
+                                                1D      ;Minimum TTL
+                                                )
+
+;Name Server Information
+@      IN  NS      ocp4-bastion.edge4.example.com.
+
+;IP address of Name Server
+ocp4-bastion IN  A       192.168.123.100
+
+;A - Record HostName To IP Address
+sno-master1     IN  A       192.168.123.50
+
+api		 IN  A       192.168.123.50
+api-int		 IN  A       192.168.123.50
+
+;Wildcard Entry for apps
+
+*.apps.edge4.example.com. 300 IN  A 192.168.123.50

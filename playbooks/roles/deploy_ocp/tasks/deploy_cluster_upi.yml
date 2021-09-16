@@ -1,0 +1,212 @@
+---
+# vim: set ft=ansible:
+
+- name: Make sure that Bastion machine is running
+  wait_for_connection:
+    timeout: 240
+
+- name: Ensure ocp-install directory is removed
+  ansible.builtin.file:
+    path: /root/ocp-install
+    state: absent
+
+- name: Make ocp-install directory
+  ansible.builtin.file:
+    path: /root/ocp-install/
+    state: directory
+
+- name: Copy lab install-config to ocp-install directory
+  ansible.builtin.copy:
+    remote_src: yes
+    src: /root/lab/install-config.yaml
+    dest: /root/ocp-install/install-config.yaml
+
+- name: Make a backup of the install-config from ocp-install directory
+  ansible.builtin.copy:
+    remote_src: yes
+    src: /root/ocp-install/install-config.yaml
+    dest: /root/install-config.yaml.bak
+
+- name: Create OpenShift manifests for UPI
+  ansible.builtin.command: >
+    openshift-install --dir=/root/ocp-install/ create manifests
+  when: deploy_type == "upi"
+
+- name: Copy over MachineConfigs for chrony and networking
+  ansible.builtin.copy:
+    src: "{{ item }}"
+    dest: /root/ocp-install/openshift
+  loop:
+    - "../../conf/k8s/99_masters-chrony-configuration.yaml"
+    - "../../conf/k8s/99_workers-chrony-configuration.yaml"
+    - "../../conf/k8s/97_workers_empty_enp3s0.yaml"
+
+- name: Copy over empty enp3s0 for masters on compact install
+  ansible.builtin.copy:
+    src: ../../conf/k8s/97_masters_empty_enp3s0.yaml
+    dest: /root/ocp-install/openshift
+  when: deploy_compact | bool
+
+- name: Copy install-config back into ocp-install directory for UPI
+  ansible.builtin.copy:
+    remote_src: yes
+    src: /root/install-config.yaml.bak
+    dest: /root/ocp-install/install-config.yaml
+  when: deploy_type == "upi"
+
+- name: Create Ignition Configs for UPI
+  ansible.builtin.command: >
+    openshift-install --dir=/root/ocp-install/ create ignition-configs
+  when: deploy_type == "upi"
+
+- name: Copy Ignition configs into /var/www/html for UPI
+  ansible.builtin.copy:
+    remote_src: yes
+    src: "{{ item }}"
+    dest: /var/www/html/
+    mode: 0755
+    setype: _default
+  loop:
+    - "/root/ocp-install/bootstrap.ign"
+    - "/root/ocp-install/master.ign"
+    - "/root/ocp-install/worker.ign"
+  when: deploy_type == "upi"
+
+- name: Pull required images for OpenShift logging
+  containers.podman.podman_image:
+    name: "quay.io/roxenham/frontail"
+
+- name: Run frontail for OpenShift installation log
+  containers.podman.podman_container:
+    name: frontail
+    state: present
+    image: quay.io/roxenham/frontail
+    volume: "/root/ocp-install:/log/"
+    net: host
+    privileged: true
+    command: "/log/.openshift_install.log -n 6000"
+
+- name: Print OpenShift Installation log location
+  vars:
+    msg: |
+      You can watch the OpenShift installation logs by opening the following URL:
+
+      http://{{ groups['target'][0] }}:9001
+  debug:
+    msg: "{{ msg.split('\n') }}"
+
+# - name: Power up nodes for UPI installation
+#   hosts: target
+#   remote_user: root
+#   vars_files:
+#     - "../../conf/vms.yml"
+#   tasks:
+
+- name: Power on Bootstrap and Masters for UPI installation
+  virt:
+    name: "{{ item }}"
+    state: running
+  loop:
+    - "ocp4-bootstrap"
+    - "ocp4-master1"
+    - "ocp4-master2"
+    - "ocp4-master3"
+  when: deploy_type == "upi"
+
+- name: Power on Workers for UPI installation
+  virt:
+    name: "{{ item }}"
+    state: running
+  loop:
+    - "ocp4-worker1"
+    - "ocp4-worker2"
+  when:
+    - not deploy_compact
+    - deploy_type == "upi"
+
+- name: Power on third worker for UPI installation
+  virt:
+    name: "ocp4-worker3"
+    state: running
+  when:
+    - deploy_ocs
+    - not deploy_compact
+    - deploy_type == "upi"
+
+# - name: Make sure deployment is proceeding
+#   gather_facts: false
+#   hosts: bastion
+#   tasks:
+
+- name: Wait for OpenShift bootstrap-complete for UPI
+  ansible.builtin.command: >
+    openshift-install --dir=/root/ocp-install wait-for bootstrap-complete
+  register: bootstrap_wait
+  failed_when: bootstrap_wait.rc > 0
+  retries: 1
+  when: deploy_type == "upi"
+
+# - name: Destroy bootstrap machine via target
+#   hosts: target
+#   remote_user: root
+#   tasks:
+
+- name: Destroy bootstrap machine
+  virt:
+    name: "ocp4-bootstrap"
+    state: destroyed
+  when:
+    - deploy_type == "upi"
+
+# - name: Make sure deployment is proceeding
+#   gather_facts: false
+#   hosts: bastion
+#   tasks:
+
+- name: Sleeping whilst nodes come up for UPI
+  ansible.builtin.pause:
+    minutes: 10
+  when: deploy_type == "upi"
+
+- name: Approve outstanding CSR's for UPI
+  ansible.builtin.shell: "oc get csr -o name | xargs oc adm certificate approve"
+  environment:
+    KUBECONFIG: "/root/ocp-install/auth/kubeconfig"
+  when: deploy_type == "upi"
+
+- name: Wait for OpenShift install-complete for UPI
+  ansible.builtin.command: >
+    openshift-install --dir=/root/ocp-install wait-for install-complete
+  register: install_wait
+  failed_when: install_wait.rc > 0
+  retries: 1
+  when: deploy_type == "upi"
+
+- name: Approve outstanding CSR's for UPI for a second time
+  ansible.builtin.shell: "oc get csr -o name | xargs oc adm certificate approve"
+  environment:
+    KUBECONFIG: "/root/ocp-install/auth/kubeconfig"
+  when: deploy_type == "upi"
+
+- name: Make .kube directory
+  ansible.builtin.file:
+    path: /root/.kube/
+    state: directory
+
+- name: Copy kubeconfig from ocp-install directory
+  ansible.builtin.copy:
+    remote_src: yes
+    src: /root/ocp-install/auth/kubeconfig
+    dest: /root/.kube/config
+
+- name: Restart squid to fix DNS propagation
+  ansible.builtin.systemd:
+    name: squid
+    state: restarted
+    enabled: yes
+
+- name: Pull kubeadmin-password to local generated
+  ansible.builtin.fetch:
+    src: /root/ocp-install/auth/kubeadmin-password
+    dest: ../../generated/kubeadmin-password.txt
+    flat: yes

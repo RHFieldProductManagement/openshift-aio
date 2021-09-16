@@ -1,0 +1,19 @@
+@   IN  SOA     ocp4-bastion.aio.example.com. root.aio.example.com. (
+                                                1001    ;Serial
+                                                3H      ;Refresh
+                                                15M     ;Retry
+                                                1W      ;Expire
+                                                1D      ;Minimum TTL
+                                                )
+
+;Name Server Information
+@ IN  NS      ocp4-bastion.aio.example.com.
+
+;Reverse lookup for Name Server
+100      IN  PTR     ocp4-bastion.aio.example.com.
+
+;PTR Record IP address to HostName
+20       IN  PTR     sno-master1.edge1.example.com.
+30       IN  PTR     sno-master1.edge2.example.com.
+40       IN  PTR     sno-master1.edge3.example.com.
+50       IN  PTR     sno-master1.edge4.example.com.

@@ -1,0 +1,7 @@
+- name: Create inventory for packet host
+  import_tasks: packet.yml
+  when: baremetal_provider == 'packet'
+
+- name: Create inventory for prebuilt host
+  import_tasks: prebuilt.yml
+  when: baremetal_provider == 'prebuilt'

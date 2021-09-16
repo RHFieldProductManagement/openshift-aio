@@ -1,0 +1,78 @@
+# Set baremetal provider to use, options are currently: packet, prebuilt
+baremetal_provider: prebuilt
+
+# Set the prebuilt IP address or hostname (please setup ssh-keys first)
+# If you're running against a local system, don't use 127.0.0.1, still
+# use the IP/hostname as if you were running against a remote system.
+prebuilt_ip: 10.11.176.28
+
+# Set Packet API Token
+packet_api_token:
+
+# Set Packet project name (will create if doesn't exist)
+packet_project_name:
+
+# Set Packet on-demand instance type
+packet_ondemand_type: s3.xlarge.x86
+
+# Set Packet spot instance type and bid
+packet_spot_type: s3.xlarge.x86
+packet_spot_bid: 0.70
+
+# Set the type of Packet deployment to do (ondemand/spot)
+packet_deploy_type: ondemand
+
+# Set the Packet facility to use
+packet_facility: am6
+
+# Set the run-time for your instance
+packet_runtime_hours: 3
+
+# Set whether you want the project to be automatically deleted
+packet_delete_project: true
+
+# Enter Email address for completion email
+email:
+
+# Enter SSH public key to use
+ssh_key: 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC4pu0BTw5xXad4uXUoV9qXDBwK7nXR0gHQBROiQWtQO9k9Ee2LQrqNm/8ce4zjet8K04Aej7ztLh8z0NmWkHZkmZKAhxhgM37CAWDzyUPiQBSob2fk9PhWPjijScEQ96AfHp7WYQ1G6NyWghg9vLnXUugrqNIWWHUNhARoXVpKPVZ/zUOZQLPKeF+GgDH9L178gvFRIvGQlvmDCjgt6qMyJymdGcuAL0LOLUJ9PsSwCXvJ6RICgH1Qa/FthFcsPs+8/zHKsd3jEJnb6m1caskbbONUkJ3d14CJOukAH/07Y3IllNtu9f1lt35N3cYmKZbdRdd4o2c74ETdOS8Ibm5v'
+
+# Enter OpenShift Pull Secret
+pull_secret: '{"auths":{"cloud.openshift.com":{"auth":"b3BlbnNoaWZ0LXJlbGVhc2UtZGV2K3Jobmdwc2htb250ZW5vbjF0dmEzYml6eTZjamhwdXNzdWNnbHF3empnbDpPMElaSldEWFlDRE1RSk9GVURPT1VEV0pQNFlTUTVIRDJIQVBSM0IyQ1NSWVZFWFFOQlZZMTM1SElGMzZYUFE5","email":"hgeaydem@redhat.com"},"quay.io":{"auth":"b3BlbnNoaWZ0LXJlbGVhc2UtZGV2K3Jobmdwc2htb250ZW5vbjF0dmEzYml6eTZjamhwdXNzdWNnbHF3empnbDpPMElaSldEWFlDRE1RSk9GVURPT1VEV0pQNFlTUTVIRDJIQVBSM0IyQ1NSWVZFWFFOQlZZMTM1SElGMzZYUFE5","email":"hgeaydem@redhat.com"},"registry.connect.redhat.com":{"auth":"NTUyNTE1Mnx1aGMtMVR2YTNiaXpZNmNKSFBVc1NVQ0dscXdaSkdsOmV5SmhiR2NpT2lKU1V6VXhNaUo5LmV5SnpkV0lpT2lKaVlqQXhObU5oT0RObU9UZzBZbVUyWWpoaE5qRXhNRFpoT0RKbU5XSmxaQ0o5Lnd0V0YyTERqWG5XUndXV0J1encyeG1PMGw3NDVLWC1OU0tQcmRJRXo4WGg3SnFzZG5xQ2Z6RnJfRXdtQ29WNXdncVhMU1pfMDAzWE1QUmstT0ZhVVN1Q3hqVmstVDF5cGxINUVsc3dVQWNIUFF6VkdQaFczM1BIU2FyV09EbHViQkJqdFBFZHdLdXpmUXFvMmFaWFYzVXNjelFPZ2QwdWlHZWlFX1NuU1JaYngxcU9LbXlxWFJuSVhxa242bWxhbm92RFJ3LWk1VmFrekxYRnJmclpNZFFERVNCem5FZGtWTFpuVFVPSnB6MEl3OVU2dFJnbWFXbG9UQnQ3WmZuU0hoOEVVWlNlRERLT3hUX0lFOEkxMGt4MUZVeHJvQlBtWjduOTlBVXZUSG1MTlpKYmVWUFBIc2ZRT0JoSndoZUExbkdJeWtLMW9wdnhuLUJRTlg5bjJUaUdRN2pfajB4NEtidGFvLTc4QWM2cFZpQXpKcmFkZDhwWld3SWFNeDhxZU9yRUV4TDJvLXZTcjRsMUF4TkhrRXFrYUxuel90ZUVqTVphZXNKS21NTVo2UWNzX21kdkxkZEU0bXRRa3IyVVlBdUJpUVVTVk1mcVZ4aWxacG9MaTA5SktRM1Z1TFUwOS1BVXd0aWM2UDdGVzNGNGt2RndqYjhLbVg5U3JWREVsOGFpZlJxYjd1VFhYOVhOZWdBMDd6ZTJYNzJOM0NSVXpwbmRQbnZrWHZvbDJUc3V1QklzM0Vid0V3cEVnMVR0WFdSNmpOeEVPMi1peDVKS2N0bjlrd09SRjFSOGZ5R3hzM3dFOU83aWZpWlhEZ0pOaE9IVWJjZjZrX3BDdUdsODhLSkhzdFNGalF5eFJVZVVBLXdxd1F5dENlU0lxaDVoMW9BNWZ2UEJZQUsw","email":"hgeaydem@redhat.com"},"registry.redhat.io":{"auth":"NTUyNTE1Mnx1aGMtMVR2YTNiaXpZNmNKSFBVc1NVQ0dscXdaSkdsOmV5SmhiR2NpT2lKU1V6VXhNaUo5LmV5SnpkV0lpT2lKaVlqQXhObU5oT0RObU9UZzBZbVUyWWpoaE5qRXhNRFpoT0RKbU5XSmxaQ0o5Lnd0V0YyTERqWG5XUndXV0J1encyeG1PMGw3NDVLWC1OU0tQcmRJRXo4WGg3SnFzZG5xQ2Z6RnJfRXdtQ29WNXdncVhMU1pfMDAzWE1QUmstT0ZhVVN1Q3hqVmstVDF5cGxINUVsc3dVQWNIUFF6VkdQaFczM1BIU2FyV09EbHViQkJqdFBFZHdLdXpmUXFvMmFaWFYzVXNjelFPZ2QwdWlHZWlFX1NuU1JaYngxcU9LbXlxWFJuSVhxa242bWxhbm92RFJ3LWk1VmFrekxYRnJmclpNZFFERVNCem5FZGtWTFpuVFVPSnB6MEl3OVU2dFJnbWFXbG9UQnQ3WmZuU0hoOEVVWlNlRERLT3hUX0lFOEkxMGt4MUZVeHJvQlBtWjduOTlBVXZUSG1MTlpKYmVWUFBIc2ZRT0JoSndoZUExbkdJeWtLMW9wdnhuLUJRTlg5bjJUaUdRN2pfajB4NEtidGFvLTc4QWM2cFZpQXpKcmFkZDhwWld3SWFNeDhxZU9yRUV4TDJvLXZTcjRsMUF4TkhrRXFrYUxuel90ZUVqTVphZXNKS21NTVo2UWNzX21kdkxkZEU0bXRRa3IyVVlBdUJpUVVTVk1mcVZ4aWxacG9MaTA5SktRM1Z1TFUwOS1BVXd0aWM2UDdGVzNGNGt2RndqYjhLbVg5U3JWREVsOGFpZlJxYjd1VFhYOVhOZWdBMDd6ZTJYNzJOM0NSVXpwbmRQbnZrWHZvbDJUc3V1QklzM0Vid0V3cEVnMVR0WFdSNmpOeEVPMi1peDVKS2N0bjlrd09SRjFSOGZ5R3hzM3dFOU83aWZpWlhEZ0pOaE9IVWJjZjZrX3BDdUdsODhLSkhzdFNGalF5eFJVZVVBLXdxd1F5dENlU0lxaDVoMW9BNWZ2UEJZQUsw","email":"hgeaydem@redhat.com"}}}'
+
+# Set whether you want to deploy a disconnected registry
+deploy_disconnected: false
+
+# Set whether you want to deploy guacamole for console
+deploy_guacamole: true
+
+# Set whether you want a compact deployment (3 node cluster)
+deploy_compact: false
+
+# Select granular deployment options
+# NOTE: OCP Plus will force acm, acs, ocp on.
+#       deploy_ocs will force 3 workers on non-compact
+deploy_ocp: true
+deploy_ocp_plus: true
+deploy_cnv: false
+deploy_ocs: false
+deploy_acm: false
+deploy_acs: false
+deploy_ods: false
+deploy_nfs: false
+deploy_sno: true
+
+# Select OpenShift version for base cluster
+ocp_version: latest-4.8
+
+# Select number of workers for base cluster (1-3, for 0 use deploy_compact)
+ocp_workers: 2
+
+# Select deployment type (upi, ipi, sno-iso or sno-ai)
+deploy_type: sno-iso
+
+# Set output directory
+output_dir: /tmp/output_dir
+
+# Deploy extra SNO nodes for AI 
+extra_sno_nodes: false

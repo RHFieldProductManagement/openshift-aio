@@ -1,0 +1,15 @@
+- name: Deploy Bastion for UPI
+  import_tasks: deploy_bastion_upi.yml
+  when: deploy_type == 'upi'
+
+- name: Deploy Bastion for IPI
+  import_tasks: deploy_bastion_ipi.yml
+  when: deploy_type == 'ipi'
+
+- name: Deploy Bastion for SNO
+  import_tasks: deploy_bastion_sno.yml
+  when: deploy_type == 'sno-iso'
+
+- name: Prepare Guacamole prereqs on bastion
+  import_tasks: prep_guac.yml
+  when: deploy_guacamole

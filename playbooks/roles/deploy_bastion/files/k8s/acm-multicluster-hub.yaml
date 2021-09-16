@@ -1,0 +1,6 @@
+apiVersion: operator.open-cluster-management.io/v1
+kind: MultiClusterHub
+metadata:
+  namespace: open-cluster-management
+  name: multiclusterhub
+spec: {}

@@ -1,0 +1,36 @@
+---
+# vim: set ft=ansible:
+
+- name: Copy over k8s-aio env requirements.txt
+  ansible.builtin.copy:
+    src: requirements.txt
+    dest: /tmp/requirements.txt
+
+- name: "Create k8s-aio venv"
+  pip:
+    requirements: "/tmp/requirements.txt"
+    virtualenv: "/opt/virtualenvs/k8s-aio"
+    virtualenv_site_packages: true
+    virtualenv_command: "/usr/bin/virtualenv"
+
+- name: "Set Ansible interpreter to venv"
+  set_fact:
+    ansible_python_interpreter: /opt/virtualenvs/k8s-aio/bin/python
+
+- name: Apply OpenShift Advanced Cluster Manager Operator
+  k8s:
+    state: present
+    definition: "{{ lookup('file', 'acm-operator.yaml') }}"
+  register: acm_operator_success
+  retries: 5
+  delay: 30
+  until: acm_operator_success is not failed
+
+- name: Apply ACM Multicluster Hub configuration
+  k8s:
+    state: present
+    definition: "{{ lookup('file', 'acm-multicluster-hub.yaml') }}"
+  register: hyperconverged_success
+  retries: 5
+  delay: 30
+  until: hyperconverged_success is not failed

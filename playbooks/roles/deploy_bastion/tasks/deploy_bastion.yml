@@ -1,0 +1,324 @@
+---
+# vim: set ft=ansible:
+
+- name: Make sure Bastion VM isn't running
+  virt:
+    name: ocp4-bastion
+    state: shutdown
+
+- name: Create temporary users SSH public key file
+  ansible.builtin.lineinfile:
+    path: /tmp/user-key.pub
+    line: "{{ ssh_key }}"
+    create: yes
+
+- name: Inject users SSH key into Bastion VM for Ansible
+  ansible.builtin.command: >
+    virt-customize -a /var/lib/libvirt/images/ocp4-bastion.qcow2 --selinux-relabel
+    --ssh-inject root:file:/root/.ssh/id_rsa.pub
+    --ssh-inject root:file:/tmp/user-key.pub
+  register: result
+  until: result is succeeded
+  retries: 3
+  delay: 30
+
+- name: Start Bastion virtual machine
+  virt:
+    name: ocp4-bastion
+    state: running
+
+- name: Deploy Bastion machine
+  gather_facts: false
+  hosts: bastion
+  tasks:
+
+- name: Wait for Bastion machine to start
+  wait_for_connection:
+    timeout: 120
+  register: result
+  until: result is succeeded
+  retries: 3
+  delay: 30
+
+- name: Grow root disk
+  ansible.builtin.command: growpart /dev/vda 1
+  ignore_errors: true
+
+- name: Resize partition to fill disk
+  ansible.builtin.command: xfs_growfs /
+
+- name: Set Bastion hostname
+  ansible.builtin.hostname:
+    name: ocp4-bastion.aio.example.com
+
+- name: Install required base packages
+  dnf:
+    name:
+      - qemu-img
+      - jq
+      - git
+      - httpd
+      - squid
+      - dhcp-server
+      - xinetd
+      - net-tools
+      - nano
+      - bind
+      - bind-utils
+      - haproxy
+      - wget
+      - syslinux
+      - libvirt-libs
+      - tftp-server
+      - syslinux-tftpboot
+      - firewalld
+      - python3-virtualenv
+      - podman
+    state: latest
+
+- name: Upgrade all packages
+  dnf:
+    name: "*"
+    state: latest
+
+- name: Create SSH keypair
+  openssh_keypair:
+    path: "~/.ssh/id_rsa"
+    type: rsa
+    size: 4096
+    state: present
+    force: no
+
+- name: Enable Firewalld
+  ansible.builtin.systemd:
+    name: firewalld
+    enabled: yes
+    state: started
+
+- name: Enable Bastion services in firewall
+  firewalld:
+    permanent: yes
+    state: enabled
+    service: "{{ item }}"
+  loop:
+    - dhcp
+    - dns
+    - http
+    - https
+    - squid
+    - nfs3
+    - mountd
+    - rpc-bind
+    - nfs
+
+- name: Enable TFTP in firewall for UPI
+  firewalld:
+    permanent: yes
+    state: enabled
+    service: "tftp"
+  when: deploy_type == "upi"
+
+- name: Enable extra Bastion ports in firewall
+  firewalld:
+    permanent: yes
+    state: enabled
+    port: "{{ item }}"
+  loop:
+    - "6443/tcp"
+    - "8443/tcp"
+    - "9001/tcp"
+    - "22623/tcp"
+    - "81/tcp"
+
+- name: Reload Firewalld
+  ansible.builtin.command: firewall-cmd --reload
+  register: firewalld_return
+  failed_when: firewalld_return.rc > 0
+
+- name: Make NFS PV and TFTPboot directories
+  file:
+    path: "{{ item }}"
+    state: directory
+    mode: 0777
+    recurse: yes
+  loop:
+    - "/nfs/pv1"
+    - "/nfs/pv2"
+    - "/nfs/pv3"
+    - "/nfs/pv4"
+    - "/nfs/pv5"
+    - "/var/lib/tftpboot/pxelinux/pxelinux.cfg/"
+
+- name: Setting up NFS config
+  ansible.builtin.lineinfile:
+    path: /etc/exports
+    line: /nfs *(rw,no_root_squash)
+    create: yes
+
+- name: Setting up HTTPD config
+  ansible.builtin.lineinfile:
+    path: /etc/httpd/conf/httpd.conf
+    regexp: '^Listen '
+    insertafter: '^#Listen '
+    line: Listen 81
+
+- name: Copy over Squid config file
+  ansible.builtin.copy:
+    src: services/squid.conf
+    dest: /etc/squid/squid.conf
+    mode: 0644
+
+- name: Copy over named config file
+  ansible.builtin.copy:
+    src: services/named.conf
+    dest: /etc/named.conf
+    mode: 0644
+
+- name: Copy over haproxy config file
+  ansible.builtin.copy:
+    src: services/haproxy.cfg
+    dest: /etc/haproxy/haproxy.cfg
+    mode: 0644
+  when:
+    - not deploy_compact
+    - deploy_type == "upi"
+
+- name: Copy over haproxy config file for compact
+  ansible.builtin.copy:
+    src: services/haproxy-compact.cfg
+    dest: /etc/haproxy/haproxy.cfg
+    mode: 0644
+  when:
+    - deploy_compact or hostvars['localhost']['override_deploy_compact']
+    - deploy_type == "upi"
+
+- name: Make sure DHCPD leases file exists
+  ansible.builtin.file:
+    path: /var/lib/dhcpd/dhcpd.leases
+    state: touch
+
+- name: Rebooting Bastion VM
+  reboot:
+    reboot_timeout: 600
+
+- name: Get RHCOS version to use
+  set_fact:
+    subversion: "{{ ocp_version.split('latest-')[1] if ('latest' in ocp_version) else ocp_version.split('.')[:2]|join('.') }}"
+
+- name: Download OpenShift Client
+  ansible.builtin.get_url:
+    url: https://mirror.openshift.com/pub/openshift-v4/clients/ocp/{{ ocp_version }}/openshift-client-linux.tar.gz
+    dest: /root
+    mode: 0644
+
+- name: Download OpenShift Installer
+  ansible.builtin.get_url:
+    url: https://mirror.openshift.com/pub/openshift-v4/clients/ocp/{{ ocp_version }}/openshift-install-linux.tar.gz
+    dest: /root
+    mode: 0644
+
+- name: Unpack OpenShift Client & Installer
+  ansible.builtin.unarchive:
+    remote_src: yes
+    src: "{{ item }}"
+    dest: /usr/bin
+  loop:
+    - "/root/openshift-install-linux.tar.gz"
+    - "/root/openshift-client-linux.tar.gz"
+
+- name: Remove OpenShift client and installer tarballs
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - "/root/openshift-install-linux.tar.gz"
+    - "/root/openshift-client-linux.tar.gz"
+
+- name: Rename RHCOS files to simplify filenames
+  ansible.builtin.command: "{{ item }}"
+  loop:
+    - "mv /var/www/html/rhcos-metal.x86_64.raw.gz /var/www/html/rhcos.raw.gz"
+    - "mv /var/www/html/rhcos-live-kernel-x86_64 /var/www/html/rhcos.kernel"
+    - "mv /var/www/html/rhcos-live-initramfs.x86_64.img /var/www/html/rhcos.initramfs"
+    - "mv /var/www/html/rhcos-live-rootfs.x86_64.img /var/www/html/rhcos.rootfs"
+  when: deploy_type == "upi"
+
+- name: Reset permissions for /var/www/html
+  ansible.builtin.file:
+    path: /var/www/html
+    recurse: yes
+    mode: '0755'
+    setype: _default
+
+- name: Make lab directory on bastion
+  ansible.builtin.file:
+    path: /root/lab
+    state: directory
+
+- name: Grab contents of Bastions SSH public key
+  ansible.builtin.command: cat /root/.ssh/id_rsa.pub
+  register: bastion_ssh
+
+- name: Make sure we remove existing pull-secret
+  ansible.builtin.file:
+    path: /root/pull-secret.json
+    state: absent
+
+- name: Creating pull-secret file
+  ansible.builtin.lineinfile:
+    path: /root/pull-secret.json
+    line: "{{ pull_secret | string }}"
+    create: yes
+
+- name: Make sure /etc/resolv.conf is writable
+  ansible.builtin.file:
+    path: /etc/resolv.conf
+    attributes: -i
+
+- name: Clear out existing /etc/resolv.conf contents
+  ansible.builtin.command: truncate -s 0 /etc/resolv.conf
+
+- name: Ensuring /etc/resolv.conf is setup for local DNS
+  ansible.builtin.blockinfile:
+    path: /etc/resolv.conf
+    block: |
+      search aio.example.com
+      nameserver 192.168.123.100
+    create: yes
+    attributes: +i
+
+- name: Copy over the CentOS/RHEL8 KVM image over to bastion
+  remote_user: root
+  hosts: target
+  gather_facts: false
+  tasks:
+
+- name: Check if we've done this stage before with existing image
+  stat:
+    path: /var/lib/libvirt/images/centos8-kvm-cnv.qcow2
+  register: centos8_cnv
+
+- name: Make a copy of the centos8-kvm image
+  ansible.builtin.copy:
+    remote_src: yes
+    src: /var/lib/libvirt/images/centos8-kvm.qcow2
+    dest: /var/lib/libvirt/images/centos8-kvm-cnv.qcow2
+  when: not centos8_cnv.stat.exists
+
+- name: Set the root password on the centos8-kvm-cnv image
+  ansible.builtin.command: >
+    virt-customize -a /var/lib/libvirt/images/centos8-kvm-cnv.qcow2 --root-password password:redhat
+  when: not centos8_cnv.stat.exists
+
+- name: Convert centos8-kvm-cnv image to raw
+  ansible.builtin.command: >
+    qemu-img convert -f qcow2 -O raw
+    /var/lib/libvirt/images/centos8-kvm-cnv.qcow2
+    /var/lib/libvirt/images/centos8-kvm-cnv.img
+
+- name: Copy CentOS8 base image to bastion machine
+  ansible.builtin.shell: >
+    scp -o "StrictHostKeyChecking no"
+    /var/lib/libvirt/images/centos8-kvm-cnv.img
+    root@192.168.123.100:/var/www/html/rhel8-kvm.img
+  when: not centos8_cnv.stat.exists

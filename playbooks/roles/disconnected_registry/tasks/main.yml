@@ -1,0 +1,250 @@
+---
+# vim: set ft=ansible:
+
+# - name: Deploy Bastion machine
+#   gather_facts: false
+# #  hosts: bastion
+#   tasks:
+
+- name: Ensure podman is available
+  dnf:
+    name:
+      - podman
+    state: latest
+  become: True
+
+- name: Ensure Bastion machine is available
+  wait_for_connection:
+    timeout: 120
+  register: result
+  until: result is succeeded
+  retries: 3
+  delay: 30
+
+- name: Enable Disconnected Registry port in firewall
+  firewalld:
+    permanent: yes
+    state: enabled
+    port: "5000/tcp"
+
+- name: Reload Firewalld
+  ansible.builtin.command: firewall-cmd --reload
+  register: firewalld_return
+  failed_when: firewalld_return.rc > 0
+
+- name: Make Disconnected Registry directories
+  file:
+    path: "{{ item }}"
+    state: directory
+    mode: 0777
+    recurse: yes
+  loop:
+    - "/nfs/registry/auth"
+    - "/nfs/registry/certs"
+    - "/nfs/registry/data"
+
+- name: Copy over k8s-aio env requirements.txt
+  ansible.builtin.copy:
+    src: ../conf/k8s/requirements.txt
+    dest: /tmp/requirements.txt
+
+- name: "Create k8s-aio venv"
+  pip:
+    requirements: "/tmp/requirements.txt"
+    virtualenv: "/opt/virtualenvs/k8s-aio"
+    virtualenv_site_packages: true
+    virtualenv_command: "/usr/bin/virtualenv"
+
+- name: "Set Ansible interpreter to venv"
+  set_fact:
+    ansible_python_interpreter: /opt/virtualenvs/k8s-aio/bin/python
+
+# I can't seem to generate a self-signed cert that has CA properties with Ansible
+#    - name: Generate OpenSSL private key
+#      openssl_privatekey:
+#        path: /nfs/registry/certs/domain.key
+#        size: 4096
+
+#    - name: Generate OpenSSL certficate signing requests
+#      openssl_csr:
+#        path: /nfs/registry/certs/domain.csr
+#        privatekey_path: /nfs/registry/certs/domain.key
+#        country_name: "US"
+#        state_or_province_name: "NorthCarolina"
+#        locality_name: "Raleigh"
+#        organization_name: "Red Hat"
+#        organizational_unit_name: "Marketing"
+#        common_name: ocp4-bastion.aio.example.com
+#        subject_alt_name: "DNS:ocp4-bastion.aio.example.com"
+
+#    - name: Generate a Self Signed OpenSSL certificate
+#      openssl_certificate:
+#        state: present
+#        signature_algorithms:
+#          - sha256WithRSAEncryption
+#        path: /nfs/registry/certs/domain.crt
+#        privatekey_path: /nfs/registry/certs/domain.key
+#        csr_path: /nfs/registry/certs/domain.csr
+#        has_expired: false
+#        provider: selfsigned
+#        subject_alt_name:
+#          - ocp4-bastion.aio.example.com
+
+- name: Manually build OpenSSL certificate
+  ansible.builtin.shell: >
+    openssl req -newkey rsa:4096 -nodes -sha256 -keyout /nfs/registry/certs/domain.key
+    -x509 -days 365 -out /nfs/registry/certs/domain.crt -subj 
+    "/C=US/ST=NorthCarolina/L=Raleigh/O=Red Hat/OU=Marketing/CN=ocp4-bastion.aio.example.com"
+    -addext "subjectAltName = DNS:ocp4-bastion.aio.example.com" -addext "certificatePolicies = 1.2.3.4"
+
+- name: Copy SSL certificate to trust store
+  ansible.builtin.copy:
+    remote_src: yes
+    src: /nfs/registry/certs/domain.crt
+    dest: /etc/pki/ca-trust/source/anchors/
+
+- name: Update the CA trust
+  ansible.builtin.command: /usr/bin/update-ca-trust extract
+
+- name: Generate htpasswd file for dummy user
+  htpasswd:
+    path: /nfs/registry/auth/htpasswd
+    username: dummy
+    password: dummy
+    crypt_scheme: bcrypt
+
+- name: Pull the Disconnected Registry container image
+  containers.podman.podman_image:
+    name: "quay.io/roxenham/registry:3"
+
+- name: Start the registry server via Podman
+  containers.podman.podman_container:
+    name: disconnected-registry
+    state: present
+    image: quay.io/roxenham/registry:3
+    volume:
+      - "/nfs/registry/data:/var/lib/registry:z"
+      - "/nfs/registry/auth:/auth:z"
+      - "/nfs/registry/certs:/certs:z"
+    net: host
+    env:
+      REGISTRY_AUTH: htpasswd
+      REGISTRY_AUTH_HTPASSWD_REALM: Registry
+      REGISTRY_HTTP_SECRET: ALongRandomSecretForRegistry
+      REGISTRY_AUTH_HTPASSWD_PATH: /auth/htpasswd
+      REGISTRY_HTTP_TLS_CERTIFICATE: /certs/domain.crt
+      REGISTRY_HTTP_TLS_KEY: /certs/domain.key
+
+- name: Check if install-config.yaml.orig exists
+  ansible.builtin.stat:
+    path: "/root/lab/install-config.yaml.orig"
+  register: install_conf_orig
+
+- name: Make a copy of the original install-config
+  ansible.builtin.copy:
+    remote_src: true
+    src: /root/lab/install-config.yaml
+    dest: /root/lab/install-config.yaml.orig
+  when: not install_conf_orig.stat.exists
+
+- name: Ensure that we're using the original install-config
+  ansible.builtin.copy: 
+    remote_src: true
+    src: /root/lab/install-config.yaml.orig
+    dest: /root/lab/install-config.yaml
+
+- name: Strip existing pull secret from install-config
+  ansible.builtin.lineinfile:
+    path: /root/lab/install-config.yaml
+    regexp: '^pullSecret: '
+    state: absent
+
+- name: Create the registry secret file
+  ansible.builtin.copy:
+    dest: /root/reg-secret.txt
+    content: |
+      "ocp4-bastion.aio.example.com:5000": {
+        "email": "dummy@redhat.com",
+        "auth": "{{ "dummy:dummy" | b64encode }}"
+      }
+
+- name: Create merged-pull-secret file with reg-secret
+  ansible.builtin.shell: >
+    cat /root/pull-secret.json | jq ".auths += {`cat /root/reg-secret.txt`}" | tr -d '[:space:]' > /root/merged-pull-secret.json
+
+- name: Slurp the contents of the merged-pull-secret
+  slurp:
+    src: /root/merged-pull-secret.json
+  register: merged_pull_secret
+
+- name: Add the merged pull-secret back into the install-config
+  ansible.builtin.lineinfile:
+    dest: /root/lab/install-config.yaml
+    state: present
+    regexp: '^pullSecret: '
+    insertafter: EOF
+    line: "pullSecret: '{{ merged_pull_secret['content'] | b64decode }}'"
+
+- name: Make a copy of the domain.crt file
+  ansible.builtin.copy:
+    remote_src: true
+    src: /nfs/registry/certs/domain.crt
+    dest: /root/domain.crt
+
+# Unfortunately the padding doesn't work with blockinfile
+- name: Insert padding into the domain.crt file
+  ansible.builtin.shell: sed -i -e 's/^/  /' /root/domain.crt
+
+- name: Slurp the contents of the domain.crt certificate
+  slurp:
+    src: /root/domain.crt
+  register: domain_crt
+
+- name: Add the trust bundle to the install-config
+  ansible.builtin.lineinfile:
+    dest: /root/lab/install-config.yaml
+    state: present
+    insertafter: EOF
+    line: "additionalTrustBundle: |"
+
+# We strip out the markers here to avoid problems with install-config parsing
+- name: Add the cert contents to the install-config
+  ansible.builtin.blockinfile:
+    path: /root/lab/install-config.yaml
+    marker: ""
+    insertafter: '^#additionalTrustBundle: |'
+    block: |
+        {{ domain_crt['content'] | b64decode }}
+
+- name: Add the imageContentSources to install-config
+  ansible.builtin.blockinfile:
+    path: /root/lab/install-config.yaml
+    marker: ""
+    insertafter: EOF
+    block: |
+      imageContentSources:
+      - mirrors:
+        - ocp4-bastion.aio.example.com:5000/ocp4/openshift4
+        source: quay.io/openshift-release-dev/ocp-release
+      - mirrors:
+        - ocp4-bastion.aio.example.com:5000/ocp4/openshift4
+        source: quay.io/openshift-release-dev/ocp-v4.0-art-dev
+
+- name: Remove blank lines blockinfile put in
+  ansible.builtin.lineinfile:
+    path: /root/lab/install-config.yaml
+    state: absent
+    regexp: '^$'
+
+- name: Get exact OpenShift version in use
+  ansible.builtin.command: oc version --client=false
+  register: ocp_client_output
+
+- set_fact:
+    ocp_client_version: "{{ ocp_client_output.stdout.split('\n')[0].split(':')[1] | trim }}"
+
+- name: Mirror OpenShift {{ ocp_client_version }} images to disconnected registry
+  ansible.builtin.shell: >
+    oc adm release mirror -a /root/merged-pull-secret.json
+    --from quay.io/openshift-release-dev/ocp-release:{{ ocp_client_version}}-x86_64
+    --to=ocp4-bastion.aio.example.com:5000/ocp4/openshift4

@@ -1,0 +1,7 @@
+
+- name: Write guacadmin password locally
+  ansible.builtin.lineinfile:
+    path: ../generated/guacadmin-password.txt
+    line: "{{ hostvars['guac_holder']['guac_shared_password'] }}"
+    create: yes
+  when: hostvars['guac_holder'] is defined

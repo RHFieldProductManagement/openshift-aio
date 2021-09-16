@@ -1,0 +1,32 @@
+
+# - name: Add Bastion to Inventory
+#   tasks:
+- name: Dynamically add new Bastion VM to the inventory
+  add_host:
+    ansible_ssh_user: root
+    ansible_ssh_host: "{{ instance_ip }}"
+    ansible_ssh_port: 8000
+    ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
+    hostname: 192.168.123.100
+    groups: bastion
+  when: baremetal_provider == "packet"   
+
+- name: Insert bastion into inventory file
+  ini_file:
+    dest: ../../../inventory.yml
+    section: bastion
+    option: 192.168.123.100 ansible_ssh_user=root
+    mode: 0666
+    state: present
+    backup: no
+    allow_no_value: yes
+
+- name: Insert SSH proxy information into inventory file for bastion VM
+  ini_file:
+    dest: ../../../inventory.yml
+    section: bastion:vars
+    option: ansible_ssh_common_args='-o StrictHostKeyChecking=accept-new -o ProxyCommand="ssh -o StrictHostKeyChecking=no -W %h:%p -q root@{{ groups['target'][0] }}"'
+    mode: 0666
+    state: present
+    backup: no
+    allow_no_value: yes
