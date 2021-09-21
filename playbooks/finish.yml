@@ -3,7 +3,7 @@
 
 - name: Reload inventory for bastion host
   gather_facts: false
-  hosts: localhost
+  hosts: bastion
   tasks:
 
     - name: Set fact for OCP deployment if requesting dependents
@@ -74,7 +74,7 @@
 
           Use this URL: http://{{ groups['target'][0] }}:8080/guacamole
           Username: guacadmin
-          Password: {{ lookup('file', '../generated/guacadmin-password.txt') }}
+          Password: {{ ansible_facts['bastion']['guacadmin_password'] }}
 
           The 'Lab Desktop' will give you a GNOME desktop environment, and 'Bastion SSH' just CLI access.
       debug:

@@ -22,17 +22,18 @@
     - base_software
     - base_virt
     - prepare_bastion
-
-# Step 4 : Prepare Bastion VM 
-- hosts: bastion
-  roles:
-    - deploy_bastion
   tasks:
     - name: deploy Guacamole
       include_role:
         name: deploy_guac
       when: deploy_guacamole
 
+# Step 4 : Prepare Bastion VM 
+- hosts: bastion
+  roles:
+    - deploy_bastion
+
+  tasks:
 # Step 5 : Deploy Openshift or SNO
     - name: deploy OCP
       include_role:

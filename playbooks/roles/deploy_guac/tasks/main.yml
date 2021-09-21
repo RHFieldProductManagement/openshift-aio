@@ -116,6 +116,15 @@
     replace: "{{ guacadmin_password_sha256 }}"
   when: not database_stat.stat.exists
 
+- name: Ensure postgres container is running
+  containers.podman.podman_container:
+    name: postgres
+    state: started
+    image: quay.io/roxenham/postgres
+    volume: "/usr/local/pgsql/data:/var/lib/postgresql/data"
+    net: host
+    env: "POSTGRES_PASSWORD=redhat"
+
 - name: Create the guacamole_db in the postgres container
   ansible.builtin.command: >
     podman exec -it postgres createdb -U postgres guacamole_db

@@ -3,7 +3,7 @@
 
 - name: Reload inventory for bastion host
   gather_facts: false
-  hosts: localhost
+  hosts: bastion
   tasks:
 
     - name: Set fact for OCP deployment if requesting dependents
@@ -21,6 +21,16 @@
     - name: Print Deployment Complete
       debug:
         msg: "OpenShift AIO: Deployment has been Successful!"
+
+    - name: Gather passwords
+      fetch:
+        src: "/root/sno-{{ item }}/auth/kubeadmin-password"
+        dest: "/tmp/{{ item }}-kubepasswd"
+        flat: yes
+      loop:
+        - rhacm
+        - edge1
+        - edge2
 
     - name: Print Deployment Specifics
       vars:
@@ -58,13 +68,13 @@
           Then set your local proxy server to localhost:8080 and enable DNS over SOCKS
 
           The console for rhacm cluster is available at: https://console-openshift-console.apps.rhacm.example.com
-          The kubeadmin password is: {{ lookup('file', '/root/sno-rhacm/auth/kubeadmin-password') }}
+          The kubeadmin password is: {{ lookup('file', '/tmp/rhacm-kubepasswd') }}
 
           The console for edge1 cluster is available at: https://console-openshift-console.apps.edge1.example.com
-          The kubeadmin password is: {{ lookup('file', '/root/sno-edge1/auth/kubeadmin-password') }}
+          The kubeadmin password is: {{ lookup('file', '/tmp/edge1-kubepasswd') }}
 
           The console for edge2 cluster is available at: https://console-openshift-console.apps.edge2.example.com
-          The kubeadmin password is: {{ lookup('file', '/root/sno-edge2/auth/kubeadmin-password') }}
+          The kubeadmin password is: {{ lookup('file', '/tmp/edge2-kubepasswd') }}
 
           If you'd like CLI access, the bastion host will have already been setup - `ssh root@192.168.123.100`
           You should then automatically have oc/kubectl access to the cluster. Check out ~/sno-{rhacm,edge1,edge2}/auth/.
@@ -80,7 +90,7 @@
 
           Use this URL: http://{{ groups['target'][0] }}:8080/guacamole
           Username: guacadmin
-          Password: {{ lookup('file', '../generated/guacadmin-password.txt') }}
+          Password: {{ ansible_facts['guac_holder']['guac_shared_password'] }}
 
           The 'Lab Desktop' will give you a GNOME desktop environment, and 'Bastion SSH' just CLI access.
       debug:

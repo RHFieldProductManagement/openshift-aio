@@ -1,6 +1,10 @@
 ---
 # vim: set ft=ansible:
 
+- name: Pause for 5 minutes to let SNO clusters settle down
+  pause:
+    minutes: 5
+
 - name: Enable Image Registry on Cluster
   ansible.builtin.shell: >
     oc --kubeconfig "/root/sno-{{ item }}/auth/kubeconfig" patch configs.imageregistry.operator.openshift.io cluster --type merge --patch '{"spec":{"managementState":"Managed"}}'

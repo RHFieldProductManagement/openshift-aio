@@ -23,7 +23,7 @@
     kubeconfig: /root/sno-rhacm/auth/kubeconfig
     definition: "{{ lookup('file', 'acs-operator.yaml') }}"
   register: acs_operator_success
-  retries: 5
+  retries: 10
   delay: 30
   until: acs_operator_success is not failed
 
@@ -33,6 +33,6 @@
     kubeconfig: /root/sno-rhacm/auth/kubeconfig
     definition: "{{ lookup('file', 'acs-central.yaml') }}"
   register: central_success
-  retries: 5
+  retries: 10
   delay: 30
   until: central_success is not failed
