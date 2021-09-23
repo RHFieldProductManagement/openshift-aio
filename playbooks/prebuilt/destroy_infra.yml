@@ -322,9 +322,18 @@
         path: "/usr/local/pgsql/"
         state: absent
 
-    - name: Remove sno directories
+    - name: Remove sno directories 1/2
       ansible.builtin.file:
         path: "/var/lib/libvirt/images/sno-{{ item }}"
+        state: absent
+      loop:
+        - rhacm
+        - edge1
+        - edge2
+
+    - name: Remove sno directories 2/2
+      ansible.builtin.file:
+        path: "/root/sno-{{ item }}"
         state: absent
       loop:
         - rhacm
