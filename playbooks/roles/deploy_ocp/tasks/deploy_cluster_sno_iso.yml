@@ -117,7 +117,7 @@
 - name: Embed ignition in install ISO
   containers.podman.podman_container:
     name: embed_ignition_{{ item }}
-    state: present
+    state: started
     image: quay.io/coreos/coreos-installer:release
     privileged: yes
     volume:
