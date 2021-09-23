@@ -322,6 +322,15 @@
         path: "/usr/local/pgsql/"
         state: absent
 
+    - name: Remove sno directories
+      ansible.builtin.file:
+        path: "/var/lib/libvirt/images/sno-{{ item }}"
+        state: absent
+      loop:
+        - rhacm
+        - edge1
+        - edge2
+
 - name: Cleanup local system
   hosts: localhost
   tasks:
@@ -348,3 +357,12 @@
       ansible.builtin.file:
         path: "../../generated/"
         state: absent
+
+    - name: Remove sno directories
+      ansible.builtin.file:
+        path: "/root/sno-{{ item }}"
+        state: absent
+      loop:
+        - rhacm
+        - edge1
+        - edge2

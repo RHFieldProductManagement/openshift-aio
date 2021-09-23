@@ -90,7 +90,7 @@
 
           Use this URL: http://{{ groups['target'][0] }}:8080/guacamole
           Username: guacadmin
-          Password: {{ ansible_facts['guac_holder']['guac_shared_password'] }}
+          Password: {{ lookup('file', '/tmp/guacadmin_passwd.txt') }}
 
           The 'Lab Desktop' will give you a GNOME desktop environment, and 'Bastion SSH' just CLI access.
       debug:
