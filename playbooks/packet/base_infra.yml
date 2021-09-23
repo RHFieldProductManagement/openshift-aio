@@ -44,6 +44,7 @@
 
      - name: Set Packet project ID from new project
        set_fact:
+         project_exists: true
          project_id: "{{ new_project.json.id }}"
        when: not project_exists | bool
 
@@ -72,13 +73,13 @@
 
      - name: Check if instance is already running
        vars:
-         project_name: "{{ packet_project_name }}-node"
+         project_name: "{{ packet_project_name }}"
        set_fact:
          instance_id: "{{ item.id }}"
          instance_exists: true
        with_items: "{{ devices.json.devices }}"
        when:
-         - item.hostname == project_name
+         - item.hostname == "{{ packet_project_name }}-node"
 
      - name: Calculate instance termination time
        shell: date -d '+ {{ packet_runtime_hours }} hours' +%FT%T%Z
@@ -137,7 +138,6 @@
        with_items: "{{ devices.json.devices }}"
        when:
          - project_exists | bool
-         - item.hostname == project_name
 
      - name: Display IP address of Packet instance
        debug:
