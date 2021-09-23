@@ -103,6 +103,9 @@
     guacadmin_password_sha256: "{{ random_sha256.stdout }}"
   when: not database_stat.stat.exists
 
+- local_action: copy content="{{ random_out.stdout }}" dest=/tmp/guacadmin_passwd.txt
+  when: not database_stat.stat.exists
+
 - name: add guacadmin_password variable to dummy host
   add_host:
     name: "guac_holder"
