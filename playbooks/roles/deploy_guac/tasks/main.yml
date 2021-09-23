@@ -66,7 +66,7 @@
 - name: Run postgres container for Guac
   containers.podman.podman_container:
     name: postgres
-    state: present
+    state: started
     image: quay.io/roxenham/postgres
     volume: "/usr/local/pgsql/data:/var/lib/postgresql/data"
     net: host
@@ -119,14 +119,14 @@
     replace: "{{ guacadmin_password_sha256 }}"
   when: not database_stat.stat.exists
 
-- name: Ensure postgres container is running
-  containers.podman.podman_container:
-    name: postgres
-    state: started
-    image: quay.io/roxenham/postgres
-    volume: "/usr/local/pgsql/data:/var/lib/postgresql/data"
-    net: host
-    env: "POSTGRES_PASSWORD=redhat"
+# - name: Ensure postgres container is running
+#   containers.podman.podman_container:
+#     name: postgres
+#     state: started
+#     image: quay.io/roxenham/postgres
+#     volume: "/usr/local/pgsql/data:/var/lib/postgresql/data"
+#     net: host
+#     env: "POSTGRES_PASSWORD=redhat"
 
 - name: Create the guacamole_db in the postgres container
   ansible.builtin.command: >
@@ -171,14 +171,14 @@
 - name: Run GuacD container
   containers.podman.podman_container:
     name: guacd
-    state: present
+    state: started
     image: quay.io/roxenham/guacd
     net: host
 
 - name: Run Guacamole container
   containers.podman.podman_container:
     name: guacamole
-    state: present
+    state: started
     image: quay.io/roxenham/guacamole
     net: host
     env:
