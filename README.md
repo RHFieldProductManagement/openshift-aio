@@ -43,37 +43,51 @@ With the current implementation it's possible to achieve the following-
 
 Note, these playbooks are expected to be operated from your workstation/laptop, and not executed on the target host directly, however, if you clone this repository on the baremetal system you want to use, make sure that your `prebuilt_ip` is the IP or hostname of the machine, and *not* `127.0.0.1`; when you're executing against a remote server or running the playbooks locally, you will need to make sure that the user in which you execute the playbooks with has password-free root access to the target by ensuring that ssh-keys are exchanged prior to operation.
 
+To get started, first clone this repository:
+
+~~~bash
+git clone https://github.com/RHFieldProductManagement/openshift-aio.git
+cd openshift-aio
+~~~
+
 ## Software prerequisites
+
+Setup a Python virtual environment for ansible:
+
+~~~bash
+python3 -m venv venv
+. venv/bin/activate
+
+pip install pip -U
+pip install -r requirements.txt
+~~~
+
+-or-
 
 Installation requires either Ansible 2.10+ or you'll need to install the **Podman module** for lower versions. This can be done via `ansible-galaxy` or an RPM:
 
 ~~~bash
-$ ansible-galaxy collection install containers.podman
+ansible-galaxy collection install containers.podman
+~~~
 
 -or-
 
-$ sudo dnf install -y ansible-collection-containers-podman.noarch
+~~~bash
+sudo dnf install -y ansible-collection-containers-podman.noarch
 ~~~
 
 ## Configure  
 
-To get started, first clone this repository:
-
-~~~bash
-$ git clone https://github.com/RHFieldProductManagement/openshift-aio.git
-~~~
-
 Next, enter the directory and make a copy of the `sample_vars.yml` file, as we'll use this to customise the deployment:
 
 ~~~bash
-$ cd openshift-aio
-$ cp sample_vars.yml my_vars.yml
+cp sample_vars.yml my_vars.yml
 ~~~
 
 Now you can edit your variables to suit your expected configuration:
 
 ~~~bash
-$ vi my_vars.yml
+vi my_vars.yml
 ~~~
 
 The list of available options (exposed as Ansible variables) is described below-
@@ -112,13 +126,13 @@ The list of available options (exposed as Ansible variables) is described below-
 When you're ready to deploy a cluster, call `main.yml` making sure you specify your variables and the dynamic inventory (don't worry that it doesn't exist yet):
 
 ~~~bash
-$ ansible-playbook playbooks/main.yml -e @my_vars.yml -i inventory.yml
+ansible-playbook playbooks/main.yml -e @my_vars.yml -i inventory.yml
 ~~~
 
 To destroy your cluster, call `destroy.yml`, again making sure to specify your variables and dynamic inventory:
 
 ~~~bash
-$ ansible-playbook playbooks/destroy.yml -e @my_vars.yml -i inventory.yml
+ansible-playbook playbooks/destroy.yml -e @my_vars.yml -i inventory.yml
 ~~~
 
 
