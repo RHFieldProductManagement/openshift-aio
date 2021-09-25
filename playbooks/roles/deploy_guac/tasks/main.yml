@@ -83,41 +83,55 @@
     /opt/guacamole/bin/initdb.sh --postgres > /usr/local/pgsql/data/initdb.sql
   when: not database_stat.stat.exists
 
+- name: Check if we already generated a password for guacamole
+  stat:
+    path: /tmp/guacadmin_passwd.txt
+  register: guac_file
+
 - name: Generate random password for guacadmin user
   ansible.builtin.shell: >
     cat /dev/urandom | tr -dc _A-Z-a-z-0-9 | head -c12
   register: random_out
-  when: not database_stat.stat.exists
+  when: not guac_file.stat.exists
+
+- name: Get the defined password if any
+  slurp:
+    src: /tmp/guacadmin_passwd
+  register: guac_pass
+  when: guac_file.stat.exists
 
 - name: Get sha256sum for random password
   ansible.builtin.shell: >
     echo -n {{ random_out.stdout }} | sha256sum | awk '{print $1;}'
   register: random_sha256
-  when: not database_stat.stat.exists
+  when: not guac_file.stat.exists
 
 - set_fact:
     guacadmin_password: "{{ random_out.stdout }}"
-  when: not database_stat.stat.exists
+  when: not guac_file.stat.exists
+
+- set_fact:
+    guacadmin_password: "{{ guac_pass['content'] | b64decode"
+  when: guac_file.stat.exists
 
 - set_fact:
     guacadmin_password_sha256: "{{ random_sha256.stdout }}"
-  when: not database_stat.stat.exists
+  when: not guac_file.stat.exists
 
 - local_action: copy content="{{ random_out.stdout }}" dest=/tmp/guacadmin_passwd.txt
-  when: not database_stat.stat.exists
+  when: not guac_file.stat.exists
 
 - name: add guacadmin_password variable to dummy host
   add_host:
     name: "guac_holder"
     guac_shared_password:  "{{ guacadmin_password }}"
-  when: not database_stat.stat.exists
 
 - name: Reset guacadmin password in initdb.sql
   ansible.builtin.replace:
     path: /usr/local/pgsql/data/initdb.sql
     regexp: 'CA458A7D494E3BE824F5E1E175A1556C0F8EEF2C2D7DF3633BEC4A29C4411960'
     replace: "{{ guacadmin_password_sha256 }}"
-  when: not database_stat.stat.exists
+  when: not guac_file.stat.exists
 
 # - name: Ensure postgres container is running
 #   containers.podman.podman_container:
@@ -131,13 +145,13 @@
 - name: Create the guacamole_db in the postgres container
   ansible.builtin.command: >
     podman exec -it postgres createdb -U postgres guacamole_db
-  when: not database_stat.stat.exists
+  when: not guac_file.stat.exists
 
 - name: Import the initdb.sql content
   ansible.builtin.command: >
     podman exec -it postgres psql -U postgres
     -d guacamole_db -f /var/lib/postgresql/data/initdb.sql
-  when: not database_stat.stat.exists
+  when: not guac_file.stat.exists
 
 - name: Grant privileges for Guacamole in Postgres and remove password salt
   ansible.builtin.shell: >
@@ -148,7 +162,7 @@
     - "\"GRANT SELECT,INSERT,UPDATE,DELETE ON ALL TABLES IN SCHEMA public TO guacamole_user\""
     - "\"GRANT SELECT,USAGE ON ALL SEQUENCES IN SCHEMA public TO guacamole_user\""
   register: privileges_result
-  when: not database_stat.stat.exists
+  when: not guac_file.stat.exists
   failed_when: '"FATAL" in privileges_result.stdout'
 
 - name: Create connection entries in Guacamole
@@ -165,7 +179,7 @@
     - "\"INSERT INTO guacamole_connection_parameter VALUES (2, 'port', '5999')\""
     - "\"INSERT INTO guacamole_connection_parameter VALUES (2, 'password', 'redhat')\""
   register: connections_result
-  when: not database_stat.stat.exists
+  when: not guac_file.stat.exists
   failed_when: '"FATAL" in connections_result.stdout'
 
 - name: Run GuacD container
