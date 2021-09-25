@@ -175,7 +175,7 @@
 - name: Run frontail for OpenShift installation log
   containers.podman.podman_container:
     name: frontail
-    state: present
+    state: started
     image: quay.io/roxenham/frontail
     volume: "/root/ocp-install:/log/"
     net: host
@@ -227,8 +227,18 @@
     state: restarted
     enabled: yes
 
+- name: Get cluster password as variable
+  slurp:
+    src: /root/ocp-install/auth/kubeadmin-password
+  register: kubeadmin_password
+
+- name: Create object to store kube passwd
+  add_host:
+    name: "kube_holder"
+    kubeadmin_password:  "{{ kubeadmin_password['content'] | b64decode }}"
+
 - name: Pull kubeadmin-password to local generated
   ansible.builtin.fetch:
     src: /root/ocp-install/auth/kubeadmin-password
-    dest: ../../../../generated/kubeadmin-password.txt
+    dest: ../../generated/kubeadmin-password.txt
     flat: yes

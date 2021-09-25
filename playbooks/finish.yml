@@ -58,7 +58,7 @@
           Then set your local proxy server to localhost:8080 and enable DNS over SOCKS
 
           The console is available at: https://console-openshift-console.apps.aio.example.com
-          The kubeadmin password is: {{ lookup('file', '../generated/kubeadmin-password.txt') }}
+          The kubeadmin password is: {{ hostvars['kube_holder']['kubeadmin_password'] }}
 
           If you'd like CLI access, the bastion host will have already been setup - `ssh root@192.168.123.100`
           You should then automatically have oc/kubectl access to the cluster. Check out ~/ocp-install/auth/.
@@ -74,7 +74,7 @@
 
           Use this URL: http://{{ groups['target'][0] }}:8080/guacamole
           Username: guacadmin
-          Password: {{ ansible_facts['bastion']['guacadmin_password'] }}
+          Password: {{ hostvars['guac_holder']['guac_shared_password'] }}
 
           The 'Lab Desktop' will give you a GNOME desktop environment, and 'Bastion SSH' just CLI access.
       debug:
