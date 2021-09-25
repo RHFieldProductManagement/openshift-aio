@@ -120,7 +120,7 @@
 - name: Start the registry server via Podman
   containers.podman.podman_container:
     name: disconnected-registry
-    state: present
+    state: started
     image: quay.io/roxenham/registry:3
     volume:
       - "/nfs/registry/data:/var/lib/registry:z"
