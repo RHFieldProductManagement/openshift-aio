@@ -52,3 +52,7 @@
   src: https://github.com/RHFieldProductManagement/ocp4_aio_infra_role_deploy_guacamole.git
   scm: git
 #  version: origin/master
+
+- name: deploy_ocp
+  src: https://github.com/RHFieldProductManagement/ocp4_aio_infra_role_deploy_ocp.git
+  scm: git
