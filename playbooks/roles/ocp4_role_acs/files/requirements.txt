@@ -1,4 +1,0 @@
-openshift==0.12.1
-cryptography>=1.6
-PyOpenSSL>=0.15
-passlib>=1.7.4

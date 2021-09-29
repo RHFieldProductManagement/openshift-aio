@@ -1,6 +1,0 @@
-- name: Install required base packages
-  dnf:
-    name:
-      - podman
-    state: latest
-  become: True

@@ -1,7 +1,0 @@
-- name: Deploy ACS on OCP Cluster
-  import_tasks: deploy_acs.yml
-  when: deploy_type == 'upi' or deploy_type == 'ipi'
-
-- name: Deploy ACS on rhacm SNO Cluster
-  import_tasks: deploy_acs_sno.yml
-  when: deploy_type == 'sno-iso'

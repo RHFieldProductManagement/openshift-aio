@@ -1,0 +1,8 @@
+# ignore everything in roles dir
+/*
+# Except:
+!.gitignore
+!requirements.yml
+!create_inventory/
+!generate_configs/
+!ocp4_role_cnvlab/
