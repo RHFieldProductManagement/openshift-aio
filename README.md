@@ -29,7 +29,7 @@ With the current implementation it's possible to achieve the following-
   * [Advanced Cluster Security](https://www.redhat.com/en/resources/advanced-cluster-security-for-kubernetes-datasheet) (ACS)
 * Deploy a [Red Hat OpenShift Platform Plus](https://www.openshift.com/products/platform-plus) deployment (combination of OpenShift, ACM, and ACS)
 * Deploy an optional [Apache Guacamole](https://guacamole.apache.org/) instance for easy browser-based interaction with the cluster
-* Deploy a *disconneted* cluster in which the OpenShift cluster relies on a dedicated image registry
+* (**WIP**) Deploy a *disconneted* cluster in which the OpenShift cluster relies on a dedicated image registry
 * Deploy NFS-based "basic" persistent volume storage for when OCS/ODF is not enabled
 * (**WIP**) Deploy the cluster in a pre-determined state to support self-paced labs and demonstration for-
   * Baremetal IPI cluster deployment & post-deployment utilisation
@@ -108,6 +108,12 @@ The list of available options (exposed as Ansible variables) is described below-
 | `deploy_type`             | Specify the deployment type that you want to use; you can choose from a UPI or an IPI type deployment, in which the "baremetal" type will be used for both. With a UPI installation, there's no provider integration and is considered a more agnostic deployment approach, whereas IPI uses the IPMI-based management to provide a more integrated baremetal management interface via [Metal3](https://metal3.io/). <br /><br />**Default**: "ipi" (Installer Provisioned Infrastructure) |
 
 ## Deployment
+
+Before being able to deploy, make sure to fetch the required roles with the following command :
+
+~~~bash
+$ ansible-galaxy -r playbools/roles/requirements.yml -p playbooks/roles
+~~~
 
 When you're ready to deploy a cluster, call `main.yml` making sure you specify your variables and the dynamic inventory (don't worry that it doesn't exist yet):
 
