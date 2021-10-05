@@ -22,4 +22,5 @@ spec:
         filesystem: root
         mode: 420
         path: /etc/chrony.conf
+        overwrite: true
   osImageURL: ""
