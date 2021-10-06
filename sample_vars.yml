@@ -68,8 +68,8 @@ ocp_version: latest-4.8
 # Select number of workers for base cluster (1-3, for 0 use deploy_compact)
 ocp_workers: 2
 
-# Select deployment type (upi, ipi, sno-iso or sno-ai)
-deploy_type: sno-iso
+# Select deployment type (ipi or sno)
+deploy_type: sno
 
 # Set output directory
 output_dir: /tmp/output_dir
