@@ -38,6 +38,8 @@
     - name: deploy OCP
       include_role:
         name: deploy_ocp
+      vars:
+        aio_host_ip_address: "{{ groups['target'][0] }}"
       when: deploy_type == 'upi' or deploy_type == 'ipi'
 
 - hosts: target
