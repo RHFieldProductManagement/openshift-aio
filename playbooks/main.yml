@@ -47,7 +47,7 @@
     - name: Deploy SNO
       include_role:
         name: deploy_ocp
-      when: deploy_type == "sno-iso"
+      when: deploy_type == "sno"
 
 # Step 5 : Get infos from deployments
 - hosts: localhost
