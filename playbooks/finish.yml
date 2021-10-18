@@ -25,7 +25,7 @@
     - name: Print Deployment Specifics
       vars:
         msg: |
-           OpenShift Version: {{ ocp_version }}
+           OpenShift Version: {{ ocp4_aio_ocp_version }}
            Baremetal Provider: {{ baremetal_provider }}
            Baremetal Server: {{ groups['target'][0] }}
            Deployment Type: {{ deploy_type }}
