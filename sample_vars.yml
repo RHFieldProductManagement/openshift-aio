@@ -35,7 +35,7 @@ packet_delete_project: true
 email:
 
 # Enter SSH public key to use
-ssh_key: ''
+ocp4_aio_ssh_key: ''
 
 # Enter OpenShift Pull Secret
 pull_secret: ''

@@ -56,7 +56,7 @@
          body_format: json
          body:
            label: "{{ project_id }}-key"
-           key: "{{ ssh_key }}"
+           key: "{{ ocp4_aio_ssh_key }}"
          headers:
            Content-Type: "application/json"
            X-Auth-Token: "{{ packet_api_token }}"
@@ -104,7 +104,7 @@
            plan: "{{ packet_ondemand_type }}"
            hostname: "{{ packet_project_name }}-node"
            operating_system: "centos_8"
-           key: "{{ ssh_key }}"
+           key: "{{ ocp4_aio_ssh_key }}"
            termination_time: "{{ termination_time.stdout }}"
            spot_instance: "{{ is_spot }}"
            spot_price_max: "{{ packet_spot_bid }}"
