@@ -118,7 +118,7 @@ $ ansible-galaxy -r playbools/roles/requirements.yml -p playbooks/roles
 When you're ready to deploy a cluster, call `main.yml` making sure you specify your variables and the dynamic inventory (don't worry that it doesn't exist yet):
 
 ~~~bash
-$ ansible-playbook playbooks/main.yml -e @my_vars.yml -i inventory.yml
+$ ansible-playbook playbooks/main.yml -e @my_vars.yml
 ~~~
 
 To destroy your cluster, call `destroy.yml`, again making sure to specify your variables and dynamic inventory:

@@ -18,15 +18,21 @@
 
 # Step 3 : Prepare Base Host
 - hosts: target
-  roles:
-    - base_software
-    - base_virt
-    - prepare_bastion
   tasks:
+    - name: Setup base software
+      include_role:
+        name: base_software
+      vars: ocp4_aio_baremetal_provider: "{{ baremetal_provider }}"
+    - name: Setup base virt
+      include_role:
+        name: base_virt
+    - name: Prepare bastion VM
+      include_role:
+        name: prepare_bastion
     - name: deploy Guacamole
       include_role:
         name: deploy_guac
-      when: deploy_guacamole
+      when: ocp4_aio_deploy_guacamole
 
 # Step 4 : Prepare Bastion VM 
 - hosts: bastion
@@ -40,14 +46,14 @@
         name: deploy_ocp
       vars:
         aio_host_ip_address: "{{ groups['target'][0] }}"
-      when: deploy_type == 'upi' or deploy_type == 'ipi'
+      when: ocp4_aio_deploy_type == 'upi' or ocp4_aio_deploy_type == 'ipi'
 
 - hosts: target
   tasks:
     - name: Deploy SNO
       include_role:
         name: deploy_ocp
-      when: deploy_type == "sno"
+      when: ocp4_aio_deploy_type == "sno"
 
 # Step 5 : Get infos from deployments
 - hosts: localhost
@@ -61,27 +67,27 @@
     - name: Setting up OCS Storage
       include_role:
         name: ocp4_role_ocs
-      when: deploy_ocs 
+      when: ocp4_aio_deploy_ocs 
 
     - name: Setting up NFS Storage
       include_role: 
         name: ocp4_role_nfsmount
-      when: not deploy_ocs
+      when: not ocp4_aio_deploy_ocs
 
     - name: Installing ACM
       include_role:
         name: ocp4_role_acm
-      when: deploy_acm or deploy_ocp_plus or deploy_sno
+      when: ocp4_aio_deploy_acm or ocp4_aio_deploy_ocp_plus or ocp4_aio_deploy_sno
 
     - name: Installing ACS
       include_role:
         name: ocp4_role_acs
-      when: deploy_acs or deploy_ocp_plus or deploy_sno
+      when: ocp4_aio_deploy_acs or ocp4_aio_deploy_ocp_plus or ocp4_aio_deploy_sno
 
     - name: Installing CNV
       include_role:
         name: ocp4_role_cnv
-      when: deploy_cnv
+      when: ocp4_aio_deploy_cnv
 
     - name: Deploy internal registry
       include_role:
@@ -89,8 +95,8 @@
   
 # Step 7: Print Output to User
 - import_playbook: finish.yml
-  when: not deploy_sno | bool
+  when: not ocp4_aio_deploy_sno | bool
 
 # Step 7-SNO: Print Output to User
 - import_playbook: finish_sno.yml
-  when: deploy_sno
+  when: ocp4_aio_deploy_sno
