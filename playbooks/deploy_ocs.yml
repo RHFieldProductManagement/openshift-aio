@@ -19,7 +19,7 @@
         oc label nodes --overwrite ocp4-{{ item.key }}.aio.example.com cluster.ocs.openshift.io/openshift-storage=''
       with_dict: "{{ vms['masters'] }}"
       when:
-        - deploy_compact or hostvars['localhost']['override_deploy_compact']
+        - deploy_compact or hostvars['localhost']['override_deploy_compact'] | default(false)
 
     - name: Label nodes for OpenShift Storage when not compact
       ansible.builtin.command: >
