@@ -8,10 +8,10 @@
   set_fact:
     override_deploy_compact: false
 
-- name: Force compact mode when ocp_workers is 0
+- name: Force compact mode when ocp4_aio_ocp_workers is 0
   set_fact:
     override_deploy_compact: true
-  when: ocp_workers == 0
+  when: ocp4_aio_ocp_workers == 0
 
 - name: Set a placeholder for override_deploy_nfs
   set_fact:
