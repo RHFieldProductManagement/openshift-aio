@@ -80,7 +80,7 @@ Our application will now build from source, you can watch it happen with:
 $ oc logs duckhunt-js-1-build -f
 (...)
 
-Successfully pushed image-registry.openshift-image-registry.svc:5000/test/duckhunt-js:latest@sha256:4d0186040826a4be9d678459c5d6831e107a60c403d65a0da77fb076ff89084c
+Successfully pushed image-registry.openshift-image-registry.svc:5000/test/duckhunt-js@sha256:c4e64bc633ae09ce0f2f2f6de2ca9eaca8e11dc5b335301a2be78216df4b6929
 Push successful
 ~~~
 
@@ -110,7 +110,7 @@ NAME          HOST/PORT                                  PATH   SERVICES      PO
 duckhunt-js   duckhunt-js-test.apps.cnv.example.com          duckhunt-js   8080-tcp                 None
 ~~~
 
-You should be able to open up the application in the same browser that you're reading this guide from, either copy and paste the address, or click this clink: [http://duckhunt-js-test.apps.cnv.example.com](http://duckhunt-js-test.apps.cnv.example.com). If your OpenShift cluster is working as expected and the application build was successful, you should now be able to have a quick play with this... good luck ;-)
+You should be able to open up the application in the same browser that you're reading this guide from, either copy and paste the address, or click this clink: [http://duckhunt-js-test.apps.aio.example.com/](http://duckhunt-js-test.apps.aio.example.com/). If your OpenShift cluster is working as expected and the application build was successful, you should now be able to have a quick play with this... good luck ;-)
 
 <img src="img/duckhunt.png"/>
 
