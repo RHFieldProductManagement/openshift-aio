@@ -2,12 +2,13 @@ On the right hand side where the web terminal is, let's see if we can check the 
 
 ~~~bash
 $ oc get nodes
-NAME                           STATUS   ROLES    AGE     VERSION
-ocp4-master1.cnv.example.com   Ready    master   50m     v1.17.1
-ocp4-master2.cnv.example.com   Ready    master   50m     v1.17.1
-ocp4-master3.cnv.example.com   Ready    master   50m     v1.17.1
-ocp4-worker1.cnv.example.com   Ready    worker   35m     v1.17.1
-ocp4-worker2.cnv.example.com   Ready    worker   35m     v1.17.1
+NAME                           STATUS   ROLES    AGE   VERSION
+ocp4-master1.aio.example.com   Ready    master   22h   v1.22.0-rc.0+894a78b
+ocp4-master2.aio.example.com   Ready    master   22h   v1.22.0-rc.0+894a78b
+ocp4-master3.aio.example.com   Ready    master   22h   v1.22.0-rc.0+894a78b
+ocp4-worker1.aio.example.com   Ready    worker   22h   v1.22.0-rc.0+894a78b
+ocp4-worker2.aio.example.com   Ready    worker   22h   v1.22.0-rc.0+894a78b
+
 ~~~
 
 If you do not see **three** masters and **two** workers listed in your output, you may need to approve the CSR requests, note that you only need to do this if you're missing nodes, but it won't harm to run this regardless:
@@ -28,20 +29,23 @@ certificatesigningrequest.certificates.k8s.io/csr-4k6n8 approved
 Next let's validate the version that we've got deployed, and the status of the cluster operators:
 
 
-
 ~~~bash
 $ oc get clusterversion
-NAME      VERSION                             AVAILABLE   PROGRESSING   SINCE   STATUS
-version   4.4.0-0.nightly-2020-03-08-235004   True        False         28m     Cluster version is 4.4.0-0.nightly-2020-03-08-235004
+NAME      VERSION   AVAILABLE   PROGRESSING   SINCE   STATUS
+version   4.9.0     True        False         22h     Cluster version is 4.9.0
 
 $ oc get clusteroperators
-NAME                                       VERSION                             AVAILABLE   PROGRESSING   DEGRADED   SINCE
-authentication                             4.4.0-0.nightly-2020-03-08-235004   True        False         False      33m
-cloud-credential                           4.4.0-0.nightly-2020-03-08-235004   True        False         False      54m
-cluster-autoscaler                         4.4.0-0.nightly-2020-03-08-235004   True        False         False      42m
-console                                    4.4.0-0.nightly-2020-03-08-235004   True        False         False      32m
-csi-snapshot-controller                    4.4.0-0.nightly-2020-03-08-235004   True        False         False      39m
-dns                                        4.4.0-0.nightly-2020-03-08-235004   True        False         False      51m
+NAME                                       VERSION   AVAILABLE   PROGRESSING   DEGRADED   SINCE   MESSAGE
+authentication                             4.9.0     True        False         False      23h     
+baremetal                                  4.9.0     True        False         False      23h     
+cloud-controller-manager                   4.9.0     True        False         False      23h     
+cloud-credential                           4.9.0     True        False         False      23h     
+cluster-autoscaler                         4.9.0     True        False         False      23h     
+config-operator                            4.9.0     True        False         False      23h     
+console                                    4.9.0     True        False         False      23h     
+csi-snapshot-controller                    4.9.0     True        False         False      23h     
+dns                                        4.9.0     True        False         False      23h     
+etcd                                       4.9.0     True        False         False      23h 
 (...)
 ~~~
 
@@ -53,7 +57,8 @@ OK, so this is likely something that you've all done before, and it's hardly ver
 
 ~~~bash
 $ oc new-project test
-Now using project "test" on server "https://api.cnv.example.com:6443".
+Now using project "test" on server "https://api.aio.example.com:6443".
+(...)
 
 $ oc new-app \
 	nodejs~https://github.com/vrutkovs/DuckHunt-JS
@@ -107,7 +112,7 @@ route.route.openshift.io/duckhunt-js exposed
 
 $ oc get route duckhunt-js
 NAME          HOST/PORT                                  PATH   SERVICES      PORT       TERMINATION   WILDCARD
-duckhunt-js   duckhunt-js-test.apps.cnv.example.com          duckhunt-js   8080-tcp                 None
+duckhunt-js   duckhunt-js-test.apps.aio.example.com          duckhunt-js   8080-tcp                 None
 ~~~
 
 You should be able to open up the application in the same browser that you're reading this guide from, either copy and paste the address, or click this clink: [http://duckhunt-js-test.apps.aio.example.com/](http://duckhunt-js-test.apps.aio.example.com/). If your OpenShift cluster is working as expected and the application build was successful, you should now be able to have a quick play with this... good luck ;-)
