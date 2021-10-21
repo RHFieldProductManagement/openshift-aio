@@ -8,7 +8,7 @@ First, make sure you're in the default project:
 
 ~~~bash
 $ oc project default
-Now using project "default" on server "https://172.30.0.1:443".
+Now using project "default" on server "https://api.aio.example.com:6443".
 ~~~
 
 >**NOTE**: If you don't use the default project for the next few lab steps, it's likely that you'll run into some errors - some resources are scoped, i.e. aligned to a namespace, and others are not. Ensuring you're in the default namespace now will ensure that all of the coming lab steps should flow together.
@@ -27,9 +27,9 @@ EOF
 
 storageclass.storage.k8s.io/nfs created
 
-$ oc get sc                                                                                                                                            
-NAME   PROVISIONER                    RECLAIMPOLICY   VOLUMEBINDINGMODE   ALLOWVOLUMEEXPANSION   AGE                                                       
-nfs    kubernetes.io/no-provisioner   Delete          Immediate           false                  14s
+$ oc get sc
+NAME   PROVISIONER                    RECLAIMPOLICY   VOLUMEBINDINGMODE   ALLOWVOLUMEEXPANSION   AGE
+nfs    kubernetes.io/no-provisioner   Delete          Immediate           false                  7s
 ~~~
 
 
