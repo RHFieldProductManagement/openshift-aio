@@ -8,11 +8,10 @@ ocp4-master2.aio.example.com   Ready    master   22h   v1.22.0-rc.0+894a78b
 ocp4-master3.aio.example.com   Ready    master   22h   v1.22.0-rc.0+894a78b
 ocp4-worker1.aio.example.com   Ready    worker   22h   v1.22.0-rc.0+894a78b
 ocp4-worker2.aio.example.com   Ready    worker   22h   v1.22.0-rc.0+894a78b
-ocp4-worker3.aio.example.com   Ready    worker   22h   v1.22.0-rc.0+894a78b
 
 ~~~
 
-If you do not see **three** masters and **three** workers listed in your output, you may need to approve the CSR requests, note that you only need to do this if you're missing nodes, but it won't harm to run this regardless:
+If you do not see **three** masters and **two** workers listed in your output, you may need to approve the CSR requests, note that you only need to do this if you're missing nodes, but it won't harm to run this regardless:
 
 ~~~bash
 $ for csr in $(oc get csr | awk '/Pending/ {print $1}'); \
@@ -113,10 +112,10 @@ route.route.openshift.io/duckhunt-js exposed
 
 $ oc get route duckhunt-js
 NAME          HOST/PORT                                  PATH   SERVICES      PORT       TERMINATION   WILDCARD
-duckhunt-js   duckhunt-js-test.apps.cnv.example.com          duckhunt-js   8080-tcp                 None
+duckhunt-js   duckhunt-js-test.apps.aio.example.com          duckhunt-js   8080-tcp                 None
 ~~~
 
-You should be able to open up the application in the same browser that you're reading this guide from, either copy and paste the address, or click this clink: [http://duckhunt-js-test.apps.cnv.example.com](http://duckhunt-js-test.apps.cnv.example.com). If your OpenShift cluster is working as expected and the application build was successful, you should now be able to have a quick play with this... good luck ;-)
+You should be able to open up the application in the same browser that you're reading this guide from, either copy and paste the address, or click this clink: [http://duckhunt-js-test.apps.aio.example.com](http://duckhunt-js-test.apps.cnv.example.com). If your OpenShift cluster is working as expected and the application build was successful, you should now be able to have a quick play with this... good luck ;-)
 
 <img src="img/duckhunt.png"/>
 
