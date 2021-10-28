@@ -7,7 +7,7 @@
 
     - meta: refresh_inventory
 
-- name: Deploy OpenShift Virtualization (CNV)
+- name: Deploy OpenShift Virtualization Lab
   gather_facts: false
   vars_files:
     - "../conf/vms.yml"
@@ -39,19 +39,25 @@
       delay: 30
       until: project_success is not failed
  
+    - name: Clone OpenShift virt repositories
+      git:
+        repo: "https://github.com/RHFieldProductManagement/openshift-aio.git"
+        dest: "/root/openshift-aio"
+        version: "main"
+
     - name: Deploy Workbook Instance for CNV Labs
       block:
       - name: Configure and apply build template
         shell: >-
           oc -n workbook process
-          -f ~/openshift-virt-labs/docs/build-template.yaml -p NAME=cnv | oc -n workbook apply -f -
+          -f /root/openshift-aio/labs/cnv/build-template.yaml -p NAME=cnv | oc -n workbook apply -f -
         register: buildt_success
         retries: 3
         delay: 30
         until: buildt_success is not failed
 
       - name: Start the build
-        shell: oc -n workbook start-build cnv --from-dir=openshift-virt-labs/docs/
+        shell: oc -n workbook start-build cnv --from-dir=/root/openshift-aio/labs/cnv
         register: build_success
         retries: 3
         delay: 30
@@ -60,7 +66,7 @@
       - name: Configure and deploy the deploy template
         shell: >-
           oc -n workbook process
-          -f ~/openshift-virt-labs/docs/deploy-template.yaml -p NAME=cnv -p IMAGE_STREAM_NAME=cnv
+          -f /root/openshift-aio/labs/cnv/deploy-template.yaml -p NAME=cnv -p IMAGE_STREAM_NAME=cnv
           | oc -n workbook apply -f -
         register: deploy_success
         retries: 3
@@ -75,3 +81,16 @@
       retries: 3
       delay: 30
       until: clusteradmin_success is not failed
+
+    - name: Get CNV Lab Workbook Route
+      k8s_info:
+        kind: Route
+        api_version: route.openshift.io/v1
+        namespace: "workbook"
+        label_selectors:
+          - app = cnv
+      register: getroute
+
+    - name: Print CNV Lab Workbook Route
+      debug:
+        msg: "OpenShift Virtualization Lab Workbook: https://{{ getroute.resources[0].spec.host }}"

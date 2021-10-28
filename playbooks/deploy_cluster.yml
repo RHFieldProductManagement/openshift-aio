@@ -216,7 +216,7 @@
     - name: Run frontail for OpenShift installation log
       containers.podman.podman_container:
         name: frontail
-        state: present
+        state: started
         image: quay.io/roxenham/frontail
         volume: "/root/ocp-install:/log/"
         net: host

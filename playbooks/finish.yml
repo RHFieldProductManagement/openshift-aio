@@ -80,3 +80,16 @@
       debug:
         msg: "{{ msg.split('\n') }}"
       when: deploy_guacamole
+
+    - name: Print CNV Lab Route Information
+      vars:
+        msg: |
+          You've requested the OpenShift Virtualization (CNV) Lab to be deployed.
+          To access the environment via your proxy-enabled web-browser you use the following link:
+
+          OpenShift Virtualization Lab Workbook: https://cnv-workbook.apps.aio.example.com
+
+          If you've deployed Guacamole, this should be available via the same link.
+      debug:
+        msg: "{{ msg.split('\n') }}"
+      when: deploy_cnvlab

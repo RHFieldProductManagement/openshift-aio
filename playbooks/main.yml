@@ -55,5 +55,9 @@
 - import_playbook: deploy_imgreg.yml
   when: deploy_ocp or hostvars['localhost']['override_deploy_ocp']
 
-# Step 13: Print Output to User
+# Step 13: Deploy CNV Lab when requested
+- import_playbook: deploy_cnvlab.yml
+  when: deploy_cnvlab
+
+# Step 14: Print Output to User
 - import_playbook: finish.yml

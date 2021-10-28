@@ -49,6 +49,9 @@ deploy_guacamole: true
 # Set whether you want a compact deployment (3 node cluster)
 deploy_compact: false
 
+# Set whether you want to deploy the CNV Lab
+deploy_cnvlab: false
+
 # Select granular deployment options
 # NOTE: OCP Plus will force acm, acs, ocp on.
 #       deploy_ocs will force 3 workers on non-compact
