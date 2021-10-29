@@ -85,9 +85,20 @@
         oc patch storageclass nfs
         -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"false"}}}'
       register: default_nfsclass_success
-      retries: 5
+      retries: 1
       delay: 30
       until: default_nfsclass_success is not failed
+      when: deploy_nfs or hostvars['localhost']['override_deploy_nfs'] | default(false)
+
+    - name: Unset default storage class for nfs (when running deploy_ocs manually)
+      ansible.builtin.command: >
+        oc patch storageclass nfs
+        -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"false"}}}'
+      register: default_nfsclass_success
+      retries: 1
+      delay: 30
+      until: default_nfsclass_success is not failed
+      when: not deploy_ocs
 
     - name: Set default storage class to be ocs-storagecluster-ceph-rbd
       ansible.builtin.command: >
@@ -97,6 +108,26 @@
       retries: 5
       delay: 30
       until: default_class_success is not failed
+
+    - name: Create PVC for the Image Registry on OCS
+      k8s:
+        state: present
+        definition: "{{ lookup('file', '../conf/k8s/ceph-imgreg-pvc.yaml') }}"
+      register: imgreg_volume_success
+      retries: 5
+      delay: 30
+      until: imgreg_volume_success is not failed
+
+    - name: Enable OCS based PVC based storage for Image Registry
+      ansible.builtin.shell: >
+        oc patch configs.imageregistry.operator.openshift.io cluster --type merge --patch '{"spec":{"storage":{"pvc": {"claim": "ocs-imgreg"}}}}'
+
+    - name: Delete the old PVC that would have been created for NFS
+      k8s:
+        kind: pvc
+        namespace: openshift-image-registry
+        name: image-registry-storage
+        state: absent
 
     - name: Enable Ceph Tools pod for troubleshooting
       ansible.builtin.command: >
