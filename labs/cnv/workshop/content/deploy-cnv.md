@@ -57,27 +57,43 @@ You will know the process is complete when you can return to the top terminal an
 ~~~bash
 $ oc get csv -n openshift-cnv
 NAME                                      DISPLAY                    VERSION   REPLACES                                  PHASE
-kubevirt-hyperconverged-operator.v2.6.2   OpenShift Virtualization   2.6.2     kubevirt-hyperconverged-operator.v2.6.1   Succeeded
+kubevirt-hyperconverged-operator.v4.8.2   OpenShift Virtualization   4.8.2     kubevirt-hyperconverged-operator.v4.8.1   Succeeded
 ~~~
+
+> **NOTE**: You may have slightly newer versions than the ones listed above.
 
 If you do not see `Succeeded` in the `PHASE` column then the deployment may still be progressing, or has failed. You will not be able to proceed until the installation has been successful. Once the `PHASE` changes to `Succeeded` you can validate that the required resources and the additional components have been deployed across the nodes. First let's check the pods deployed in the `openshift-cnv` namespace:
 
 ~~~bash
 $ oc get pods -n openshift-cnv
-NAME                                                 READY   STATUS    RESTARTS   AGE
-bridge-marker-h9hgl                                  1/1     Running   0          13m
-bridge-marker-j76lr                                  1/1     Running   0          13m
-bridge-marker-ljjgr                                  1/1     Running   0          13m
-bridge-marker-rf8vj                                  1/1     Running   0          13m
-bridge-marker-zxp52                                  1/1     Running   0          13m
-cdi-apiserver-7b5894bdbb-77p28                       1/1     Running   0          13m
-cdi-deployment-b4f97d69f-ncp22                       1/1     Running   0          13m
-cdi-operator-5f9b9c977b-xw7w2                        1/1     Running   0          14m
-cdi-uploadproxy-76c94b65c-x25dt                      1/1     Running   0          13m
+NAME                                                  READY   STATUS    RESTARTS   AGE
+bridge-marker-52mv7                                   1/1     Running   0          6m55s
+bridge-marker-74rzv                                   1/1     Running   0          6m55s
+bridge-marker-8h7gd                                   1/1     Running   0          6m55s
+bridge-marker-hvdx2                                   1/1     Running   0          6m55s
+bridge-marker-lsx48                                   1/1     Running   0          6m55s
+bridge-marker-sbmhr                                   1/1     Running   0          6m55s
+cdi-apiserver-5b4cfb4d57-4zd72                        1/1     Running   0          6m55s
+cdi-deployment-65d77bbf54-bwvtk                       1/1     Running   0          6m55s
+cdi-operator-cfbb47d55-5nxhk                          1/1     Running   0          13m
+cdi-uploadproxy-5dddc647cb-m8mmp                      1/1     Running   0          6m53s
+cluster-network-addons-operator-679485cff4-qkjm9      1/1     Running   0          13m
+hco-operator-667cdd75d7-7hmml                         1/1     Running   0          13m
+hco-webhook-5c8d75b559-d4h5r                          1/1     Running   0          13m
 (...)
 ~~~
 
 > **NOTE**: All pods shown from this command should be in the `Running` state. You will have many different types, the above snippet is just an example of the output at one point in time, you may have more or less at any one point. Below we discuss some of the pod types and what they do.
+
+You may check by filtering with grep the 'Running' ones and then counting the lines:
+~~~bash
+$ oc get pods -n openshift-cnv | grep -v Running
+NAME                                                  READY   STATUS    RESTARTS   AGE
+(this should be empty)
+
+$ oc get pods -n openshift-cnv | wc -l
+47
+~~~
 
 
 Together, all of these pods are responsible for various functions of running a virtual machine on-top of OpenShift/Kubernetes. See the table below that describes some of the various different pod types and their function:
@@ -108,49 +124,57 @@ There's also a few custom resources that get defined too, for example the `NodeN
 ~~~bash
 $ oc get nns -A
 NAME                           AGE
-ocp4-master1.cnv.example.com   11m
-ocp4-master2.cnv.example.com   12m
-ocp4-master3.cnv.example.com   11m
-ocp4-worker1.cnv.example.com   12m
-ocp4-worker2.cnv.example.com   11m
+ocp4-master1.aio.example.com   8m37s
+ocp4-master2.aio.example.com   8m27s
+ocp4-master3.aio.example.com   8m37s
+ocp4-worker1.aio.example.com   8m51s
+ocp4-worker2.aio.example.com   8m50s
+ocp4-worker3.aio.example.com   8m54s
 
-$ oc get nns/ocp4-worker2.cnv.example.com -o yaml
-apiVersion: nmstate.io/v1alpha1
+$ oc get nns/ocp4-worker1.aio.example.com -o yaml
+apiVersion: nmstate.io/v1beta1
 kind: NodeNetworkState
 metadata:
-  creationTimestamp: "2020-03-09T11:24:42Z"
+  creationTimestamp: "2021-10-21T14:56:59Z"
   generation: 1
-  name: ocp4-worker2.cnv.example.com
+  name: ocp4-worker1.aio.example.com
 (...)
    interfaces:
     - ipv4:
+        address: []
         enabled: false
       ipv6:
+        address: []
         enabled: false
+      mac-address: 1A:FC:25:BD:A6:40
       mtu: 1450
       name: br0
       state: down
       type: ovs-interface
     - ipv4:
         address:
-        - ip: 192.168.123.105
+        - ip: 172.22.0.68
           prefix-length: 24
         auto-dns: true
         auto-gateway: true
+        auto-route-table-id: 0
         auto-routes: true
         dhcp: true
         enabled: true
       ipv6:
         address:
-        - ip: fe80::dee4:6bcf:a5c7:3cee
+        - ip: fe80::dcad:beff:feef:4
           prefix-length: 64
         auto-dns: true
         auto-gateway: true
+        auto-route-table-id: 0
         auto-routes: true
         autoconf: true
         dhcp: true
         enabled: true
-      mac-address: 52:54:00:B2:96:0E
+      lldp:
+        enabled: false
+      mac-address: DE:AD:BE:EF:00:04
       mtu: 1500
       name: enp1s0
       state: up
@@ -171,9 +195,9 @@ No resources found in openshift-cnv namespace.
 
 
 
-### Viewing the OpenShift virtualisation Dashboard
+### Viewing the OpenShift Virtualization Dashboard
 
-When OpenShift virtualisation is deployed it adds additional components to OpenShift's web-console so you can interact with objects and custom resources defined by OpenShift virtualisation, including `VirtualMachine` types. If you select the `Console` button at the top of this pane you should see the web-console displayed. You can now navigate to "**Workloads**" --> "**Virtualization**" on the left-hand side panel and you should see the new snap-in component for OpenShift virtualisation but with no Virtual Machines running.
+When OpenShift Virtualization is deployed it adds additional components to OpenShift's web-console so you can interact with objects and custom resources defined by OpenShift Virtualization, including `VirtualMachine` types. If you select the `Console` button at the top of this pane you should see the web-console displayed. You can now navigate to "**Workloads**" --> "**Virtualization**" on the left-hand side panel and you should see the new snap-in component for OpenShift virtualisation but with no Virtual Machines running.
 
 <img src="img/ocpvirt-dashboard.png"/>
 
