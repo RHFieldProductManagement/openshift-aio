@@ -80,6 +80,15 @@
       delay: 30
       until: storage_cluster_success is not failed
 
+    - name: Unset default storage class for nfs
+      ansible.builtin.command: >
+        oc patch storageclass nfs
+        -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"false"}}}'
+      register: default_nfsclass_success
+      retries: 5
+      delay: 30
+      until: default_nfsclass_success is not failed
+
     - name: Set default storage class to be ocs-storagecluster-ceph-rbd
       ansible.builtin.command: >
         oc patch storageclass ocs-storagecluster-ceph-rbd 

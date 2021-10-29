@@ -31,29 +31,30 @@
 - import_playbook: deploy_cluster.yml
   when: deploy_ocp or hostvars['localhost']['override_deploy_ocp']
 
-# Step 7: Deploy OpenShift Container Storage
-- import_playbook: deploy_ocs.yml
-  when: deploy_ocs
-
-# Step 8: Deploy NFS Storage (when OCS not used)
+# Step 7: Deploy NFS Storage (when OCS not used)
 - import_playbook: deploy_nfs.yml
   when: deploy_nfs or hostvars['localhost']['override_deploy_nfs']
 
-# Step 9: Deploy OpenShift Virtualization
+# Step 8: Deploy Internal OpenShift Image Registry
+# Deploy the image registry on NFS before OCS installs
+- import_playbook: deploy_imgreg.yml
+  when: deploy_ocp or hostvars['localhost']['override_deploy_ocp']
+
+# Step 9: Deploy OpenShift Container Storage
+- import_playbook: deploy_ocs.yml
+  when: deploy_ocs
+
+# Step 10: Deploy OpenShift Virtualization
 - import_playbook: deploy_cnv.yml
   when: deploy_cnv
 
-# Step 10: Deploy Advanced Cluster Manager
+# Step 11: Deploy Advanced Cluster Manager
 - import_playbook: deploy_acm.yml
   when: deploy_acm or deploy_ocp_plus
 
-# Step 11: Deploy Advanced Cluster Security
+# Step 12: Deploy Advanced Cluster Security
 - import_playbook: deploy_acs.yml
   when: deploy_acs or deploy_ocp_plus
-
-# Step 12: Deploy Internal OpenShift Image Registry
-- import_playbook: deploy_imgreg.yml
-  when: deploy_ocp or hostvars['localhost']['override_deploy_ocp']
 
 # Step 13: Deploy CNV Lab when requested
 - import_playbook: deploy_cnvlab.yml

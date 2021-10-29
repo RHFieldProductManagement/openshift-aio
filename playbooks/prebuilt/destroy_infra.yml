@@ -294,6 +294,7 @@
         - postgres
         - guacamole
         - guacd
+      when: deploy_guacamole
 
     - name: Remove Guacamole postgres data directory
       ansible.builtin.file:
