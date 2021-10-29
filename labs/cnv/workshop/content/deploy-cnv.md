@@ -60,6 +60,8 @@ NAME                                      DISPLAY                    VERSION   R
 kubevirt-hyperconverged-operator.v4.8.2   OpenShift Virtualization   4.8.2     kubevirt-hyperconverged-operator.v4.8.1   Succeeded
 ~~~
 
+> **NOTE**: You may have slightly newer versions than the ones listed above.
+
 If you do not see `Succeeded` in the `PHASE` column then the deployment may still be progressing, or has failed. You will not be able to proceed until the installation has been successful. Once the `PHASE` changes to `Succeeded` you can validate that the required resources and the additional components have been deployed across the nodes. First let's check the pods deployed in the `openshift-cnv` namespace:
 
 ~~~bash
@@ -87,6 +89,8 @@ You may check by filtering with grep the 'Running' ones and then counting the li
 ~~~bash
 $ oc get pods -n openshift-cnv | grep -v Running
 NAME                                                  READY   STATUS    RESTARTS   AGE
+(this should be empty)
+
 $ oc get pods -n openshift-cnv | wc -l
 47
 ~~~
@@ -191,9 +195,9 @@ No resources found in openshift-cnv namespace.
 
 
 
-### Viewing the OpenShift virtualization Dashboard
+### Viewing the OpenShift Virtualization Dashboard
 
-When OpenShift virtualization is deployed it adds additional components to OpenShift's web-console so you can interact with objects and custom resources defined by OpenShift virtualization, including `VirtualMachine` types. If you select the `Console` button at the top of this pane you should see the web-console displayed. You can now navigate to "**Workloads**" --> "**Virtualization**" on the left-hand side panel and you should see the new snap-in component for OpenShift virtualisation but with no Virtual Machines running.
+When OpenShift Virtualization is deployed it adds additional components to OpenShift's web-console so you can interact with objects and custom resources defined by OpenShift Virtualization, including `VirtualMachine` types. If you select the `Console` button at the top of this pane you should see the web-console displayed. You can now navigate to "**Workloads**" --> "**Virtualization**" on the left-hand side panel and you should see the new snap-in component for OpenShift virtualisation but with no Virtual Machines running.
 
 <img src="img/ocpvirt-dashboard.png"/>
 
