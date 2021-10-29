@@ -18,17 +18,22 @@
 
 # Step 3 : Prepare Base Host
 - hosts: target
+  gather_facts: true
   tasks:
     - name: Setup base software
       include_role:
         name: base_software
-      vars: ocp4_aio_baremetal_provider: "{{ baremetal_provider }}"
+      vars: 
+        ocp4_aio_baremetal_provider: "{{ baremetal_provider }}"
+
     - name: Setup base virt
       include_role:
         name: base_virt
+
     - name: Prepare bastion VM
       include_role:
         name: prepare_bastion
+
     - name: deploy Guacamole
       include_role:
         name: deploy_guac
