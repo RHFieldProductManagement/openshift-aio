@@ -78,7 +78,7 @@
     - name: Run postgres container for Guac
       containers.podman.podman_container:
         name: postgres
-        state: present
+        state: started
         image: quay.io/roxenham/postgres
         volume: "/usr/local/pgsql/data:/var/lib/postgresql/data"
         net: host
@@ -171,14 +171,14 @@
     - name: Run GuacD container
       containers.podman.podman_container:
         name: guacd
-        state: present
+        state: started
         image: quay.io/roxenham/guacd
         net: host
 
     - name: Run Guacamole container
       containers.podman.podman_container:
         name: guacamole
-        state: present
+        state: started
         image: quay.io/roxenham/guacamole
         net: host
         env:
