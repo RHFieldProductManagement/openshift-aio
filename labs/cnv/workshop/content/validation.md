@@ -3,15 +3,15 @@ On the right hand side where the web terminal is, let's see if we can check the 
 ~~~bash
 $ oc get nodes
 NAME                           STATUS   ROLES    AGE   VERSION
-ocp4-master1.aio.example.com   Ready    master   22h   v1.22.0-rc.0+894a78b
-ocp4-master2.aio.example.com   Ready    master   22h   v1.22.0-rc.0+894a78b
-ocp4-master3.aio.example.com   Ready    master   22h   v1.22.0-rc.0+894a78b
-ocp4-worker1.aio.example.com   Ready    worker   22h   v1.22.0-rc.0+894a78b
-ocp4-worker2.aio.example.com   Ready    worker   22h   v1.22.0-rc.0+894a78b
-
+ocp4-master1.aio.example.com   Ready    master   57m   v1.22.0-rc.0+a44d0f0
+ocp4-master2.aio.example.com   Ready    master   58m   v1.22.0-rc.0+a44d0f0
+ocp4-master3.aio.example.com   Ready    master   58m   v1.22.0-rc.0+a44d0f0
+ocp4-worker1.aio.example.com   Ready    worker   38m   v1.22.0-rc.0+a44d0f0
+ocp4-worker2.aio.example.com   Ready    worker   38m   v1.22.0-rc.0+a44d0f0
+ocp4-worker3.aio.example.com   Ready    worker   38m   v1.22.0-rc.0+a44d0f0
 ~~~
 
-If you do not see **three** masters and **two** workers listed in your output, you may need to approve the CSR requests, note that you only need to do this if you're missing nodes, but it won't harm to run this regardless:
+If you do not see **three** masters and **three** workers listed in your output, you may need to approve the CSR requests, note that you only need to do this if you're missing nodes, but it won't harm to run this regardless:
 
 ~~~bash
 $ for csr in $(oc get csr | awk '/Pending/ {print $1}'); \
@@ -32,7 +32,7 @@ Next let's validate the version that we've got deployed, and the status of the c
 ~~~bash
 $ oc get clusterversion
 NAME      VERSION   AVAILABLE   PROGRESSING   SINCE   STATUS
-version   4.9.0     True        False         22h     Cluster version is 4.9.0
+version   4.9.5     True        False         27m     Cluster version is 4.9.5.0
 
 $ oc get clusteroperators
 NAME                                       VERSION   AVAILABLE   PROGRESSING   DEGRADED   SINCE   MESSAGE
@@ -51,9 +51,9 @@ etcd                                       4.9.0     True        False         F
 
 
 
-### Making sure OpenShift works
+### Making sure OpenShift is fully functional
 
-OK, so this is likely something that you've all done before, and it's hardly very exciting, but let's have a little bit of fun. Let's deploy a nifty little application inside of a pod and use it to verify that the OpenShift cluster is functioning properly; this will involve building an application from source and exposing it to your web-browser. We'll use the **s2i** (source to image) container type:
+OK, so this is likely something that you've done before, but in an attempt to validate OpenShift is ready for our lab, let's have a little bit of fun. Let's build a simple web-browser based game (called Duckhunt) from source, expose it via a route, and make sure all of the networking is hooked up properly. We'll use the **s2i** (source to image) container type:
 
 ~~~bash
 $ oc new-project test
@@ -79,7 +79,7 @@ $ oc new-app \
 
 
 
-Our application will now build from source, you can watch it happen with:
+Our application will now build from source, you can watch it happen by tailing the build log file. When it's finished it will push the image into the OpenShift image registry:
 
 ~~~bash
 $ oc logs duckhunt-js-1-build -f
@@ -93,14 +93,13 @@ Push successful
 
 
 
-You can check if the Duckhunt pod has finished building and is `Running`, if it's still showing as `ContainerCreating` just give it a few more seconds:
+You'll see that a couple of pods have been created, one that just completed our build, and then the application itself, which should be in a `Running` state, if it's still showing as `ContainerCreating` just give it a few more seconds:
 
 ~~~bash
 $ oc get pods
-NAME                   READY   STATUS      RESTARTS   AGE
-duckhunt-js-1-build    0/1     Completed   0          5m17s
-duckhunt-js-2-deploy   0/1     Completed   0          3m8s
-duckhunt-js-2-sbcgr    1/1     Running     0          2m6s     <-- this is the one!
+NAME                           READY   STATUS      RESTARTS   AGE
+duckhunt-js-1-build            0/1     Completed   0          4m7s
+duckhunt-js-5b75fd5ccf-j7lqj   1/1     Running     0          105s   <-- this is our app!
 ~~~
 
 Now expose the application (via the service) so we can route to it from the outside...
@@ -119,7 +118,7 @@ You should be able to open up the application in the same browser that you're re
 
 <img src="img/duckhunt.png"/>
 
-Now, if you can tear yourself away from the game, let's actually start working with OpenShift virtualisation, first let's just clean up the test project...
+Before we start looking at OpenShift Virtualization, let's just clean up the test project and have OpenShift remove the resources...
 
 ~~~bash
 $ oc delete project test

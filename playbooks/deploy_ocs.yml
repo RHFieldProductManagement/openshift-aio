@@ -106,7 +106,7 @@
         -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}'
       register: default_class_success
       retries: 5
-      delay: 30
+      delay: 60
       until: default_class_success is not failed
 
     - name: Create PVC for the Image Registry on OCS
@@ -128,6 +128,10 @@
         namespace: openshift-image-registry
         name: image-registry-storage
         state: absent
+
+    - name: Wait for image registry to stabilise on OCS
+      pause:
+        minutes: 2
 
     - name: Enable Ceph Tools pod for troubleshooting
       ansible.builtin.command: >

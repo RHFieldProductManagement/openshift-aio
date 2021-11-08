@@ -36,7 +36,6 @@
   when: deploy_nfs or hostvars['localhost']['override_deploy_nfs']
 
 # Step 8: Deploy Internal OpenShift Image Registry
-# Deploy the image registry on NFS before OCS installs
 - import_playbook: deploy_imgreg.yml
   when: deploy_ocp or hostvars['localhost']['override_deploy_ocp']
 

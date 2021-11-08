@@ -1,10 +1,10 @@
-Now let's bring all these settings together and actually launch some workloads!
+Now let's bring all these configurations together and actually launch some workloads!
 
-> **NOTE**: We're calling everything RHEL8 here, regardless of whether you're actually using CentOS 8 as your base image - it won't impact anything for our purposes here.
+> **NOTE**: We're calling most of the resources "RHEL 8" here, regardless of whether you're actually using CentOS 8 as your base image - it won't impact anything for our purposes here.
 
-To begin with let's use the NFS volumes we created earlier to launch some VMs. We are going to create a machine called `rhel8-server-nfs`. As you'll recall we have created a PVC called `rhel8-nfs` that was created using the CDI utility with a RHEL 8 base image. To connect the machine to the network we will utilise the `NetworkAttachmentDefinition` we created for the underlying host's secondary NIC. This is the `tuning-bridge-fixed` interface which refers to that bridge created previously. It's also important to remember that OpenShift 4.x uses Multus as it's default networking CNI so we also ensure Multus knows about this `NetworkAttachmentDefinition`
+To begin with let's use the OpenShift Data Foundation volume we created earlier to launch some VMs. We are going to create a machine called `rhel8-server-ocs`. As you'll recall we have created a PVC called `rhel8-ocs` that was created using the CDI utility with a CentOS 8 base image. To connect the machine to the network we will utilise the `NetworkAttachmentDefinition` we created for the underlying host's third NIC (`enp3s0` via `br1`). This is the `tuning-bridge-fixed` interface which refers to that bridge created previously. It's also important to remember that OpenShift 4.x uses Multus as it's default networking CNI so we also ensure Multus knows about this `NetworkAttachmentDefinition`. Lastly we have set the `evictionStrategy` to `LiveMigrate` so that any request to move the instance will use this method. We will explore this in more depth in a later lab.
 
-Lastly we have set the `evictionStrategy` to `LiveMigrate` so that any request to move the instance will use this method. We will explore this in more depth in a later lab.
+Let's apply a VM configuration via the CLI first:
 
 ~~~bash
 $ cat << EOF | oc apply -f -
@@ -20,14 +20,14 @@ metadata:
     template.kubevirt.ui: openshift_rhel8-generic-large
     vm.kubevirt.io/template: rhel8-generic-small
     workload.template.kubevirt.io/generic: "true"
-    app: rhel8-server-nfs
-  name: rhel8-server-nfs
+    app: rhel8-server-ocs
+  name: rhel8-server-ocs
 spec:
   running: true
   template:
     metadata:
       labels:
-        vm.kubevirt.io/name: rhel8-server-nfs
+        vm.kubevirt.io/name: rhel8-server-ocs
     spec:
       domain:
         clock:
@@ -44,7 +44,7 @@ spec:
           disks:
           - disk:
               bus: sata
-            name: rhel8-nfs
+            name: rhel8-ocs
           interfaces:
           - bridge: {}
             model: e1000
@@ -71,73 +71,76 @@ spec:
           name: tuning-bridge-fixed
       terminationGracePeriodSeconds: 0
       volumes:
-      - name: rhel8-nfs
+      - name: rhel8-ocs
         persistentVolumeClaim:
-          claimName: rhel8-nfs
+          claimName: rhel8-ocs
 EOF
 
-virtualmachine.kubevirt.io/rhel8-server-nfs created
+virtualmachine.kubevirt.io/rhel8-server-ocs created
 ~~~
 
 This starts to **schedule** the virtual machine across the available hypervisors, which we can see by viewing the VM and VMI objects:
 
 ~~~bash
 $ oc get vm
-NAME               AGE   RUNNING   VOLUME
-rhel8-server-nfs   4s    false
+NAME               AGE   STATUS     READY
+rhel8-server-ocs   4s    Starting   False
 
 $ oc get vmi
-NAME               AGE   PHASE        IP    NODENAME
-rhel8-server-nfs   6s    Scheduling
+NAME               AGE   PHASE     IP    NODENAME                       READY
+rhel8-server-ocs   15s   Running         ocp4-worker3.aio.example.com   True
 ~~~
 
-> **NOTE**: A `vm` object is the definition of the virtual machine, whereas a `vmi` is an instance of that virtual machine definition.
-
-After a few seconds that machine will show as running:
-
-~~~bash
-$ oc get vmi
-NAME               AGE   PHASE     IP                  NODENAME
-rhel8-server-nfs   2m    Running   192.168.123.62/24   ocp4-worker1.cnv.example.com
-~~~
-
-> **NOTE**: You need to have the `qemu-guest-agent` installed in the guest for the IP address to show in this list, and it may take a minute or two to appear.
+> **NOTE**: A `vm` object is the definition of the virtual machine, whereas a `vmi` is an instance of that virtual machine definition. In addition, you need to have the `qemu-guest-agent` installed in the guest for the IP address to show in this list, and it may take a minute or two to appear.
 
 What you'll find is that OpenShift spawns a pod that manages the provisioning of the virtual machine in our environment, known as the `virt-launcher`:
 
 ~~~bash
 $ oc get pods
 NAME                                   READY   STATUS    RESTARTS   AGE
-virt-launcher-rhel8-server-nfs-qntx6   1/1     Running   0          7m
+virt-launcher-rhel8-server-ocs-z5rmr   1/1     Running   0          3m5s
 
-$ oc describe pod/virt-launcher-rhel8-server-nfs-qntx6
-Name:         virt-launcher-rhel8-server-nfs-qntx6
+$ oc describe pod virt-launcher-rhel8-server-ocs-z5rmr
+Name:         virt-launcher-rhel8-server-ocs-z5rmr
 Namespace:    default
 Priority:     0
-Node:         ocp4-worker1.cnv.example.com/192.168.123.104
-Start Time:   Tue, 17 Mar 2020 09:19:23 -0400
+Node:         ocp4-worker3.aio.example.com/192.168.123.106
+Start Time:   Mon, 08 Nov 2021 13:47:23 +0000
 Labels:       kubevirt.io=virt-launcher
-              kubevirt.io/created-by=f6fd33b3-5f2f-45fd-b899-18a089dc44ad
-              vm.kubevirt.io/name=rhel8-server-nfs
-Annotations:  k8s.v1.cni.cncf.io/networks: [{"interface":"net1","mac":"02:be:83:00:00:00","name":"tuning-bridge-fixed","namespace":"default"}]
+              kubevirt.io/created-by=8d58ce9f-61bd-4c5f-82d1-15dbc9c3897e
+              vm.kubevirt.io/name=rhel8-server-ocs
+Annotations:  k8s.v1.cni.cncf.io/network-status:
+                [{
+                    "name": "openshift-sdn",
+                    "interface": "eth0",
+                    "ips": [
+                        "10.129.2.16"
+                    ],
+                    "default": true,
+                    "dns": {}
+                },{
+                    "name": "default/tuning-bridge-fixed",
+                    "interface": "net1",
+                    "mac": "02:7c:a4:00:00:00",
+                    "dns": {}
+                }]
+              k8s.v1.cni.cncf.io/networks: [{"interface":"net1","mac":"02:7c:a4:00:00:00","name":"tuning-bridge-fixed","namespace":"default"}]
               k8s.v1.cni.cncf.io/networks-status:
                 [{
                     "name": "openshift-sdn",
                     "interface": "eth0",
                     "ips": [
-                        "10.128.2.14"
+                        "10.129.2.16"
                     ],
-                    "dns": {},
-                    "default-route": [
-                        "10.128.2.1"
-                    ]
+                    "default": true,
+                    "dns": {}
                 },{
-                    "name": "groot",
+                    "name": "default/tuning-bridge-fixed",
                     "interface": "net1",
-                    "mac": "02:be:83:00:00:00",
+                    "mac": "02:7c:a4:00:00:00",
                     "dns": {}
                 }]
-              kubevirt.io/domain: rhel8-server-nfs
+              kubevirt.io/domain: rhel8-server-ocs
 Status:       Running
 (...)
 ~~~
@@ -476,5 +479,4 @@ system:serviceaccount:workbook:cnv
 [~] $ oc project default
 Already on project "default" on server "https://172.30.0.1:443".
 ~~~
-
 
