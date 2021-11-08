@@ -9,14 +9,14 @@
     - name: Set fact for OCP deployment if requesting dependents
       set_fact:
         deploy_ocp: true
-      when: deploy_ocs or deploy_cnv or deploy_acm
+      when: ocp4_aio_deploy_ocs or ocp4_aio_deploy_cnv or ocp4_aio_deploy_acm
 
     - name: Set facts for variants if requesting OCP Plus
       set_fact:
-        deploy_ocp: true
-        deploy_acm: true
-        deploy_acs: true
-      when: deploy_ocp_plus
+        ocp4_aio_deploy_ocp: true
+        ocp4_aio_deploy_acm: true
+        ocp4_aio_deploy_acs: true
+      when: ocp4_aio_deploy_ocp_plus
 
     - name: Print Deployment Complete
       debug:
@@ -28,12 +28,12 @@
            OpenShift Version: {{ ocp4_aio_ocp_version }}
            Baremetal Provider: {{ baremetal_provider }}
            Baremetal Server: {{ groups['target'][0] }}
-           Deployment Type: {{ deploy_type }}
-           Compact Deployment: {{ deploy_compact }}
-           Deploy CNV: {{ deploy_cnv }}
-           Deploy OCS: {{ deploy_ocs }}
-           Deploy ACM: {{ deploy_acm }}
-           Deploy ACS: {{ deploy_acs }}
+           Deployment Type: {{ ocp4_aio_deploy_type }}
+           Compact Deployment: {{ ocp4_aio_deploy_compact }}
+           Deploy CNV: {{ ocp4_aio_deploy_cnv }}
+           Deploy OCS: {{ ocp4_aio_deploy_ocs }}
+           Deploy ACM: {{ ocp4_aio_deploy_acm }}
+           Deploy ACS: {{ ocp4_aio_deploy_acs }}
       debug:
         msg: "{{ msg.split('\n') }}"
 
@@ -51,11 +51,11 @@
       vars:
         msg: |
           As you've requested OpenShift to be installed, you can access the console either via proxy or Guacamole (if enabled).
-          To access the environment via a Squid Proxy, open a port-forwarded session:
+          To access the environment via a Squid Proxy, setup the following SOCKS proxy:
 
-          $ ssh root@{{ groups['target'][0] }} -L 8080:192.168.123.100:3128
+          {{ groups['target'][0] }}:3128
 
-          Then set your local proxy server to localhost:8080 and enable DNS over SOCKS
+          Then enable DNS over SOCKS
 
           The console is available at: https://console-openshift-console.apps.aio.example.com
           The kubeadmin password is: {{ hostvars['kube_holder']['kubeadmin_password'] }}
@@ -64,7 +64,30 @@
           You should then automatically have oc/kubectl access to the cluster. Check out ~/ocp-install/auth/.
       debug:
         msg: "{{ msg.split('\n') }}"
-      when: deploy_ocp
+      when:
+        - not ocp4_aio_use_ddns 
+        - ocp4_aio_deploy_ocp
+
+    - name: Print Kube Configuration
+      vars:
+        msg: |
+          As you've requested OpenShift to be installed, you can access the console either via proxy or Guacamole (if enabled).
+          To access the environment via a Squid Proxy, setup the followinf SOCKS proxy:
+
+          proxy.{{ guid }}.{{ cluster_dns_zone }}:3128
+
+          and enable DNS over SOCKS
+
+          The console is available at: https://console-openshift-console.apps.{{ guid }}.{{ cluster_dns_zone }}
+          The kubeadmin password is: {{ hostvars['kube_holder']['kubeadmin_password'] }}
+
+          If you'd like CLI access, the bastion host will have already been setup - `ssh root@192.168.123.100`
+          You should then automatically have oc/kubectl access to the cluster. Check out ~/ocp-install/auth/.
+      debug:
+        msg: "{{ msg.split('\n') }}"
+      when:
+        - ocp4_aio_use_ddns 
+        - ocp4_aio_deploy_ocp
 
     - name: Print Guacamole Information
       vars:
@@ -79,4 +102,4 @@
           The 'Lab Desktop' will give you a GNOME desktop environment, and 'Bastion SSH' just CLI access.
       debug:
         msg: "{{ msg.split('\n') }}"
-      when: deploy_guacamole
+      when: ocp4_aio_deploy_guacamole

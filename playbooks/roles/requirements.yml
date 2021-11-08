@@ -46,6 +46,10 @@
   src: https://github.com/RHFieldProductManagement/ocp4_aio_infra_role_deploy_ocp.git
   scm: git
 
-- name: ocp4_aio_role_ocs
+- name: ocp4_role_ocs
   src: https://github.com/RHFieldProductManagement/ocp4_aio_role_ocs.git
+  scm: git
+
+- name: ocp4_role_deploy_cnvlab
+  src: https://github.com/RHFieldProductManagement/ocp4_aio_role_deploy_cnvlab.git
   scm: git

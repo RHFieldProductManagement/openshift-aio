@@ -76,3 +76,9 @@ output_dir: /tmp/output_dir
 
 # Deploy extra SNO nodes for AI 
 extra_sno_nodes: false
+
+# Set the url for the rhcos live iso for SNO
+ocp4_aio_rhcos_iso_url: "https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/4.9/latest/rhcos-live.x86_64.iso"
+
+# Shall we use DDNS ? (WiP)
+ocp4_aio_use_ddns: false

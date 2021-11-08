@@ -15,6 +15,50 @@
 - hosts: localhost
   roles:
     - create_inventory
+# Step 2b: Prepare DDNS entries
+  tasks:
+    - name: Create DNS entries for OpenShift FIPs
+      debug:
+        msg: Currently using {{ cluster_dns_zone }} on server {{ cluster_dns_server }}
+      when: ocp4_aio_use_ddns
+
+    - set_fact:
+        ocp_api_fip: "{{ groups['target'][0] }}"
+      when: ocp4_aio_use_ddns
+
+    - set_fact:
+        ocp_ingress_fip: "{{ groups['target'][0] }}"
+      when: ocp4_aio_use_ddns
+
+    - set_fact:
+        ocp_proxy_fip: "{{ groups['target'][0] }}"
+      when: ocp4_aio_use_ddns
+
+    - name: Add DNS entry for OpenShift API and ingress
+      nsupdate:
+        server: >-
+          {{ cluster_dns_server
+          | ipaddr
+          | ternary(cluster_dns_server, lookup('dig', cluster_dns_server))
+          }}
+        zone: "{{ cluster_dns_zone }}"
+        record: "{{ item.dns }}.{{ guid }}"
+        type: A
+        ttl: 5
+        port: "{{ cluster_dns_port | d('53') }}"
+        value: "{{ item.name }}"
+        key_name: "{{ ddns_key_name }}"
+        key_secret: "{{ ddns_key_secret }}"
+      loop:
+        - name: "{{ ocp_api_fip }}"
+          dns: "api"
+        - name: "{{ ocp_ingress_fip }}"
+          dns: "*.apps"
+        - name: "{{ ocp_proxy_fip }}"
+          dns: "proxy"
+      loop_control:
+        label: item.name
+      when: ocp4_aio_use_ddns
 
 # Step 3 : Prepare Base Host
 - hosts: target
@@ -29,6 +73,8 @@
     - name: Setup base virt
       include_role:
         name: base_virt
+      vars:
+        aio_host_ip_address: "{{ groups['target'][0] }}"
 
     - name: Prepare bastion VM
       include_role:
@@ -69,15 +115,18 @@
 - hosts: bastion
   tasks:
 
+    - name: Setting up NFS Storage
+      include_role: 
+        name: ocp4_role_nfsmount
+
+    - name: Deploy internal registry
+      include_role:
+        name: ocp4_role_imgreg
+
     - name: Setting up OCS Storage
       include_role:
         name: ocp4_role_ocs
       when: ocp4_aio_deploy_ocs 
-
-    - name: Setting up NFS Storage
-      include_role: 
-        name: ocp4_role_nfsmount
-      when: not ocp4_aio_deploy_ocs
 
     - name: Installing ACM
       include_role:
@@ -94,9 +143,10 @@
         name: ocp4_role_cnv
       when: ocp4_aio_deploy_cnv
 
-    - name: Deploy internal registry
+    - name: Deploy Openshift Virtualization LAB
       include_role:
-        name: ocp4_role_imgreg
+        name: ocp4_role_deploy_cnvlab
+      when: ocp4_aio_deploy_cnvlab
   
 # Step 7: Print Output to User
 - import_playbook: finish.yml
