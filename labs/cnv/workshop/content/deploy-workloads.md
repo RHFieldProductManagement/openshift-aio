@@ -145,115 +145,128 @@ Status:       Running
 (...)
 ~~~
 
-If you look into this launcher pod, you'll see that it has the same typical libvirt functionality as we've come to expect with RHV/OpenStack.
-
-First get a shell on the conatiner running pod:
+If you look into this launcher pod, you'll see that it has the same typical libvirt functionality as we've come to expect with existing Red Hat virtualisation products like RHV and/or OpenStack. First get a shell on the pod that's operating our virtual machine, recalling that each VM has a `virt-launcher` pod associated to it:
 
 ~~~bash
-$ oc exec -it virt-launcher-rhel8-server-nfs-qntx6 /bin/bash
+$ oc get pods
+NAME                                   READY   STATUS    RESTARTS   AGE
+virt-launcher-rhel8-server-ocs-z5rmr   1/1     Running   0          30h
+
+$ oc exec -it virt-launcher-rhel8-server-ocs-z5rmr bash
+(...)
 ~~~
 
 And then you can run the usual virsh commands:
 
 ~~~bash
-[root@rhel8-server-nfs /]# virsh list --all
+[root@rhel8-server-ocs /]# virsh list --all
  Id   Name                       State
 ------------------------------------------
- 1    default_rhel8-server-nfs   running
+ 1    default_rhel8-server-ocs   running
 ~~~
 
-We can also verify the storage attachment, which should be via NFS:
+We can also verify the storage attachment, which should be an RBD volume as it's come from OCS:
 
 ~~~bash
-[root@rhel8-server-nfs /]# virsh domblklist 1
+[root@rhel8-server-ocs /]# virsh domblklist default_rhel8-server-ocs
  Target   Source
-------------------------------------------------------------------
- sda      /var/run/kubevirt-private/vmi-disks/rhel8-nfs/disk.img
+--------------------------
+ sda      /dev/rhel8-ocs
  
-[root@rhel8-server-nfs /]# mount | grep nfs
-192.168.123.100:/nfs/pv1 on /run/kubevirt-private/vmi-disks/rhel8-nfs type nfs4 (rw,relatime,vers=4.2,rsize=524288,wsize=524288,namlen=255,hard,proto=tcp,timeo=600,retrans=2,sec=sys,clientaddr=192.168.123.104,local_lock=none,addr=192.168.123.100)
+[root@rhel8-server-ocs /]# lsblk /dev/rhel8-ocs 
+NAME     MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
+rbd1     251:16   0   40G  0 disk 
+└─rbd1p1 251:17   0  7.8G  0 part
 ~~~
 
 And for networking:
 
 ~~~bash
-[root@rhel8-server-nfs /]# virsh domiflist 1
+[root@rhel8-server-nfs /]# virsh domiflist default_rhel8-server-ocs
  Interface   Type     Source     Model   MAC
 ------------------------------------------------------------
- vnet0       bridge   k6t-net1   e1000   02:9f:1c:00:00:00
+ tap1        ethernet   -        e1000   02:7c:a4:00:00:00
 ~~~
 
-But let's go a little deeper:
+But let's go a little deeper; if we look at tap1 we'll see that it's part of a bridge called "*k6t-net1*":
 
 ~~~bash
-[root@rhel8-server-nfs /]# ip link | grep -A2 k6t-net1
-5: net1@if4: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue master k6t-net1 state UP mode DEFAULT group default
-    link/ether 02:9f:1c:4c:22:7d brd ff:ff:ff:ff:ff:ff link-netnsid 0
-6: k6t-net1: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue state UP mode DEFAULT group default
-    link/ether 02:9f:1c:4c:22:7d brd ff:ff:ff:ff:ff:ff
-7: vnet0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel master k6t-net1 state UNKNOWN mode DEFAULT group default qlen 1000
-    link/ether fe:9f:1c:00:00:00 brd ff:ff:ff:ff:ff:ff
+[root@rhel8-server-ocs /]# ip link | grep -A2 tap1
+6: tap1: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel master k6t-net1 state UP mode DEFAULT group default qlen 1000
+    link/ether ca:e9:2f:35:2c:a1 brd ff:ff:ff:ff:ff:ff
 ~~~
 
-That's showing that there's a bridge inside of the pod called "**k6t-net1**", with both the **"vnet0"** (the device attached to the VM), and the **"net1@if4"** device being how the packets get out onto the bridge on the hypervisor (more shortly):
+That bridge device has an interface called "*net1@if29*" (yours may be slightly different):
 
 ~~~bash
-[root@rhel8-server-nfs /]# virsh dumpxml 1 | grep -A8 "interface type"
-    <interface type='bridge'>
-      <mac address='02:9f:1c:00:00:00'/>
-      <source bridge='k6t-net1'/>
-      <target dev='vnet0'/>
+[root@rhel8-server-ocs /]# ip link | grep -A2 k6t-net1
+4: net1@if29: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue master k6t-net1 state UP mode DEFAULT group default 
+    link/ether 02:7c:a4:12:0d:6f brd ff:ff:ff:ff:ff:ff link-netnsid 0
+5: k6t-net1: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue state UP mode DEFAULT group default 
+    link/ether 02:7c:a4:12:0d:6f brd ff:ff:ff:ff:ff:ff
+6: tap1: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel master k6t-net1 state UP mode DEFAULT group default qlen 1000
+    link/ether ca:e9:2f:35:2c:a1 brd ff:ff:ff:ff:ff:ff
+~~~
+
+That's showing that there's a bridge inside of the pod called "**k6t-net1**", with both the **"tap1"** (the device attached to the VM), and the **"net1@if29"** device being how the packets get out onto the bridge on the hypervisor (more shortly):
+
+~~~bash
+[root@rhel8-server-ocs /]# virsh dumpxml default_rhel8-server-ocs | grep -A8 "interface type"
+    <interface type='ethernet'>
+      <mac address='02:7c:a4:00:00:00'/>
+      <target dev='tap1' managed='no'/>
       <model type='e1000'/>
       <mtu size='1500'/>
       <alias name='ua-tuning-bridge-fixed'/>
+      <rom enabled='no'/>
       <address type='pci' domain='0x0000' bus='0x02' slot='0x01' function='0x0'/>
     </interface>
 ~~~
 
-Exit the shell before proceeding:
+Exit the shell before proceeding (the `oc whoami` here just makes sure you're in the right place):
 
 ~~~bash
-[root@rhel8-server-nfs /]# exit
+[root@rhel8-server-ocs /]# exit
 exit
 
-$
+$ oc whoami
+system:serviceaccount:workbook:cnv
 ~~~
 
 Now, how is this plugged on the underlying host? 
 
-The key to this is the **"net1@if4"** device (it may be slightly different in your environment); this is one half of a **"veth pair"** that allows network traffic to be bridged between network namespaces, which is exactly how containers segregate their network traffic between each other on a container host. In this example the **"cnv-bridge"** is being used to connect the bridge for the virtual machine (**"k6t-net1"**) out to the bridge on the underlying host (**"br1"**), via a veth pair. The other side of the veth pair can be discovered as follows. First find the host of our virtual machine:
+The key to this is the **"net1@if29"** device (it may be slightly different in your environment); this is one half of a **"veth pair"** that allows network traffic to be bridged between network namespaces, which is exactly how containers segregate their network traffic between each other on a container host. In this example the **"cnv-bridge"** is being used to connect the bridge for the virtual machine (**"k6t-net1"**) out to the bridge on the underlying host (**"br1"**), via a veth pair. The other side of the veth pair can be discovered as follows. First find the host of our virtual machine:
 
 ~~~bash
 $ oc get vmi
-NAME               AGE   PHASE     IP                  NODENAME
-rhel8-server-nfs   10h   Running   192.168.123.62/24   ocp4-worker1.cnv.example.com
+NAME               AGE   PHASE     IP               NODENAME                       READY
+rhel8-server-ocs   30h   Running   192.168.123.64   ocp4-worker3.aio.example.com   True
 ~~~
 
-Then connect to it and track back the link - here you'll need to adjust the commands below - if your veth pair on the pod side was **"net1@if4"** then the **ifindex** in the command below will be **"4"**, if it was **"net1@if5"** then **"ifindex"** will be **"5"** and so on...
+Then connect to it and track back the link - here you'll need to adjust the commands below - if your veth pair on the pod side was **"net1@if29"** then the **ifindex** in the command below will be **"29"**, if it was **"net1@if5"** then **"ifindex"** will be **"5"** and so on...
 
-To do this we need to get to one of our workers, so first jump to the bastion:
+To do this we need to get to the worker running our virtual machine, and we can use the `oc debug node` function to do this (adjust to suit the host of your virtual machine from the previous command):
 
 ~~~bash
-$ oc debug node/ocp4-worker1.cnv.example.com
-Starting pod/ocp4-worker1cnvexamplecom-debug ...
+$ oc debug node/ocp4-worker3.aio.example.com
+Starting pod/ocp4-worker3aioexamplecom-debug ...
 To use host binaries, run `chroot /host`
-Pod IP: 192.168.123.104
+Pod IP: 192.168.123.106
 If you don't see a command prompt, try pressing enter.
 
-sh4.2# chroot /host
-
-sh4.4# export ifindex=4
-sh4.4# ip -o link | grep ^$ifindex: | sed -n -e 's/.*\(veth[[:alnum:]]*@if[[:digit:]]*\).*/\1/p'
-veth1bc05f9b@if5
+sh-4.4# chroot /host
+sh-4.4# export ifindex=29
+sh-4.4# ip -o link | grep ^$ifindex: | sed -n -e 's/.*\(veth[[:alnum:]]*@if[[:digit:]]*\).*/\1/p'
+Error: Peer netns reference is invalid.
+veth9d567769@if4
 ~~~
-> **NOTE**: You may have to adjust both the connection to worker1 or worker2, and the ifindex for the commands above to work properly.
-
-Therefore, the other side of the link, in the example above is **"veth1bc05f9b"**. You can then see that this is attached to **"br1"** as follows-
+Therefore, the other side of the link, in the example above is **"veth9d567769@if4"**. You can then see that this is attached to **"br1"** as follows-
 
 ~~~bash
-sh4.4# ip link show dev veth1bc05f9b
-4: veth1bc05f9b@if5: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue master br1 state UP mode DEFAULT group default
-    link/ether 62:7c:b2:db:8a:9b brd ff:ff:ff:ff:ff:ff link-netnsid 12
+sh-4.4# ip link show veth9d567769     
+29: veth9d567769@if4: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue master br1 state UP mode DEFAULT group default 
+Error: Peer netns reference is invalid.
+    link/ether 16:6b:ba:90:da:87 brd ff:ff:ff:ff:ff:ff link-netns c3dde5db-32f3-47a7-b7a8-3705dd17f8e1
 ~~~
 
 Note the "**master br1**" in the above output.
@@ -279,7 +292,7 @@ $ oc project default
 Already on project "default" on server "https://172.30.0.1:443".
 ~~~
 
-Now that we have the NFS instance running, let's do the same for the **hostpath** setup we created. This is essentially the same as our NFS instance, except we reference the `rhel8-hostpath` PVC:
+Now that we have the OCS instance running, let's do the same for the **hostpath** setup we created. Let's leverage the hostpath PVC that we created in a previous step - this is essentially the same as our OCS-based VM instance, except we reference the `rhel8-hostpath` PVC instead:
 
 ~~~bash
 $ cat << EOF | oc apply -f -
@@ -289,11 +302,11 @@ metadata:
   annotations:
     name.os.template.kubevirt.io/rhel8: Red Hat Enterprise Linux 8.0
   labels:
-    flavor.template.kubevirt.io/small: "true"
+    flavor.template.kubevirt.io/small: "tiny"
     kubevirt.io/os: rhel8
     os.template.kubevirt.io/rhel8: "true"
-    template.kubevirt.ui: openshift_rhel8-generic-large
-    vm.kubevirt.io/template: rhel8-generic-small
+    template.kubevirt.ui: openshift_rhel8-generic-tiny
+    vm.kubevirt.io/template: tiny
     workload.template.kubevirt.io/generic: "true"
     app: rhel8-server-hostpath
   name: rhel8-server-hostpath
@@ -338,8 +351,7 @@ spec:
           type: q35
         resources:
           requests:
-            memory: 2048M
-      evictionStrategy: LiveMigrate
+            memory: 1024M
       networks:
         - multus:
             networkName: tuning-bridge-fixed
@@ -359,37 +371,41 @@ As before we can see the launcher pod built and run:
 ~~~bash
 $ oc get pods
 NAME                                        READY   STATUS    RESTARTS   AGE
-virt-launcher-rhel8-server-hostpath-nb4bh   1/1     Running   0          18s
-virt-launcher-rhel8-server-nfs-l97kd        1/1     Running   0          12m
+virt-launcher-rhel8-server-hostpath-ddmjm   0/1     Pending   0          4s
+virt-launcher-rhel8-server-ocs-z5rmr        1/1     Running   0          30h
+~~~
 
+And after a few seconds, this should launch...
+
+~~~bash
 $ oc get vmi
-NAME                    AGE    PHASE     IP                  NODENAME
-rhel8-server-hostpath   1m     Running   192.168.123.63/24   ocp4-worker2.cnv.example.com
-rhel8-server-nfs        13m    Running   192.168.123.62/24   ocp4-worker1.cnv.example.com
-
+NAME                    AGE   PHASE     IP               NODENAME                       READY
+rhel8-server-hostpath   71s   Running   192.168.123.65   ocp4-worker2.aio.example.com   True
+rhel8-server-ocs        30h   Running   192.168.123.64   ocp4-worker3.aio.example.com   True
 ~~~
 
 And looking deeper we can see the hostpath claim we explored earlier being utilised, note the `Mounts` section for where, inside the pod, the `rhel8-hostpath` PVC is attached, and then below the PVC name:
 
 ~~~bash
-$ oc describe pod/virt-launcher-rhel8-server-hostpath-nb4bh
-Name:         virt-launcher-rhel8-server-hostpath-nb4bh
+$ oc describe pod/virt-launcher-rhel8-server-hostpath-9sqxm
+Name:         virt-launcher-rhel8-server-hostpath-9sqxm
 Namespace:    default
 Priority:     0
-Node:         ocp4-worker2.cnv.example.com/192.168.123.105
-Start Time:   Thu, 19 Mar 2020 00:41:29 +0000
+Node:         ocp4-worker2.aio.example.com/192.168.123.105
+Start Time:   Tue, 09 Nov 2021 20:33:22 +0000
 Labels:       kubevirt.io=virt-launcher
-              kubevirt.io/created-by=1354b779-011a-49bb-8d25-a55fe4d3d20a
+              kubevirt.io/created-by=7a19cb48-18bb-4d16-a7eb-4f7811675c17
               vm.kubevirt.io/name=rhel8-server-hostpath
-(...)
+(...)    
     Mounts:
-      /var/run/kubevirt from virt-share-dir (rw)
+      /var/run/kubevirt from public (rw)
       /var/run/kubevirt-ephemeral-disks from ephemeral-disks (rw)
-      /var/run/kubevirt-infra from infra-ready-mount (rw)
+      /var/run/kubevirt-private from private (rw)
       /var/run/kubevirt-private/vmi-disks/rhel8-hostpath from rhel8-hostpath (rw)
       /var/run/kubevirt/container-disks from container-disks (rw)
+      /var/run/kubevirt/hotplug-disks from hotplug-disks (rw)
+      /var/run/kubevirt/sockets from sockets (rw)
       /var/run/libvirt from libvirt-runtime (rw)
-
 (...)
 Volumes:
   rhel8-hostpath:
@@ -399,25 +415,23 @@ Volumes:
 (...)
 ~~~
 
-If we take a peek inside of that pod we can dig down further, you'll notice that it's largely the same output as the NFS step above, but the mount point is obviously not over NFS:
+If we take a peek inside of that pod we can dig down further, you'll notice that it's largely the same output as the OCS step above, but the mount point is obviously not over OCS:
 
 ~~~bash
-$ oc exec -it virt-launcher-rhel8-server-hostpath-nb4bh /bin/bash
+$ oc exec -it virt-launcher-rhel8-server-hostpath-9sqxm bash
+(...)
 
-[root@rhel8-server-hostpath /]# virsh domblklist 1
+[root@rhel8-server-hostpath /]# virsh domblklist default_rhel8-server-hostpath
  Target   Source
 -----------------------------------------------------------------------
  sda      /var/run/kubevirt-private/vmi-disks/rhel8-hostpath/disk.img
-
-[root@rhel8-server-hostpath /]# mount | grep rhel8
-/dev/mapper/coreos-luks-root-nocrypt on /run/kubevirt-private/vmi-disks/rhel8-hostpath type xfs (rw,relatime,seclabel,attr2,inode64,prjquota)
 ~~~
 
 The problem here is that if you try and run the `mount` command to see how this is attached, it will only show the whole filesystem being mounted into the pod:
 
 ~~~bash
 [root@rhel8-server-hostpath /]# mount | grep rhel8
-/dev/mapper/coreos-luks-root-nocrypt on /run/kubevirt-private/vmi-disks/rhel8-hostpath type xfs (rw,relatime,seclabel,attr2,inode64,prjquota)
+/dev/vda4 on /run/kubevirt-private/vmi-disks/rhel8-hostpath type xfs (rw,relatime,seclabel,attr2,inode64,logbufs=8,logbsize=32k,prjquota)
 ~~~
 
 However, we can see how this has been mapped in by Kubernetes by looking at the pod configuration on the host. First, recall which host your virtual machine is running on, and get the name of the launcher pod:
@@ -427,11 +441,11 @@ However, we can see how this has been mapped in by Kubernetes by looking at the 
 logout
 
 $ oc get vmi/rhel8-server-hostpath
-NAME                    AGE     PHASE     IP                  NODENAME
-rhel8-server-hostpath   6h40m   Running   192.168.123.63/24   ocp4-worker2.cnv.example.com
+NAME                    AGE     PHASE     IP               NODENAME                       READY
+rhel8-server-hostpath   6m43s   Running   192.168.123.65   ocp4-worker2.aio.example.com   True
 
-$ oc get pods | grep rhel8-server-hostpath
-virt-launcher-rhel8-server-hostpath-nb4bh   1/1     Running   0          6h43m
+$ oc get pods | awk '/hostpath/ {print $1;}'
+virt-launcher-rhel8-server-hostpath-9sqxm
 ~~~
 
 > **NOTE**: In your environment, your virtual machine may be running on worker1, simply adjust the following instructions to suit your configuration.
@@ -439,31 +453,36 @@ virt-launcher-rhel8-server-hostpath-nb4bh   1/1     Running   0          6h43m
 Next, we need to get the container ID from the pod:
 
 ~~~bash
-$ oc describe pod virt-launcher-rhel8-server-hostpath-nb4bh | awk -F// '/Container ID/ {print $2;}'
+$ oc describe pod virt-launcher-rhel8-server-hostpath-9sqxm | awk -F// '/Container ID/ {print $2;}'
 ba06cc69e0dbe376dfa0c8c72f0ab5513f31ab9a7803dd0102e858c94df55744
 ~~~
+
+> **NOTE**: Make a note (copy it) of this container ID as we'll use it in the next step
 
 Now we can check on the worker node itself, remembering to adjust these commands for the worker that your hostpath based VM is running on, and the container ID from the above:
 
 ~~~bash
-$ oc debug node/ocp4-worker2.cnv.example.com
-Starting pod/ocp4-worker2cnvexamplecom-debug ...
+$ oc describe pod virt-launcher-rhel8-server-hostpath-9sqxm | grep "Node:"
+Node:         ocp4-worker2.aio.example.com/192.168.123.105
+
+$ oc debug node/ocp4-worker2.aio.example.com
+Starting pod/ocp4-worker2aioexamplecom-debug ...
 To use host binaries, run `chroot /host`
 Pod IP: 192.168.123.105
 If you don't see a command prompt, try pressing enter.
 
-sh4.2# chroot /host
-sh4.4# crictl inspect ba06cc69e0dbe376dfa0c8c72f0ab5513f31ab9a7803dd0102e858c94df55744 | grep -A4 rhel8-hostpath
+sh-4.4# chroot /host
+sh-4.4# crictl inspect ba06cc69e0dbe376dfa0c8c72f0ab5513f31ab9a7803dd0102e858c94df55744 | grep -A4 rhel8-hostpath
+
         "containerPath": "/var/run/kubevirt-private/vmi-disks/rhel8-hostpath",
-        "hostPath": "/var/hpvolumes/pvc-77e486ea-af9a-4fb5-bc7d-1f21a59ed21a",
+        "hostPath": "/var/hpvolumes/pvc-0f3ff50d-12b1-4ad6-8beb-be742a6e674a",
         "propagation": "PROPAGATION_PRIVATE",
         "readonly": false,
         "selinuxRelabel": false
+(...)
 ~~~
 
-Here you can see that the container has been configured to have a `hostPath` from `/var/hpvolumes` mapped to the expected path inside of the container where the libvirt definition is pointing to.
-
-Don't forget to exit (twice) before proceeding:
+Here you can see that the container has been configured to have a `hostPath` from `/var/hpvolumes` mapped to the expected path inside of the container where the libvirt definition is pointing to. Don't forget to exit (twice) before proceeding:
 
 ~~~bash
 sh4.4# exit
@@ -480,3 +499,4 @@ system:serviceaccount:workbook:cnv
 Already on project "default" on server "https://172.30.0.1:443".
 ~~~
 
+That's it for deploying basic workloads - we've deployed a VM on-top of OCS and one on-top of hostpath.
