@@ -7,8 +7,12 @@ modules:
     - deploy-cnv
     - storage-setup
     - network-setup
-    - deploy-workloads
-    - cloning
+    - sample-application-architecture
+    - deploy-application-components
+    - deploy-database-web
+    - deploy-database-yaml
     - live-migration
+    - snapshot-restore
+    - cloning
     - masquerade
     - console

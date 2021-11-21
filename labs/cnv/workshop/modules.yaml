@@ -13,12 +13,24 @@ modules:
         exit_sign: Networking Setup
     network-setup:
         name: Network Setup
-        exit_sign: Deploy Workloads
-    deploy-workloads:
-        name: Deploy Workloads
-        exit_sign: Clone a Workload
+        exit_sign: ParksMap Application Architecture
+    sample-application-architecture:
+        name: Parksmap Application Architecture
+        exit_sign: Deploy Parksmap Application Components
+    deploy-application-components:
+        name: Deploy Parksmap Application Components
+        exit_sign: Deploy Database VM with Web Console
+    deploy-database-web:
+        name: Deploy Database VM with using Web Console
+        exit_sign: Deploy Database VM with using YAML
+    deploy-database-yaml:
+        name: Deploy Database VM with using YAML
+        exit_sign: Live Migration
     live-migration:
         name: Live Migration
+        exit_sign: Snapshot and Restore
+    snapshot-restore:
+        name: Snapshot and Restore
         exit_sign: Cloning Workloads
     cloning:
         name: Clone a Workload
