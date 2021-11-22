@@ -112,7 +112,7 @@ The list of available options (exposed as Ansible variables) is described below-
 Before being able to deploy, make sure to fetch the required roles with the following command :
 
 ~~~bash
-$ ansible-galaxy -r playbooks/roles/requirements.yml -p playbooks/roles
+$ ansible-galaxy install -r playbooks/roles/requirements.yml -p playbooks/roles
 ~~~
 
 When you're ready to deploy a cluster, call `main.yml` making sure you specify your variables and the dynamic inventory (don't worry that it doesn't exist yet):
