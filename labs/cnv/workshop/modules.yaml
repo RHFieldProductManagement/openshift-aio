@@ -1,18 +1,24 @@
 modules:
     welcome:
         name: Welcome
-        exit_sign: Lab Validation
+        exit_sign: Using Homeroom
+    using-homeroom:
+        name: Using Homeroom
+        exit_sign: Validate Lab Connectivity
     validation:
-        name: Validate Connectivity
-        exit_sign: Deploy CNV
+        name: Validate Lab Connectivity
+        exit_sign: Explore OpenShift CLI and Web Console   
+    explore-openshift:
+        name: Explore OpenShift CLI and Web Console
+        exit_sign: Deploy OpenShift Virtualization        
     deploy-cnv:
-        name: Deploy CNV
+        name: Deploy OpenShift Virtualization
         exit_sign: Storage Setup
     storage-setup:
         name: Storage Setup
         exit_sign: Networking Setup
     network-setup:
-        name: Network Setup
+        name: Networking Setup
         exit_sign: ParksMap Application Architecture
     sample-application-architecture:
         name: Parksmap Application Architecture
@@ -34,10 +40,19 @@ modules:
         exit_sign: Cloning Workloads
     cloning:
         name: Clone a Workload
+        exit_sign: Backup and Restore
+    backup-restore:
+        name: Backup and Restore
         exit_sign: Masquerade Networking
     masquerade:
         name: Masquerade Networking
-        exit_sign: CNV Console
+        exit_sign: Network Isolation for Virtual Machines
+    network-policy:
+        name: Network Isolation for Virtual Machines 
+        exit_sign: Using the VM Console
     console:
-        name: Using the console
+        name: Using the VM console
+        exit_sign: External Access to Virtual Machine
+    ingress:
+        name: External Access to Virtual Machine
         exit_sign: Finish Workshop

@@ -4,7 +4,6 @@ First we will deploy the web component of the ParksMap application which is also
 
 <img  border="1" align="center" src="img/roadshow-app-architecture-parksmap-1.png" title="Application architecture"/>
 
-
 == Exercise: Deploying Parksmap Container Image
 
 Let's start by doing the simplest thing possible - get a plain old
@@ -17,14 +16,11 @@ If you're no longer on the Developer perspective, return there now.
 
 From the left menu, click *+Add*. You will see a screen where you have multiple options to deploy application to OpenShift. Click *Container Image* to open a dialog that will allow you to specify the information for the image you want to deploy.
 
-image::images/parksmap-devconsole-container-image.png[Add from Container Image]
+<img  border="1" align="center" src="img/parksmap-devconsole-container-image.png" title="Add from Container Image"/>
 
 In the *Image Name* field, copy/paste the following into the box:
 
-[source,role=copy]
-----
-quay.io/openshiftroadshow/{{PARKSMAP_IMAGENAME}}:{{PARKSMAP_VERSION}}
-----
+ quay.io/openshiftroadshow/{{PARKSMAP_IMAGENAME}}:{{PARKSMAP_VERSION}}
 
 OpenShift will then go out to the container registry specified and interrogate the image.
 

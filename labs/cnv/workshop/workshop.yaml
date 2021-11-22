@@ -3,7 +3,9 @@ name: OpenShift Virtualization Labs
 modules:
     activate:
     - welcome
+    - using-homeroom
     - validation
+    - explore-openshift
     - deploy-cnv
     - storage-setup
     - network-setup
@@ -14,5 +16,8 @@ modules:
     - live-migration
     - snapshot-restore
     - cloning
+    - backup-restore
     - masquerade
+    - micro-segmentation
     - console
+    - ingress
