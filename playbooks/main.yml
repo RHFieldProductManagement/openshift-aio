@@ -118,15 +118,16 @@
     - name: Setting up NFS Storage
       include_role: 
         name: ocp4_role_nfsmount
-
-    - name: Deploy internal registry
-      include_role:
-        name: ocp4_role_imgreg
+      when: ocp4_aio_deploy_nfs or not ocp4_aio_deploy_ocs
 
     - name: Setting up OCS Storage
       include_role:
         name: ocp4_role_ocs
       when: ocp4_aio_deploy_ocs 
+
+    - name: Deploy internal registry
+      include_role:
+        name: ocp4_role_imgreg
 
     - name: Installing ACM
       include_role:
