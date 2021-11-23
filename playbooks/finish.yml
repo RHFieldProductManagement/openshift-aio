@@ -72,7 +72,7 @@
       vars:
         msg: |
           As you've requested OpenShift to be installed, you can access the console either via proxy or Guacamole (if enabled).
-          To access the environment via a Squid Proxy, setup the followinf SOCKS proxy:
+          To access the environment via a Squid Proxy, setup the following SOCKS proxy:
 
           proxy.{{ guid }}.{{ cluster_dns_zone }}:3128
 

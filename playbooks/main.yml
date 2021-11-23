@@ -143,7 +143,7 @@
         name: ocp4_role_cnv
       when: ocp4_aio_deploy_cnv
 
-    - name: Deploy Openshift Virtualization LAB
+    - name: Deploy OpenShift Virtualization LAB
       include_role:
         name: ocp4_role_deploy_cnvlab
       when: ocp4_aio_deploy_cnvlab
