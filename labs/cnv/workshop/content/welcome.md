@@ -7,14 +7,22 @@ In these labs you'll utilise a virtual environment built with the [OpenShift AIO
 This is the self-hosted lab guide that will run you through the following:
 
 * **Validating the OpenShift deployment**
+* **Explore OpenShift CLI and Web Console**
 * **Deploying OpenShift Virtualization**
 * **Setting up Storage for OpenShift Virtualization**
 * **Setting up Networking for OpenShift Virtualization**
-* **Deploying some Test Workloads**
+* **ParksMap Application Architecture**
+* **Deploying Parksmap Application Components**
+* **Deploying Database VM using Web Console**
+* **Deploy Database VM using YAML**
 * **Performing Live Migrations and Node Maintenance**
+* **Creating Virtual Machines from Snapshot**
+* **Cloning a Virtual Machine**
+* **Performing Backup and Restore of Virtual Machines**
 * **Utilising network masquerading on pod networking for VM's**
+* **Network Isolation for Virtual Machines**
 * **Using the OpenShift Web Console extensions for OpenShift Virtualization**
-* **Upgrading OpenShift Virtualization via the Operator Lifecycle**
+* **External Access to Virtual Machines**
 
 Within the lab you can cut and paste commands directly from the instructions; but also be sure to review all commands carefully both for functionality and syntax!
 

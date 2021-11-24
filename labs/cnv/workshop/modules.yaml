@@ -4,55 +4,55 @@ modules:
         exit_sign: Using Homeroom
     using-homeroom:
         name: Using Homeroom
-        exit_sign: Validate Lab Connectivity
+        exit_sign: Validate Lab
     validation:
         name: Validate Lab Connectivity
-        exit_sign: Explore OpenShift CLI and Web Console   
+        exit_sign: Explore OpenShift 
     explore-openshift:
         name: Explore OpenShift CLI and Web Console
-        exit_sign: Deploy OpenShift Virtualization        
+        exit_sign: Deploying CNV        
     deploy-cnv:
-        name: Deploy OpenShift Virtualization
+        name: Deploying OpenShift Virtualization
         exit_sign: Storage Setup
     storage-setup:
         name: Storage Setup
         exit_sign: Networking Setup
     network-setup:
         name: Networking Setup
-        exit_sign: ParksMap Application Architecture
-    sample-application-architecture:
-        name: Parksmap Application Architecture
-        exit_sign: Deploy Parksmap Application Components
-    deploy-application-components:
-        name: Deploy Parksmap Application Components
-        exit_sign: Deploy Database VM with Web Console
-    deploy-database-web:
-        name: Deploy Database VM with using Web Console
-        exit_sign: Deploy Database VM with using YAML
-    deploy-database-yaml:
-        name: Deploy Database VM with using YAML
+        exit_sign: ParksMap Application
+    deploy-workloads:
+        name: Deploy Workloads
         exit_sign: Live Migration
     live-migration:
         name: Live Migration
-        exit_sign: Snapshot and Restore
-    snapshot-restore:
-        name: Snapshot and Restore
-        exit_sign: Cloning Workloads
+        exit_sign: Parksmap Application 
+    sample-application-architecture:
+        name: Parksmap Application Architecture
+        exit_sign: Deploying Parksmap 
+    deploy-application-components:
+        name: Deploying Parksmap Application Components
+        exit_sign: Deploy first DB
+    deploy-database-web:
+        name: Deploy Database VM using Web Console
+        exit_sign: Deploy second DB
+    deploy-database-yaml:
+        name: Deploy Database VM using YAML
+        exit_sign: Snapshot
+    snapshot:
+        name: Creating Virtual Machines from Snapshot
+        exit_sign: Cloning 
     cloning:
-        name: Clone a Workload
+        name: Clone a Virtual Machine
         exit_sign: Backup and Restore
-    backup-restore:
-        name: Backup and Restore
-        exit_sign: Masquerade Networking
     masquerade:
         name: Masquerade Networking
-        exit_sign: Network Isolation for Virtual Machines
-    network-policy:
+        exit_sign: Network Isolation
+    micro-segmentation:
         name: Network Isolation for Virtual Machines 
         exit_sign: Using the VM Console
     console:
         name: Using the VM console
-        exit_sign: External Access to Virtual Machine
-    ingress:
-        name: External Access to Virtual Machine
+        exit_sign: Backup and Restore
+    backup-restore:
+        name: Backup and Restore
         exit_sign: Finish Workshop
