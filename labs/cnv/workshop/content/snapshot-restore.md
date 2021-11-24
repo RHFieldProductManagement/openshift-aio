@@ -48,7 +48,7 @@ sudo systemctl enable --now qemu-guest-agent
 
 Virtual machine (VM) snapshots can be created either by using the web console or in the CLI. In this exercise, let's create a snapshot of our mongodb database vm by using the web console.
 
-<img src="img/vm-snapshot-card.png" width="40%" style="float: right;"/>
+<img src="img/vm-snapshot-card.png" width="40%" align="right"/>
 
 1. Click **Workloads** → **Virtualization** from the side menu.
    
