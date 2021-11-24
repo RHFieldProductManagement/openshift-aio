@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # Background: Virtual Machine snapshots
 
 A snapshot represents the state and data of a virtual machine (VM) at a specific point in time. You can use a snapshot to restore an existing VM to a previous state (represented by the snapshot) for backup and disaster recovery or to rapidly roll back to a previous development version.
@@ -45,6 +44,27 @@ sudo yum install -y qemu-guest-agent
 sudo systemctl enable --now qemu-guest-agent
 ~~~
 
+# Exercise: Creating a virtual machine snapshot in the web console
+
+Virtual machine (VM) snapshots can be created either by using the web console or in the CLI. In this exercise, let's create a snapshot of our mongodb database vm by using the web console.
+
+
+
+1. Click **Workloads** → **Virtualization** from the side menu.
+   
+2. Click the **Virtual Machines** tab.
+   
+3. Select `mongodb-nationalparks` virtual machine to open its **Overview** screen.
+
+4. Click the **Snapshots** tab and then click **Take Snapshot**.
+
+5. Fill in the **Snapshot Name** and optional **Description** fields.
+
+6. Because the VM has a cloud-init disk that cannot be included in the snapshot, select the **I am aware of this warning and wish to proceed** checkbox.
+
+7. Click **Save**.  
+
+  <img src="img/vm-snapshot-card.png"/>
 To begin with let's use the OpenShift Data Foundation volume we created earlier to launch some VMs. We are going to create a machine called `rhel8-server-ocs`. As you'll recall we have created a PVC called `rhel8-ocs` that was created using the CDI utility with a CentOS 8 base image. To connect the machine to the network we will utilise the `NetworkAttachmentDefinition` we created for the underlying host's third NIC (`enp3s0` via `br1`). This is the `tuning-bridge-fixed` interface which refers to that bridge created previously. It's also important to remember that OpenShift 4.x uses Multus as it's default networking CNI so we also ensure Multus knows about this `NetworkAttachmentDefinition`. Lastly we have set the `evictionStrategy` to `LiveMigrate` so that any request to move the instance will use this method. We will explore this in more depth in a later lab.
 
 Let's apply a VM configuration via the CLI first:
@@ -544,4 +564,3 @@ Already on project "default" on server "https://172.30.0.1:443".
 
 That's it for deploying basic workloads - we've deployed a VM on-top of OCS and one on-top of hostpath.
 =======
->>>>>>> 325d53ca55a9c348a184771a084807d4959119f3
