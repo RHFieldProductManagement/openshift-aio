@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Background: Virtual Machine snapshots
 
 A snapshot represents the state and data of a virtual machine (VM) at a specific point in time. You can use a snapshot to restore an existing VM to a previous state (represented by the snapshot) for backup and disaster recovery or to rapidly roll back to a previous development version.
@@ -542,3 +543,5 @@ Already on project "default" on server "https://172.30.0.1:443".
 ~~~
 
 That's it for deploying basic workloads - we've deployed a VM on-top of OCS and one on-top of hostpath.
+=======
+>>>>>>> 325d53ca55a9c348a184771a084807d4959119f3
