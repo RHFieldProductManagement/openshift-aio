@@ -215,3 +215,8 @@ $ oc delete vm/rhel8-server-ocs
 virtualmachine.kubevirt.io "rhel8-server-ocs" deleted
 ~~~
 
+![](img/livemigration1.png)
+![](img/livemigration2.png)
+![](img/livemigration3.png)
+![](img/livemigration4.png)
+![](img/livemigration5.png)
