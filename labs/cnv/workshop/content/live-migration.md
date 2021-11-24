@@ -221,5 +221,5 @@ virtualmachine.kubevirt.io "rhel8-server-ocs" deleted
 ![](img/livemigration2.png)
 ![](img/livemigration3.png)
 ![](img/livemigration4.png)
-
+![](2021-11-24-18-00-30.png)
 ![](img/livemigration5.png)
