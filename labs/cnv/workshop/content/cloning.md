@@ -567,3 +567,25 @@ NAME               AGE   PHASE     IP                  NODENAME
 rhel8-server-nfs   23h   Running   192.168.123.62/24   ocp4-worker1.cnv.example.com
 ~~~
 
+
+Firstly, we are installing httpd package for test.
+
+~~~bash
+$ yum install httpd -y
+$ systemctl start httpd
+$ systemctl enable httpd
+~~~
+
+And lets  doing some test.
+
+![](img/clone1.png)
+
+Then we are starting clone job.
+![](img/clone2.png)
+![](img/clone3.png)
+![](img/clone4.png)
+![](img/clone5.png)
+
+After vm started , check current public ip and then connect your browser with this new ip
+
+![](img/clone6.png)
