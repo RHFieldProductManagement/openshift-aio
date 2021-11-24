@@ -48,6 +48,7 @@ sudo systemctl enable --now qemu-guest-agent
 
 Virtual machine (VM) snapshots can be created either by using the web console or in the CLI. In this exercise, let's create a snapshot of our mongodb database vm by using the web console.
 
+<p>
 <img src="img/vm-snapshot-card.png" width="40%" align="right"/>
 
 1. Click **Workloads** → **Virtualization** from the side menu.
@@ -63,7 +64,7 @@ Virtual machine (VM) snapshots can be created either by using the web console or
 6. Because the VM has a cloud-init disk that cannot be included in the snapshot, select the **I am aware of this warning and wish to proceed** checkbox.
 
 7. Click **Save**.
-
+</p>
 Once you click Save to create snapshot, the vm controller checks that the QEMU guest agent is installed and running. If so, it freezes the VM file system before taking the snapshot, and initiates snapshot creation on actual storage system for each Container Storage Interface (CSI) volume attached to the VM, a copy of the VM specification and metadata is also created.
 
 <img src="img/vm-snapshot-creating.png"/><br><br> 
