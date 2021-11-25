@@ -222,6 +222,7 @@ You can use current VM for Live Migration test. I'll need to click detail.Then "
 ![](img/livemigration1.png)
 
 Click "**Migrate**" 
+
 ![](img/livemigration2.png)
 
 As you can see on your console,VM status is updated to "**Migrating**" State.
