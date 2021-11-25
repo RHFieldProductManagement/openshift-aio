@@ -582,15 +582,19 @@ And lets  check your HTTP server via browser. First of all , you should get your
 ![](img/clone1.png)
 
 Then we are starting clone  job as you can see below screenshot.
+
 ![](img/clone2.png)
 
 I can change namespace and after finishing clone,  I can start this VM. You'll need to click "**Clone Virtual Machine**" button.
+
 ![](img/clone3.png)
 
 As you can see your console, current vm is closing now, and new vm is provisioning. 
+
 ![](img/clone4.png)
 
 At this point, I'll need some test for this new vm. I am starting VM now. You'll need to click  "**...**" and "**Start Virtual Machine**" buttons.
+
 ![](img/clone5.png)
 
 After vm started , check current public ip and then connect your browser with this new ip. That's it.
