@@ -69,7 +69,7 @@ Virtual machine (VM) snapshots can be created either by using the web console or
 
 Once you click Save to create snapshot, the vm controller checks that the QEMU guest agent is installed and running. If so, it freezes the VM file system before taking the snapshot, and initiates snapshot creation on actual storage system for each Container Storage Interface (CSI) volume attached to the VM, a copy of the VM specification and metadata is also created.
 
-<img src="img/vm-snapshot-creating.png"/><br><br> 
+<img src="img/vm-snapshot-creating.png"/><br>
 
 It should take just a little seconds to actually create the snapshot and make it Ready to use. Once the snapshot becomes **Ready** then it can be used to restore the virtual machine to that specific point in time then the snapshot is taken.
 
@@ -316,7 +316,47 @@ mongodb-nationalparks-vmrestore1             VirtualMachine   mongodb-nationalpa
 ~~~bash
 oc describe vmsnapshot mongodb-nationalparks-snap1
 ~~~
-
+~~~bash
+Name:         mongodb-nationalparks-vmrestore1
+Namespace:    backup-test
+Labels:       <none>
+Annotations:  <none>
+API Version:  snapshot.kubevirt.io/v1alpha1
+Kind:         VirtualMachineRestore
+Metadata:
+  Creation Timestamp:  2021-11-25T15:06:44Z
+  Generation:          5
+  UID:                     805d3352-6c72-468d-b8c6-36f083d2d68e
+Spec:
+  Target:
+    API Group:                    kubevirt.io
+    Kind:                         VirtualMachine
+    Name:                         mongodb-nationalparks
+  Virtual Machine Snapshot Name:  mongodb-nationalparks-snap1
+Status:
+  Complete:  true
+  Conditions:
+    Last Probe Time:       <nil>
+    Last Transition Time:  2021-11-25T15:06:46Z
+    Reason:                Operation complete
+    Status:                False
+    Type:                  Progressing
+    Last Probe Time:       <nil>
+    Last Transition Time:  2021-11-25T15:06:46Z
+    Reason:                Operation complete
+    Status:                True
+    Type:                  Ready
+  Restore Time:            2021-11-25T15:06:46Z
+  Restores:
+    Data Volume Name:         restore-805d3352-6c72-468d-b8c6-36f083d2d68e-mongodb-nationalparks
+    Persistent Volume Claim:  restore-805d3352-6c72-468d-b8c6-36f083d2d68e-mongodb-nationalparks
+    Volume Name:              mongodb-nationalparks
+    Volume Snapshot Name:     vmsnapshot-7a46dfc9-9904-42e9-a0a3-c02ef43d0f2b-volume-mongodb-nationalparks
+Events:
+  Type    Reason                         Age    From                Message
+  ----    ------                         ----   ----                -------
+  Normal  VirtualMachineRestoreComplete  7m50s  restore-controller  Successfully completed VirtualMachineRestore mongodb-nationalparks-vmrestore1
+~~~
 After the snapshot was restored successfully and it's `complete` flag is set to `true`, then you can click **Actions** → **Start Virtual Machine** to power the VM on.
 Once the VM is powered on and boots successfully, you can refresh `ParksMap` web page (Map Visualizer on OpenShift 4). It should successfully load national parks locations from the backend service and start displaying them on the map again.
 
