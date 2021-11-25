@@ -567,9 +567,9 @@ NAME               AGE   PHASE     IP                  NODENAME
 rhel8-server-nfs   23h   Running   192.168.123.62/24   ocp4-worker1.cnv.example.com
 ~~~
 
-### Emre
+### Cloning VM using Openshift Console
 
-Firstly, we are installing httpd package for test.
+Firstly, we are installing httpd package for test.You can use same virtual machine as you have created before
 
 ~~~bash
 $ yum install httpd -y
@@ -577,13 +577,17 @@ $ systemctl start httpd
 $ systemctl enable httpd
 ~~~
 
-And lets  doing some test.
+And lets  check your HTTP server via browser. First of all , you should get your VM's current public ip then try to connect using this ip.That's it.
 
 ![](img/clone1.png)
 
-Then we are starting clone job.
+Then we are starting clone  job as you can see below screenshot.
 ![](img/clone2.png)
+
+I can change namespace and after finishing clone,  I can start this VM. You'll need to click "**Clone Virtual Machine**" button.
 ![](img/clone3.png)
+
+As you can see your console, current vm is closing now, and new vm is provisioning. 
 ![](img/clone4.png)
 ![](img/clone5.png)
 
