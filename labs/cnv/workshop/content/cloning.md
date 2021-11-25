@@ -387,7 +387,7 @@ rhel8-server-nfs        94m   Running     192.168.123.62/24   ocp4-worker1.cnv.e
 
 
 
-### Clone the VM
+### Clone the VM (Option 1)
 
 Now that we've got a working virtual machine with a test workload we're ready to actually clone it, to prove that the built-in cloning utilities work, and that the cloned machine shares the same workload. First we need to create a PV (persistent volume) to clone into. This is done by creating a special resource called a `DataVolume`, this custom resource type is provide by CDI. DataVolumes orchestrate import, clone, and upload operations and help the process of importing data into a cluster. DataVolumes are integrated into OpenShift virtualisation.
 
@@ -567,7 +567,7 @@ NAME               AGE   PHASE     IP                  NODENAME
 rhel8-server-nfs   23h   Running   192.168.123.62/24   ocp4-worker1.cnv.example.com
 ~~~
 
-### Cloning VM using Openshift Console
+### Cloning VM using Openshift Console(Option 2)
 
 Firstly, we are installing httpd package for test.You can use same virtual machine as you have created before
 
