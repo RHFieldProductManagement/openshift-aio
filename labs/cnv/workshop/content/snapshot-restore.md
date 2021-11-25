@@ -49,7 +49,7 @@ sudo systemctl enable --now qemu-guest-agent
 Virtual machine (VM) snapshots can be created either by using the web console or in the CLI. In this exercise, let's create a snapshot of our mongodb database vm by using the web console.
 <table>
   <tr>
-  <td>
+    <td>
 <img src="img/vm-snapshot-card.png" width="40%" align="right"/>
 
 1. Click **Workloads** → **Virtualization** from the side menu.
@@ -68,6 +68,7 @@ Virtual machine (VM) snapshots can be created either by using the web console or
    </td>
   </tr>
  </table>
+
 Once you click Save to create snapshot, the vm controller checks that the QEMU guest agent is installed and running. If so, it freezes the VM file system before taking the snapshot, and initiates snapshot creation on actual storage system for each Container Storage Interface (CSI) volume attached to the VM, a copy of the VM specification and metadata is also created.
 
 <img src="img/vm-snapshot-creating.png"/><br><br> 
@@ -94,6 +95,38 @@ sudo systemctl start mongod
 ~~~
 
 Now you can check by refreshing `ParksMap` web page (Map Visualizer on OpenShift 4), it should **fail** to load national parks locations from the backend service and no longer display them on the map.
+
+# Exercise: Restoring a virtual machine from a snapshot in the web console
+
+In this exercise, let's restore our mongodb database vm by using the web console to the snapshot created in the previous exercise.
+You can only restore to a powered off (offline) VM so we will first power off the virtual machine in this exercise.
+
+1. Click **Workloads** → **Virtualization** from the side menu.
+
+2. Click the **Virtual Machines** tab.
+
+3. Select `mongodb-nationalparks` virtual machine to open its **Overview** screen.
+
+4. If the virtual machine is running, click **Actions** → **Stop Virtual Machine** to power it down.
+
+5. Click the **Snapshots** tab. The page displays a list of snapshots associated with the virtual machine.
+
+6. Choose one of the following methods to restore a VM snapshot:
+
+   - For the snapshot that you want to use as the source to restore the VM, click **Restore**.
+   - Select a snapshot to open the **Snapshot Details** screen and click **Actions** → **Restore Virtual Machine Snapshot**.
+
+7. In the confirmation pop-up window, click **Restore** to restore the VM to its previous configuration represented by the snapshot.
+
+<img src="img/vm-snapshot-restore-popup.png"  width="70%"/><br><br>
+
+Once you click Restore to restore vm from the snapshot, it initiates snapshot restoration on actual storage system for each Container Storage Interface (CSI) volume attached to the VM and included in the snaphot, VM specification and metadata is also restored.  
+It should take just a little seconds to actually restore the snapshot and make the VM ready to be powered on again.
+
+<img src="img/vm-snapshot-restoring.png"/><br><br>
+
+After the snapshot was restored successfully and it's status become **Ready**, then you can click **Actions** → **Start Virtual Machine** to power it on.
+Once the VM is powered on and boots successfully, you can refresh `ParksMap` web page (Map Visualizer on OpenShift 4). It should successfully load national parks locations from the backend service and start displaying them on the map again.
 
 That's it for deploying basic workloads - we've deployed a VM on-top of OCS and one on-top of hostpath.
 =======
