@@ -1,0 +1,197 @@
+---
+kind: Template
+apiVersion: template.openshift.io/v1
+metadata:
+  name: mlb-mongodb
+  annotations:
+    iconClass: icon-eap
+    description: Application template for Parksmap application web, frontend and backend components 
+    openshift.io/display-name: Parksmap
+    openshift.io/long-description: This template deploys a ParksMap application. Parksmap is a polyglot geo-spatial data visualization application built using the microservices architecture and is composed of a set of services which are developed using different programming languages and frameworks.
+    openshift.io/provider-display-name: OpenShift evangelist team
+    tags: roadshow,java,springboot,openshift
+labels:
+  createdBy: parksmap-template
+parameters:
+- description: The name for the mlbparks application.
+  displayName: Application Name
+  name: APPLICATION_NAME
+  value: mlbparks
+  required: true
+- description: 'Custom hostname for mlbparks application.  Leave blank for default
+    hostname, e.g.: <application-name>.<project>.<default-domain-suffix>'
+  displayName: Application route
+  name: APPLICATION_HOSTNAME
+- description: The name for the mongodb application.
+  displayName: Mongodb App
+  name: MONGODB_APPLICATION_NAME
+  value: mongodb-mlbparks
+  required: true
+- description: Database name
+  displayName: Database name
+  name: MONGODB_DATABASE
+  value: mongodb
+  required: true
+- description: Database user name
+  displayName: Database user name
+  name: MONGODB_USER
+  from: user[a-zA-Z0-9]{3}
+  generate: expression
+  required: true
+- description: Database user password
+  displayName: Database user password
+  name: MONGODB_PASSWORD
+  from: "[a-zA-Z0-9]{8}"
+  generate: expression
+  required: true
+- description: Database admin password
+  displayName: Database admin password
+  name: MONGODB_ADMIN_PASSWORD
+  from: "[a-zA-Z0-9]{8}"
+  generate: expression
+  required: true
+objects:
+- kind: ConfigMap
+  apiVersion: v1
+  metadata:
+    name: mlbparks
+    labels:
+      app: workshop
+      component: mlbparks
+      role: config
+  data:
+    db.user: "${MONGODB_USER}"
+    db.password: "${MONGODB_PASSWORD}"
+    db.name: "${MONGODB_DATABASE}"
+    db.properties: |-
+      db.user=${MONGODB_USER}
+      db.password=${MONGODB_PASSWORD}
+      db.name=${MONGODB_DATABASE}
+    application.properties: spring.data.mongodb.uri=mongodb://${MONGODB_USER}:${MONGODB_PASSWORD}@${MONGODB_APPLICATION_NAME}:27017/${MONGODB_DATABASE}
+- kind: Service
+  apiVersion: v1
+  metadata:
+    name: "${MONGODB_APPLICATION_NAME}"
+    labels:
+      app: workshop
+      component: mlbparks
+      role: database
+  spec:
+    ports:
+    - name: mongo
+      protocol: TCP
+      port: 27017
+      targetPort: 27017
+    selector:
+      deploymentConfig: "${MONGODB_APPLICATION_NAME}"
+    type: ClusterIP
+    sessionAffinity: None
+- kind: DeploymentConfig
+  apiVersion: v1
+  metadata:
+    name: "${MONGODB_APPLICATION_NAME}"
+    labels:
+      app: workshop
+      component: mlbparks
+      role: database
+      app.kubernetes.io/part-of: workshop
+      app.kubernetes.io/name: mongodb
+  spec:
+    strategy:
+      type: Recreate
+      recreateParams:
+        timeoutSeconds: 600
+      resources: {}
+    triggers:
+    - type: ImageChange
+      imageChangeParams:
+        automatic: true
+        containerNames:
+        - "${MONGODB_APPLICATION_NAME}"
+        from:
+          kind: ImageStreamTag
+          namespace: openshift
+          name: mongodb:3.6
+    - type: ConfigChange
+    replicas: 1
+    test: false
+    selector:
+      app: workshop
+      component: mlbparks
+      role: database
+      deploymentConfig: "${MONGODB_APPLICATION_NAME}"
+    template:
+      metadata:
+        labels:
+          app: workshop
+          component: mlbparks
+          role: database
+          deploymentConfig: "${MONGODB_APPLICATION_NAME}"
+      spec:
+        volumes:
+        - name: mongodb-data
+          emptyDir: {}
+        containers:
+        - name: "${MONGODB_APPLICATION_NAME}"
+          image: "${MONGODB_APPLICATION_NAME}"
+          ports:
+          - containerPort: 27017
+            protocol: TCP
+          env:
+          - name: KUBERNETES_NAMESPACE
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.namespace
+          - name: MONGODB_USER
+            valueFrom:
+              configMapKeyRef:
+                name: mlbparks
+                key: db.user
+          - name: MONGODB_PASSWORD
+            valueFrom:
+              configMapKeyRef:
+                name: mlbparks
+                key: db.password
+          - name: MONGODB_DATABASE
+            valueFrom:
+              configMapKeyRef:
+                name: mlbparks
+                key: db.name
+          - name: MONGODB_ADMIN_PASSWORD
+            value: "${MONGODB_ADMIN_USER}"
+          resources:
+            limits:
+              memory: 512Mi
+          volumeMounts:
+          - name: mongodb-data
+            mountPath: "/var/lib/mongodb/data"
+          livenessProbe:
+            tcpSocket:
+              port: 27017
+            initialDelaySeconds: 30
+            timeoutSeconds: 1
+            periodSeconds: 10
+            successThreshold: 1
+            failureThreshold: 3
+          readinessProbe:
+            exec:
+              command:
+              - "/bin/sh"
+              - "-i"
+              - "-c"
+              - mongo 127.0.0.1:27017/$MONGODB_DATABASE -u $MONGODB_USER -p $MONGODB_PASSWORD
+                --eval="quit()"
+            initialDelaySeconds: 3
+            timeoutSeconds: 1
+            periodSeconds: 10
+            successThreshold: 1
+            failureThreshold: 3
+          terminationMessagePath: "/dev/termination-log"
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            capabilities: {}
+            privileged: false
+        restartPolicy: Always
+        terminationGracePeriodSeconds: 30
+        dnsPolicy: ClusterFirst
+        securityContext: {}

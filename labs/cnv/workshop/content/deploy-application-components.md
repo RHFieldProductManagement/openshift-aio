@@ -1,8 +1,9 @@
 In this lab, we're going to deploy the main components of the ParksMap application.
 
-First we will deploy the web component of the ParksMap application which is also called `parksmap` and uses OpenShift's service discovery mechanism to discover the backend services deployed and shows their data on the map.
+First we will deploy the frontend and backend components of the ParksMap application uses OpenShift's service discovery mechanism to discover the backend services deployed and shows their data on the map.
 
-<img  border="1" align="center" src="img/roadshow-app-architecture-parksmap-1.png" title="Application architecture"/>
+![Application Architecture](img/roadshow-app-architecture-parksmap-1.png)
+
 
 == Exercise: Deploying Parksmap Container Image
 
@@ -15,6 +16,8 @@ Return to the http://console-openshift-console.{{cluster_subdomain}}/k8s/cluster
 If you're no longer on the Developer perspective, return there now. 
 
 From the left menu, click *+Add*. You will see a screen where you have multiple options to deploy application to OpenShift. Click *Container Image* to open a dialog that will allow you to specify the information for the image you want to deploy.
+
+![Application Architecture](img/parksmap-devconsole-container-image.png)
 
 <img  border="1" align="center" src="img/parksmap-devconsole-container-image.png" title="Add from Container Image"/>
 

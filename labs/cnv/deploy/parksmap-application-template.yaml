@@ -1,0 +1,433 @@
+---
+kind: Template
+apiVersion: template.openshift.io/v1
+metadata:
+  name: parksmap
+  annotations:
+    iconClass: icon-eap
+    description: Application template for Parksmap application web, frontend and backend components 
+    openshift.io/display-name: Parksmap
+    openshift.io/long-description: This template deploys a ParksMap application. Parksmap is a polyglot geo-spatial data visualization application built using the microservices architecture and is composed of a set of services which are developed using different programming languages and frameworks.
+    openshift.io/provider-display-name: OpenShift evangelist team
+    tags: roadshow,java,springboot,openshift
+labels:
+  createdBy: parksmap-template
+parameters:
+- description: The name for the parksmap web application.
+  displayName: Parksmap Web Application Name
+  name: PM_APPLICATION_NAME
+  value: parksmap
+  required: true
+- description: The name for the mlbparks application.
+  displayName: Mlbparks Application Name
+  name: MLB_APPLICATION_NAME
+  value: mlbparks
+  required: true
+- description: The name for the Mlbparks mongodb application.
+  displayName: Mlbparks Mongodb App
+  name: MONGODB_MLB_APPLICATION_NAME
+  value: mongodb-mlbparks
+  required: true
+- description: The name for the nationalparks application.
+  displayName: Nationalparks Application Name
+  name: NP_APPLICATION_NAME
+  value: nationalparks
+  required: true
+- description: The name for the nationalparks mongodb application.
+  displayName: Nationalparks Mongodb App
+  name: MONGODB_NP_APPLICATION_NAME
+  value: mongodb-nationalparks
+  required: true
+objects:
+- kind: DeploymentConfig
+  apiVersion: v1
+  metadata:
+    name: "${MLB_APPLICATION_NAME}"
+    annotations:
+      app.openshift.io/vcs-uri: https://github.com/openshift-roadshow/mlbparks.git
+      app.openshift.io/vcs-ref: master
+    labels:
+      app: workshop
+      component: "${MLB_APPLICATION_NAME}"
+      role: backend
+      app.kubernetes.io/part-of: workshop
+      app.kubernetes.io/name: eap
+      app.openshift.io/runtime: eap
+  spec:
+    strategy:
+      type: Recreate
+      recreateParams:
+        timeoutSeconds: 600
+      resources: {}
+    triggers:
+    - type: ConfigChange
+    replicas: 1
+    test: false
+    selector:
+      app: workshop
+      component: "${MLB_APPLICATION_NAME}"
+      role: database
+      deploymentConfig: "${MLB_APPLICATION_NAME}"
+    template:
+      metadata:
+        labels:
+          app: workshop
+          component: "${MLB_APPLICATION_NAME}"
+          role: database
+          deploymentConfig: "${MLB_APPLICATION_NAME}"
+      spec:
+        containers:
+        - name: "${MLB_APPLICATION_NAME}"
+          image: "quay.io/erkanercan/mlbparks:latest"
+          ports:
+          - name: debug
+            containerPort: 8787
+            protocol: TCP
+          - name: jolokia
+            containerPort: 8778
+            protocol: TCP
+          - name: http
+            containerPort: 8080
+            protocol: TCP
+          - name: ping
+            containerPort: 8888
+            protocol: TCP
+          env:
+          - name: KUBERNETES_NAMESPACE
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.namespace
+          - name: OPENSHIFT_KUBE_PING_LABELS
+            value: component=${MLB_APPLICATION_NAME}
+          - name: OPENSHIFT_KUBE_PING_NAMESPACE
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.namespace
+          - name: DB_PORT
+            value: '27017'
+          - name: DB_HOST
+            value: "${MONGODB_MLB_APPLICATION_NAME}"
+          - name: DB_USERNAME
+            value: "mongodb"
+          - name: DB_PASSWORD
+            value: "mongodb"
+          - name: DB_NAME
+            value: "mongodb"
+          resources: {}
+          livenessProbe:
+            httpGet:
+              path: "/ws/healthz/"
+              port: 8080
+              scheme: HTTP
+            initialDelaySeconds: 120
+            timeoutSeconds: 1
+            periodSeconds: 10
+            successThreshold: 1
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: "/ws/healthz/"
+              port: 8080
+              scheme: HTTP
+            initialDelaySeconds: 20
+            timeoutSeconds: 1
+            periodSeconds: 10
+            successThreshold: 1
+            failureThreshold: 3
+          terminationMessagePath: "/dev/termination-log"
+          imagePullPolicy: IfNotPresent
+        restartPolicy: Always
+        terminationGracePeriodSeconds: 30
+        dnsPolicy: ClusterFirst
+        securityContext: {}
+- kind: Service
+  apiVersion: v1
+  metadata:
+    name: "${MLB_APPLICATION_NAME}"
+    labels:
+      app: workshop
+      component: "${MLB_APPLICATION_NAME}"
+      role: backend
+      type: parksmap-backend
+    annotations:
+      service.alpha.openshift.io/dependencies: '[{"name":"${MONGODB_MLB_APPLICATION_NAME}","namespace":"","kind":"Service"}]'
+  spec:
+    ports:
+    - name: 8080-tcp
+      protocol: TCP
+      port: 8080
+      targetPort: 8080
+    - name: 8787-tcp
+      protocol: TCP
+      port: 8787
+      targetPort: 8787
+    selector:
+      deploymentConfig: "${MLB_APPLICATION_NAME}"
+    type: ClusterIP
+    sessionAffinity: None
+- kind: Route
+  apiVersion: v1
+  metadata:
+    name: "${MLB_APPLICATION_NAME}"
+    labels:
+      app: workshop
+      component: "${MLB_APPLICATION_NAME}"
+      role: backend
+      type: parksmap-backend
+  spec:
+    to:
+      kind: Service
+      name: "${MLB_APPLICATION_NAME}"
+      weight: 100
+    port:
+      targetPort: 8080-tcp
+- kind: DeploymentConfig
+  apiVersion: v1
+  metadata:
+    name: "${NP_APPLICATION_NAME}"
+    annotations:
+      app.openshift.io/vcs-uri: https://github.com/openshift-roadshow/nationalparks.git
+      app.openshift.io/vcs-ref: master
+    labels:
+      app: workshop
+      component: "${NP_APPLICATION_NAME}"
+      role: backend
+      app.kubernetes.io/part-of: workshop
+      app.openshift.io/runtime: spring-boot
+  spec:
+    strategy:
+      type: Recreate
+      recreateParams:
+        timeoutSeconds: 600
+      resources: {}
+    triggers:
+    - type: ConfigChange
+    replicas: 1
+    test: false
+    selector:
+      app: workshop
+      component: "${NP_APPLICATION_NAME}"
+      role: database
+      deploymentConfig: "${NP_APPLICATION_NAME}"
+    template:
+      metadata:
+        labels:
+          app: workshop
+          component: "${NP_APPLICATION_NAME}"
+          role: database
+          deploymentConfig: "${NP_APPLICATION_NAME}"
+      spec:
+        containers:
+        - name: "${NP_APPLICATION_NAME}"
+          image: "quay.io/erkanercan/nationalparks:latest"
+          ports:
+          - name: debug
+            containerPort: 8787
+            protocol: TCP
+          - name: jolokia
+            containerPort: 8778
+            protocol: TCP
+          - name: http
+            containerPort: 8080
+            protocol: TCP
+          - name: ping
+            containerPort: 8888
+            protocol: TCP
+          env:
+          - name: KUBERNETES_NAMESPACE
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.namespace
+          - name: OPENSHIFT_KUBE_PING_LABELS
+            value: component=${NP_APPLICATION_NAME}
+          - name: OPENSHIFT_KUBE_PING_NAMESPACE
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.namespace
+          - name: DB_PORT
+            value: '27017'
+          - name: DB_HOST
+            value: "${MONGODB_NP_APPLICATION_NAME}"
+          - name: DB_USERNAME
+            value: "mongodb"
+          - name: DB_PASSWORD
+            value: "mongodb"
+          - name: DB_NAME
+            value: "mongodb"
+          resources: {}
+          livenessProbe:
+            httpGet:
+              path: "/ws/healthz/"
+              port: 8080
+              scheme: HTTP
+            initialDelaySeconds: 120
+            timeoutSeconds: 1
+            periodSeconds: 10
+            successThreshold: 1
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: "/ws/healthz/"
+              port: 8080
+              scheme: HTTP
+            initialDelaySeconds: 20
+            timeoutSeconds: 1
+            periodSeconds: 10
+            successThreshold: 1
+            failureThreshold: 3
+          terminationMessagePath: "/dev/termination-log"
+          imagePullPolicy: IfNotPresent
+        restartPolicy: Always
+        terminationGracePeriodSeconds: 30
+        dnsPolicy: ClusterFirst
+        securityContext: {}
+- kind: Service
+  apiVersion: v1
+  metadata:
+    name: "${NP_APPLICATION_NAME}"
+    labels:
+      app: workshop
+      component: "${NP_APPLICATION_NAME}"
+      role: backend
+      type: parksmap-backend
+    annotations:
+      service.alpha.openshift.io/dependencies: '[{"name":"${MONGODB_NP_APPLICATION_NAME}","namespace":"","kind":"Service"}]'
+  spec:
+    ports:
+    - name: 8080-tcp
+      protocol: TCP
+      port: 8080
+      targetPort: 8080
+    - name: 8787-tcp
+      protocol: TCP
+      port: 8787
+      targetPort: 8787
+    selector:
+      deploymentConfig: "${NP_APPLICATION_NAME}"
+    type: ClusterIP
+    sessionAffinity: None
+- kind: Route
+  apiVersion: v1
+  metadata:
+    name: "${NP_APPLICATION_NAME}"
+    labels:
+      app: workshop
+      component: "${NP_APPLICATION_NAME}"
+      role: backend
+      type: parksmap-backend
+  spec:
+    to:
+      kind: Service
+      name: "${NP_APPLICATION_NAME}"
+      weight: 100
+    port:
+      targetPort: 8080-tcp
+- kind: Deployment
+  apiVersion: apps/v1
+  metadata:
+    labels:
+      app.kubernetes.io/part-of: workshop
+      app.openshift.io/runtime: spring-boot
+      app.openshift.io/component: "${PM_APPLICATION_NAME}"    
+      app: workshop
+      component: "${PM_APPLICATION_NAME}"
+      role: frontend
+      deploymentConfig: "${PM_APPLICATION_NAME}"
+    annotations:
+      app.openshift.io/connects-to: ${MLB_APPLICATION_NAME}, ${NP_APPLICATION_NAME}
+    name: "${PM_APPLICATION_NAME}"
+  spec:
+    progressDeadlineSeconds: 600
+    replicas: 1
+    revisionHistoryLimit: 10
+    selector:
+      matchLabels:
+        app: workshop
+        component: "${PM_APPLICATION_NAME}"
+        role: frontend
+    strategy:
+      rollingUpdate:
+        maxSurge: 25%
+        maxUnavailable: 25%
+      type: RollingUpdate
+    template:
+      metadata:
+        labels:
+          app: workshop
+          component: "${PM_APPLICATION_NAME}"
+          role: frontend
+      spec:
+        containers:
+        - image: quay.io/erkanercan/parksmap:latest
+          imagePullPolicy: Always
+          name: "${PM_APPLICATION_NAME}"
+          ports:
+          - containerPort: 8080
+            protocol: TCP
+          resources: {}
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 8080
+              scheme: HTTP
+            timeoutSeconds: 3
+            periodSeconds: 10
+            successThreshold: 1
+            failureThreshold: 3          
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 8080
+              scheme: HTTP
+            timeoutSeconds: 1
+            periodSeconds: 10
+            successThreshold: 1
+            failureThreshold: 3
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext: {}
+        terminationGracePeriodSeconds: 30
+- kind: Service
+  apiVersion: v1
+  metadata:
+    name: "${PM_APPLICATION_NAME}"
+    labels:
+      app.kubernetes.io/part-of: workshop
+      app.openshift.io/component: "${PM_APPLICATION_NAME}"   
+      app: workshop
+      component: "${PM_APPLICATION_NAME}"
+      role: frontend
+  spec:
+    ports:
+    - name: 8080-tcp
+      protocol: TCP
+      port: 8080
+      targetPort: 8080
+    - name: 8787-tcp
+      protocol: TCP
+      port: 8787
+      targetPort: 8787
+    selector:
+      component: "${PM_APPLICATION_NAME}"
+    type: ClusterIP
+    sessionAffinity: None
+- kind: Route
+  apiVersion: v1
+  metadata:
+    name: "${PM_APPLICATION_NAME}"
+    labels:
+      app.kubernetes.io/part-of: workshop
+      app.openshift.io/component: "${PM_APPLICATION_NAME}"   
+      app: workshop
+      component: "${PM_APPLICATION_NAME}"
+      role: frontend
+  spec:
+    to:
+      kind: Service
+      name: "${PM_APPLICATION_NAME}"
+      weight: 100
+    port:
+      targetPort: 8080-tcp
