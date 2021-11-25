@@ -600,3 +600,9 @@ At this point, I'll need some test for this new vm. I am starting VM now. You'll
 After vm started , check current public ip and then connect your browser with this new ip. That's it.
 
 ![](img/clone6.png)
+
+### Clean up
+
+Before moving on to the next lab let's clean up the VMs so we ensure our environment has all the resources it might need; we're going to delete our VM's
+
+![](img/clone7.png)
