@@ -589,8 +589,10 @@ I can change namespace and after finishing clone,  I can start this VM. You'll n
 
 As you can see your console, current vm is closing now, and new vm is provisioning. 
 ![](img/clone4.png)
+
+At this point, I'll need some test for this new vm. I am starting VM now. You'll need to click  "**...**" and "**Start Virtual Machine**" buttons.
 ![](img/clone5.png)
 
-After vm started , check current public ip and then connect your browser with this new ip
+After vm started , check current public ip and then connect your browser with this new ip. That's it.
 
 ![](img/clone6.png)
