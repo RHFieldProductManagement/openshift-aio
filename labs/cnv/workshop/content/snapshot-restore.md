@@ -118,15 +118,47 @@ You can only restore to a powered off (offline) VM so we will first power off th
 
 7. In the confirmation pop-up window, click **Restore** to restore the VM to its previous configuration represented by the snapshot.
 
-<img src="img/vm-snapshot-restore-popup.png"  width="70%"/><br><br>
+<img src="img/vm-snapshot-restore-popup.png"  width="70%"/><br>
 
 Once you click Restore to restore vm from the snapshot, it initiates snapshot restoration on actual storage system for each Container Storage Interface (CSI) volume attached to the VM and included in the snaphot, VM specification and metadata is also restored.  
 It should take just a little seconds to actually restore the snapshot and make the VM ready to be powered on again.
 
-<img src="img/vm-snapshot-restoring.png"/><br><br>
+<img src="img/vm-snapshot-restoring.png"/><br>
 
 After the snapshot was restored successfully and it's status become **Ready**, then you can click **Actions** → **Start Virtual Machine** to power it on.
 Once the VM is powered on and boots successfully, you can refresh `ParksMap` web page (Map Visualizer on OpenShift 4). It should successfully load national parks locations from the backend service and start displaying them on the map again.
+
+# Background: Virtual machine snapshot controller and custom resource definitions (CRDs)
+
+The VM snapshot feature introduces three new API objects defined as CRDs for managing snapshots:
+
+- `VirtualMachineSnapshot`: Represents a user request to create a snapshot. It contains information about the current state of the VM.
+
+- `VirtualMachineSnapshotContent`: Represents a provisioned resource on the cluster (a snapshot). It is created by the VM snapshot controller and contains references to all resources required to restore the VM.
+
+- `VirtualMachineRestore`: Represents a user request to restore a VM from a snapshot.
+
+The VM snapshot controller binds a `VirtualMachineSnapshotContent` object with the `VirtualMachineSnapshot` object for which it was created, with a one-to-one mapping.
+
+# Exercise: Creating an virtual machine snapshot in the CLI
+
+In previous exercises in this module, we created and restored vm snapshot in the OpenShift web console. However, It's also possible to do same operations in the CLI using the CRDs above. Using CLI and Yaml/Json definitions of `VirtualMachineSnapshot` and `VirtualMachineRestore` objects to create and restore snapshot respectively, allows automating all snapshot releated operations.
+
+In this exercise, let's create another snapshot of our mongodb database vm, this time by using the cli.
+
+~~~bash
+$ cat << EOF | oc apply -f -
+apiVersion: snapshot.kubevirt.io/v1alpha1
+kind: VirtualMachineSnapshot
+metadata:
+  name: my-vmsnapshot 
+spec:
+  source:
+    apiGroup: kubevirt.io
+    kind: VirtualMachine
+    name: my-vm 
+EOF
+~~~
 
 That's it for deploying basic workloads - we've deployed a VM on-top of OCS and one on-top of hostpath.
 =======
