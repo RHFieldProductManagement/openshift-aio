@@ -208,10 +208,14 @@ NAME                           STATUS   ROLES    AGE   VERSION
 ocp4-worker1.aio.example.com   Ready    worker   2d    v1.22.0-rc.0+a44d0f0
 ~~~
 
-Note the removal of the `SchedulingDisabled` annotation on the '**STATUS**' column, also note that just because this node has become active again it doesn't mean that the virtual machine will 'fail back' to it. Before proceeding let's remove the `rhel8-server-ocs` virtual machine as we don't need it any longer:
+Note the removal of the `SchedulingDisabled` annotation on the '**STATUS**' column, also note that just because this node has become active again it doesn't mean that the virtual machine will 'fail back' to it. Before proceeding let's remove the `rhel8-server-ocs` virtual machine as well as any lingering PVC's we don't need any longer:
 
 ~~~bash
 $ oc delete vm/rhel8-server-ocs
 virtualmachine.kubevirt.io "rhel8-server-ocs" deleted
+
+$ oc delete pvc rhel8-ocs rhel8-hostpath
+persistentvolumeclaim "rhel8-ocs" deleted
+persistentvolumeclaim "rhel8-hostpath" deleted
 ~~~
 

@@ -11,12 +11,12 @@ openshift-storage.noobaa.io             openshift-storage.noobaa.io/obc         
 
 $ oc get csv -n openshift-storage
 NAME                  DISPLAY                       VERSION   REPLACES              PHASE
-ocs-operator.v4.8.3   OpenShift Container Storage   4.8.3     ocs-operator.v4.8.2   Succeeded
+ocs-operator.v4.8.4   OpenShift Container Storage   4.8.4     ocs-operator.v4.8.3   Succeeded
 ~~~
 
 
 
-We're going to setup two different types of storage in this section, firstly standard NFS shared storage, and also `hostpath` storage which uses the hypervisor's local disks, somewhat akin to ephemeral storage provided by OpenStack.
+We're going to setup two different types of storage in this section, firstly OCS/ODF based shared storage, and also `hostpath` storage which uses the hypervisor's local disks, somewhat akin to ephemeral storage provided by OpenStack.
 
 First, make sure you're in the default project:
 
@@ -30,15 +30,11 @@ Now using project "default" on server "https://172.30.0.1:443".
 
 
 
-Now let's create a new NFS-based Peristent Volume Claim (PVC). 
-
-For this volume claim we will use a special annotation `cdi.kubevirt.io/storage.import.endpoint` which utilises the Kubernetes Containerized Data Importer (CDI). 
+Now let's create a new OCS-based Peristent Volume Claim (PVC). For this volume claim we will use a special annotation `cdi.kubevirt.io/storage.import.endpoint` which utilises the Kubernetes Containerized Data Importer (CDI). 
 
 > **NOTE**: CDI is a utility to import, upload, and clone virtual machine images for OpenShift virtualisation. The CDI controller watches for this annotation on the PVC and if found it starts a process to import, upload, or clone. When the annotation is detected the `CDI` controller starts a pod which imports the image from that URL. Cloning and uploading follow a similar process. Read more about the Containerised Data Importer [here](https://github.com/kubevirt/containerized-data-importer).
 
-Basically we are asking OpenShift to create this PVC and use the image in the endpoint to fill it. In this case we use `"http://192.168.123.100:81/rhel8-kvm.img"` in the annotation to ensure that upon instantiation of the PV it is populated with the contents of our specific RHEL8 KVM image.
-
-In addition to triggering the CDI utility we also specify the storage class we created earlier (`nfs`) which is setting the `kubernetes.io/no-provisioner` type as described. Finally note the `requests` section. We are asking for a 40gb volume size which we ensured were available previously via nfs-pv1 and nfs-pv2.
+Basically we are asking OpenShift to create this PVC and use the image in the endpoint to fill it. In this case we use `"http://192.168.123.100:81/rhel8-kvm.img"` in the annotation to ensure that upon instantiation of the PV it is populated with the contents of our specific RHEL8 KVM image. In addition to triggering the CDI utility we also specify the storage class that OCS/ODF uses (`ocs-storagecluster-ceph-rbd`) which will dynamically create the PV in the backend Ceph storage platform. Finally note the `requests` section - we are asking for a 40gb volume size.
 
 OK, let's create the PVC with all this included!
 
@@ -73,7 +69,7 @@ NAME                   READY   STATUS              RESTARTS   AGE
 importer-rhel8-ocs     0/1     ContainerCreating   0          1s
 ~~~
 
-Watch the logs and you can see the process:
+Watch the logs and you can see the process, it may initially give an error about the pod waiting to start, you can retry after a few seconds:
 
 ~~~bash
 $ oc logs importer-rhel8-ocs -f
@@ -100,7 +96,7 @@ I0317 11:47:00.524989       1 data-processor.go:268] Expanding image size to: 40
 I0317 11:47:00.878420       1 data-processor.go:205] New phase: Complete
 ~~~
 
-If you're quick, you can view the structure of the importer pod to get some of the configuration it's using:
+If you're quick, you can Ctrl-C this watch (don't worry, it won't kill the import, you're just watching its logs), and view the structure of the importer pod to get some of the configuration it's using:
 
 ~~~bash
 $ oc describe pod $(oc get pods | awk '/importer/ {print $1;}')

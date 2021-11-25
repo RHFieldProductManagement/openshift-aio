@@ -32,20 +32,21 @@ Next let's validate the version that we've got deployed, and the status of the c
 ~~~bash
 $ oc get clusterversion
 NAME      VERSION   AVAILABLE   PROGRESSING   SINCE   STATUS
-version   4.9.5     True        False         27m     Cluster version is 4.9.5.0
+version   4.9.5     True        False         27m     Cluster version is 4.9.5.
 
 $ oc get clusteroperators
 NAME                                       VERSION   AVAILABLE   PROGRESSING   DEGRADED   SINCE   MESSAGE
-authentication                             4.9.0     True        False         False      23h     
-baremetal                                  4.9.0     True        False         False      23h     
-cloud-controller-manager                   4.9.0     True        False         False      23h     
-cloud-credential                           4.9.0     True        False         False      23h     
-cluster-autoscaler                         4.9.0     True        False         False      23h     
-config-operator                            4.9.0     True        False         False      23h     
-console                                    4.9.0     True        False         False      23h     
-csi-snapshot-controller                    4.9.0     True        False         False      23h     
-dns                                        4.9.0     True        False         False      23h     
-etcd                                       4.9.0     True        False         False      23h 
+authentication                             4.9.5     True        False         False      7h26m   
+baremetal                                  4.9.5     True        False         False      7h48m   
+cloud-controller-manager                   4.9.5     True        False         False      7h51m   
+cloud-credential                           4.9.5     True        False         False      8h      
+cluster-autoscaler                         4.9.5     True        False         False      7h48m   
+config-operator                            4.9.5     True        False         False      7h50m   
+console                                    4.9.5     True        False         False      7h29m   
+csi-snapshot-controller                    4.9.5     True        False         False      7h48m   
+dns                                        4.9.5     True        False         False      7h48m   
+etcd                                       4.9.5     True        False         False      7h48m   
+image-registry                             4.9.5     True        False         False      7h18m
 (...)
 ~~~
 
@@ -114,7 +115,9 @@ NAME          HOST/PORT                                  PATH   SERVICES      PO
 duckhunt-js   duckhunt-js-test.apps.aio.example.com          duckhunt-js   8080-tcp                 None
 ~~~
 
-You should be able to open up the application in the same browser that you're reading this guide from, either copy and paste the address, or click this clink: [http://duckhunt-js-test.apps.aio.example.com/](http://duckhunt-js-test.apps.aio.example.com/). If your OpenShift cluster is working as expected and the application build was successful, you should now be able to have a quick play with this... good luck ;-)
+You should be able to open up the application in the same browser that you're reading this guide from, either copy and paste the address from the route above, or click this clink: [http://duckhunt-js-test.apps.aio.example.com/](http://duckhunt-js-test.apps.aio.example.com/). If your OpenShift cluster is working as expected and the application build was successful, you should now be able to have a quick play with this... good luck ;-)
+
+> **NOTE**: If you've deployed this environment via RHPDS, your URL above will be slightly different (i.e. won't have the aio.example.com suffice), and the hyperlink above will not work as expected. Use the output from the `oc get route duckhunt-js` as the correct route/address to use.
 
 <img src="img/duckhunt.png"/>
 

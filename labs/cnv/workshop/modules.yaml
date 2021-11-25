@@ -16,7 +16,7 @@ modules:
         exit_sign: Deploy Workloads
     deploy-workloads:
         name: Deploy Workloads
-        exit_sign: Clone a Workload
+        exit_sign: Live Migration
     live-migration:
         name: Live Migration
         exit_sign: Cloning Workloads
