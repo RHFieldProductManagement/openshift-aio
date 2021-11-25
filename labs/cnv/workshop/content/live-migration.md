@@ -215,10 +215,23 @@ $ oc delete vm/rhel8-server-ocs
 virtualmachine.kubevirt.io "rhel8-server-ocs" deleted
 ~~~
 
-### Emre
+### Live Migration using GUI (Option 2)
+
+You can use current VM for Live Migration test. I'll need to click detail.Then "**Action**" and "**Migrate Virtual Machine**" button.
 
 ![](img/livemigration1.png)
+
+Click "**Migrate**" 
 ![](img/livemigration2.png)
+
+As you can see on your console,VM status is updated to "**Migrating**" State.
+
 ![](img/livemigration3.png)
+
+If you want to look logs, You'll need to click "**Events**" tab on your VM details screen.
+
 ![](img/livemigration4.png)
+
+After migration job is finished, You'll need to check your current host.It should changed
+
 ![](img/livemigration5.png)
