@@ -3,6 +3,7 @@ kind: Template
 apiVersion: template.openshift.io/v1
 metadata:
   name: parksmap
+  namespace: openshift
   annotations:
     iconClass: icon-eap
     description: Application template for Parksmap application web, frontend and backend components 
@@ -46,6 +47,7 @@ objects:
     annotations:
       app.openshift.io/vcs-uri: https://github.com/openshift-roadshow/mlbparks.git
       app.openshift.io/vcs-ref: master
+      app.openshift.io/connects-to: ${MONGODB_MLB_APPLICATION_NAME}
     labels:
       app: workshop
       component: "${MLB_APPLICATION_NAME}"
@@ -188,6 +190,7 @@ objects:
     annotations:
       app.openshift.io/vcs-uri: https://github.com/openshift-roadshow/nationalparks.git
       app.openshift.io/vcs-ref: master
+      app.openshift.io/connects-to: ${MONGODB_NP_APPLICATION_NAME}
     labels:
       app: workshop
       component: "${NP_APPLICATION_NAME}"
@@ -244,15 +247,15 @@ objects:
             valueFrom:
               fieldRef:
                 fieldPath: metadata.namespace
-          - name: DB_PORT
+          - name: MONGODB_SERVER_PORT
             value: '27017'
-          - name: DB_HOST
+          - name: MONGODB_SERVER_HOST
             value: "${MONGODB_NP_APPLICATION_NAME}"
-          - name: DB_USERNAME
+          - name: MONGODB_USER
             value: "mongodb"
-          - name: DB_PASSWORD
+          - name: MONGODB_PASSWORD
             value: "mongodb"
-          - name: DB_NAME
+          - name: MONGODB_DATABASE
             value: "mongodb"
           resources: {}
           livenessProbe:

@@ -4,6 +4,7 @@ First we will deploy the frontend and backend components of the ParksMap applica
 
 ![Application Architecture](img/roadshow-app-architecture-parksmap-1.png)
 
+``` 
 
 == Exercise: Deploying Parksmap Container Image
 
