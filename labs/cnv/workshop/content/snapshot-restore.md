@@ -48,7 +48,6 @@ Virtual machine (VM) snapshots can be created either by using the web console or
 <table>
   <tr>
     <td>
-<img src="img/vm-snapshot-card.png" width="40%" align="right"/>
 
 1. Click **Workloads** → **Virtualization** from the side menu.
    
@@ -60,10 +59,11 @@ Virtual machine (VM) snapshots can be created either by using the web console or
 
 5. Fill in the **Snapshot Name** and optional **Description** fields.
 
-6. Because the VM has a cloud-init disk that cannot be included in the snapshot, select the **I am aware of this warning and wish to proceed** checkbox.
+6. Because the VM has a cloud-init disk that cannot be included in the snapshot, select the **"I am aware of this warning and wish to proceed"** checkbox.
 
 7. Click **Save**.
    </td>
+   <td><img src="img/vm-snapshot-card.png" width="60%"/></td>
   </tr>
  </table>
 
