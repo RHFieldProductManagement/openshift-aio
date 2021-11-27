@@ -1,6 +1,6 @@
 # Background: Hot-plugging virtual disks
 It is expected to have **Dynamic Reconfiguration** capabilities for VMs today, such as CPU/Memory/Storage/Network hot-plug/hot-unplug.
-Although theses capabilities have been around for the traditional virtualization platforms, it is a particularly challenging feature to implement in a **Kubernetes** platform because of the kubernetes principle of **immutable Pods**, where once deployed they are never modified. If something needs to be changed, you never do so directly on the Pod. Instead, you’ll build and deploy a new one that have all your needed changes baked in.
+Although these capabilities have been around for the traditional virtualization platforms, it is a particularly challenging feature to implement in a **Kubernetes** platform because of the kubernetes principle of **immutable Pods**, where once deployed they are never modified. If something needs to be changed, you never do so directly on the Pod. Instead, you’ll build and deploy a new one that have all your needed changes baked in.
 
 OpenShift Virtualization strives to have these dynamic reconfiguration capabilities for VMs although it's a kubernetes-based platform. In 4.9 release, Hot-plugging virtual disks to a running virtual machine is supported as a Technology Preview feature, so as a VM owner, you are able to attach and detach storage on demand.
 
