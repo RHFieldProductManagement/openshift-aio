@@ -63,7 +63,7 @@ Virtual machine (VM) snapshots can be created either by using the web console or
 
 7. Click **Save**.
    </td>
-   <td><img src="img/vm-snapshot-card.png" width="60%"/></td>
+   <td><img src="img/vm-snapshot-card.png" width="100%"/></td>
   </tr>
  </table>
 
