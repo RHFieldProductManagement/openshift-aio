@@ -24,7 +24,7 @@ In this exercise, let's attach a new 5G disk to mongodb database vm by using the
 
 6. Click **Add**.
    </td>
-   <td><img src="img/hot-plug-disk-card.png" width="50%"/></td>
+   <td><img src="img/hot-plug-disk-card.png" width="80%"/></td>
   </tr>
  </table>
 
@@ -71,7 +71,7 @@ In this exercise, let's resize our hot-plugged 5G disk to 7G by using the web co
 7. Click **Expand**.
    
    </td>
-   <td><img src="img/hot-plug-disk-expand-pvc.png" width="80%"/></td>
+   <td><img src="img/hot-plug-disk-expand-pvc.png" width="100%"/></td>
   </tr>
  </table>
 
@@ -163,7 +163,7 @@ In this exercise, let's detach the disk that we have hot-plugged in the previous
    
 7. In the confirmation pop-up window, click **Detach** to hot-unplug the disk.
    </td>
-   <td><img src="img/hot-plug-disk-detach.png" width="80%"/></td>
+   <td><img src="img/hot-plug-disk-detach.png" width="100%"/></td>
   </tr>
  </table>
 
