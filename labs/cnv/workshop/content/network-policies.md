@@ -44,7 +44,7 @@ spec:
 # Exercise: Configuring network policy with OpenShift SDN 
 
 By default, all Pods in a project are accessible from other Pods and network endpoints.<br>
-In this exercise, we'll restrict access between pods as seen from image below:<br>
+In this exercise, we'll **restrict access between pods and VMs** as seen from image below:<br>
 <img src="img/network-policy-1.png" height=300> 
 <img src="img/network-policy-2.png" height=300>
 
