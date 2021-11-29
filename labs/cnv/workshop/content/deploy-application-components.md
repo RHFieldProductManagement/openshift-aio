@@ -1,26 +1,41 @@
-In this lab, we're going to deploy the main components of the ParksMap application.
+<p> In this lab, we will use OpenShift Web Console to deploy the frontend and backend components of the ParksMap application. Parkmap frontent and backend components are shown in the diagram below: </p>
 
-First we will deploy the frontend and backend components of the ParksMap application uses OpenShift's service discovery mechanism to discover the backend services deployed and shows their data on the map.
+![Application Architecture](img/roadshow-app-architecture-main.png)  
 
-![Application Architecture](img/roadshow-app-architecture-parksmap-1.png)
+# Exercise:  Creating Project
 
-``` 
+As a first step, we need to create a project where Parksmap application will be deployed. You can create the project with the following command:
 
-== Exercise: Deploying Parksmap Container Image
+```execute
+oc new-project {{PARKSMAP_NAMESPACE}}
+```
 
-Let's start by doing the simplest thing possible - get a plain old
-Docker-formatted image to run on OpenShift. This is incredibly simple to do.
-With OpenShift it can be done directly from the web console.
+# Exercise:  Grant Service Account View Permissions
 
-Return to the http://console-openshift-console.{{cluster_subdomain}}/k8s/cluster/projects[Web Console].
+The parksmap frontend application continously monitors the **routes** of the backend applications. So that's it require permissions to access OpenShift API to learn about other **Pods**, **Services**, and **Route** within the **Project**. 
+
+
+```execute
+oc policy add-role-to-user view -z default
+```
+
+The *oc policy* command above is giving a defined _role_ (*view*) to a user 
+
+# Exercise:  Deploying Parksmap Application Components with using Web Console
+
+We will use OpenShift Web Console to deploy these components. 
+
+As a first step, please go to the [Web Console](http://console-openshift-console.{{cluster_subdomain}}/k8s/cluster/projects)
+
+
+
+
 
 If you're no longer on the Developer perspective, return there now. 
 
 From the left menu, click *+Add*. You will see a screen where you have multiple options to deploy application to OpenShift. Click *Container Image* to open a dialog that will allow you to specify the information for the image you want to deploy.
 
 ![Application Architecture](img/parksmap-devconsole-container-image.png)
-
-<img  border="1" align="center" src="img/parksmap-devconsole-container-image.png" title="Add from Container Image"/>
 
 In the *Image Name* field, copy/paste the following into the box:
 
