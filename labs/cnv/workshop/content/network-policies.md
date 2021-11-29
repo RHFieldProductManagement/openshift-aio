@@ -43,7 +43,122 @@ spec:
 
 # Exercise: Configuring network policy with OpenShift SDN 
 
-By default, all Pods in a project are accessible from other Pods and network endpoints.
-<img src="img/network-policy-1.png" width="80%"/>
+By default, all Pods in a project are accessible from other Pods and network endpoints.<br>
+In this exercise, we'll restrict access between pods as seen from image below:<br>
+<img src="img/network-policy-1.png" height=300> 
+<img src="img/network-policy-2.png" height=300>
 
-<img src="img/network-policy-2.png" width="80%"/>
+Let's verify that nationalparks could access mongodb-mlbparks and mlbparks could access to mongodb-nationalparks.
+
+1. Click **Workloads** → **Pods** from the side menu.
+
+2. Click **nationalparks** pod.
+
+3. Click the **Terminal** tab.
+
+4. Run following commands and verify both mongodb services are accessible.
+~~~bash
+sh-4.4$ curl mongodb-mlbparks:27017
+It looks like you are trying to access MongoDB over HTTP on the native driver port.
+sh-4.4$ curl mongodb-nationalparks:27017
+It looks like you are trying to access MongoDB over HTTP on the native driver port.
+~~~
+
+5. Repeat above steps for **mlbparks** pod.
+~~~bash
+sh-4.4$ curl mongodb-mlbparks:27017
+It looks like you are trying to access MongoDB over HTTP on the native driver port.
+sh-4.4$ curl mongodb-nationalparks:27017
+It looks like you are trying to access MongoDB over HTTP on the native driver port.
+~~~
+
+Now, let's apply following network policy to restrict access to **mongodb-mlbparks** from **nationalparks**.
+
+1. Click **Networking** → **NetworkPolicies** from the side menu.
+
+2. Click **CreateNetworkPolicy**  pod.
+
+3. Click **Edit YAML**.
+
+4. Paste the following policy and click **Create**.
+~~~yml
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: mlbparks-policy
+  namespace: <your-namespace>
+spec:
+  podSelector:
+    matchLabels:
+      kubevirt.io/domain: mongodb-mlbparks
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: <your-namespace>
+      podSelector:
+        matchLabels:
+          component: mlbparks
+    ports:
+    - protocol: TCP
+      port: 27017
+~~~
+
+Then apply following network policy to restrict access to **mongodb-nationalparks** from **mlbparks**.
+
+1. Click **Networking** → **NetworkPolicies** from the side menu.
+
+2. Click **CreateNetworkPolicy**  pod.
+
+3. Click **Edit YAML**.
+
+4. Paste the following policy and click **Create**.
+
+~~~yml
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: nationalparks-policy
+  namespace: <your-namespace>
+spec:
+  podSelector:
+    matchLabels:
+      kubevirt.io/domain: mongodb-nationalparks
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: <your-namespace>
+      podSelector:
+        matchLabels:
+          component: nationalparks
+    ports:
+    - protocol: TCP
+      port: 27017
+~~~
+Finally, Let's verify that nationalparks could access only mongodb-nationalparks and mlbparks could access to mongodb-mlbparks.
+
+1. Click **Workloads** → **Pods** from the side menu.
+
+2. Click **nationalparks** pod.
+
+3. Click the **Terminal** tab.
+
+4. Run following commands and verify both mongodb services are accessible.
+~~~bash
+sh-4.2$ curl mongodb-mlbparks:27017
+It looks like you are trying to access MongoDB over HTTP on the native driver port.
+sh-4.2$ curl mongodb-nationalparks:27017
+curl: (7) Failed connect to mongodb-nationalparks:27017; Connection timed out
+sh-4.2$ 
+~~~
+
+5. Repeat above steps for **mlbparks** pod.
+
+```bash
+sh-4.2$ curl mongodb-mlbparks:27017
+It looks like you are trying to access MongoDB over HTTP on the native driver port.
+sh-4.2$ curl mongodb-nationalparks:27017
+curl: (7) Failed connect to mongodb-nationalparks:27017; Connection timed out
+sh-4.2$ 
+```
