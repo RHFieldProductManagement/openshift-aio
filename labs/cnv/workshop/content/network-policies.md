@@ -146,11 +146,11 @@ Finally, Let's verify that nationalparks could access only mongodb-nationalparks
 
 4. Run following commands and verify both mongodb services are accessible.
 ~~~bash
-sh-4.2$ curl mongodb-mlbparks:27017
+sh-4.4$ curl mongodb-nationalparks:27017
 It looks like you are trying to access MongoDB over HTTP on the native driver port.
-sh-4.2$ curl mongodb-nationalparks:27017
-curl: (7) Failed connect to mongodb-nationalparks:27017; Connection timed out
-sh-4.2$ 
+sh-4.4$ curl mongodb-mlbparks:27017
+curl: (7) Failed to connect to mongodb-mlbparks port 27017: Connection timed out
+sh-4.4$ 
 ~~~
 
 5. Repeat above steps for **mlbparks** pod.
