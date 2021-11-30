@@ -25,7 +25,7 @@ parameters:
   value: mlbparks
   required: true
 - description: The name for the Mlbparks mongodb application.
-  displayName: Mlbparks Mongodb App
+  displayName: Mlbparks MongoDB Application Name
   name: MONGODB_MLB_APPLICATION_NAME
   value: mongodb-mlbparks
   required: true
@@ -35,7 +35,7 @@ parameters:
   value: nationalparks
   required: true
 - description: The name for the nationalparks mongodb application.
-  displayName: Nationalparks Mongodb App
+  displayName: Nationalparks MongoDB Application Name
   name: MONGODB_NP_APPLICATION_NAME
   value: mongodb-nationalparks
   required: true
