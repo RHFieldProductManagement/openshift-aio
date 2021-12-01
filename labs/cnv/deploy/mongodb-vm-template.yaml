@@ -162,8 +162,8 @@ parameters:
   name: MONGODB_APPLICATION_NAME
   value: mongodb
   required: true
-- description: Virtual Machine User Name
-  displayName: Virtual Machine User Name
+- description: Virtual Machine Username
+  displayName: Virtual Machine Username
   name: VM_USER_NAME
   required: true
   value: redhat
@@ -181,8 +181,8 @@ parameters:
   name: MONGODB_DATABASE
   value: mongodb
   required: true
-- description: Database user name
-  displayName: Database user name
+- description: Database username
+  displayName: Database username
   name: MONGODB_USER
   value: mongodb
   required: true
