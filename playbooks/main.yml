@@ -87,6 +87,7 @@
 
 # Step 4 : Prepare Bastion VM 
 - hosts: bastion
+  gather_facts: false
   roles:
     - deploy_bastion
 
