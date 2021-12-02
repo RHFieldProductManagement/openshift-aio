@@ -39,7 +39,7 @@ modules:
         name: Deploy Database VM using YAML
         exit_sign: Snapshot
     snapshot:
-        name: Creating Virtual Machines from Snapshot
+        name: Backup & Restore Virtual Machines using Snapshots
         exit_sign: Cloning 
     cloning:
         name: Clone a Virtual Machine
