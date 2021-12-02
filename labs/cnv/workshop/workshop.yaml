@@ -20,5 +20,4 @@ modules:
     - masquerade
     - micro-segmentation
     - console
-    - backup-restore
 

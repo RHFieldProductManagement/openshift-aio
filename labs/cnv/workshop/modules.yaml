@@ -43,7 +43,7 @@ modules:
         exit_sign: Cloning 
     cloning:
         name: Clone a Virtual Machine
-        exit_sign: Backup and Restore
+        exit_sign: Masquerade Networking
     masquerade:
         name: Masquerade Networking
         exit_sign: Network Isolation
@@ -52,7 +52,4 @@ modules:
         exit_sign: Using the VM Console
     console:
         name: Using the VM console
-        exit_sign: Backup and Restore
-    backup-restore:
-        name: Backup and Restore
         exit_sign: Finish Workshop
