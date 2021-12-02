@@ -1,10 +1,10 @@
-# Background: Hot-plugging virtual disks
+### Background: Hot-plugging virtual disks
 It is expected to have **Dynamic Reconfiguration** capabilities for VMs today, such as CPU/Memory/Storage/Network hot-plug/hot-unplug.
 Although these capabilities have been around for the traditional virtualization platforms, it is a particularly challenging feature to implement in a **Kubernetes** platform because of the kubernetes principle of **immutable Pods**, where once deployed they are never modified. If something needs to be changed, you never do so directly on the Pod. Instead, you’ll build and deploy a new one that have all your needed changes baked in.
 
 OpenShift Virtualization strives to have these dynamic reconfiguration capabilities for VMs although it's a kubernetes-based platform. In 4.9 release, Hot-plugging virtual disks to a running virtual machine is supported as a Technology Preview feature, so as a VM owner, you are able to attach and detach storage on demand.
 
-# Exercise: Hot-plugging a virtual disk using the web console
+### Exercise: Hot-plugging a virtual disk using the web console
 Hot-plug and hot-unplug virtual disks when you want to add or remove them without stopping your virtual machine or virtual machine instance. This capability is helpful when you need to add storage to a running virtual machine without incurring down-time. When you hot-plug a virtual disk, you attach a virtual disk to a virtual machine instance while the virtual machine is running. When you hot-unplug a virtual disk, you detach a virtual disk from a virtual machine instance while the virtual machine is running. Only data volumes and persistent volume claims (PVCs) can be hot-plugged and hot-unplugged. You cannot hot-plug or hot-unplug container disks.
 
 In this exercise, let's attach a new 5G disk to mongodb database vm by using the web console.
@@ -48,7 +48,7 @@ sudo lsblk
 ~~~
 <img src="img/hot-plug-disk-lsblk.png" width="50%"/></td>
 
-# Exercise: Expand the VM's disk
+### Exercise: Expand the VM's disk
 OpenShift allows users to easily resize an existing PersistentVolumeClaim (PVC) objects. You no longer have to manually interact with the storage backend or delete and recreate PV and PVC objects to increase the size of a volume. Shrinking persistent volumes is not supported.
 
 In this exercise, let's resize our hot-plugged 5G disk to 7G by using the web console.
@@ -141,7 +141,7 @@ sudo lsblk
 ~~~
 <img src="img/hot-plug-disk-lsblk-expanded.png" width="50%"/></td>
 
-# Exercise: Hot-unplugging a virtual disk using the web console
+### Exercise: Hot-unplugging a virtual disk using the web console
 Hot-unplug virtual disks when you want to remove them without stopping your virtual machine or virtual machine instance. This capability is helpful when you need to remove storage from a running virtual machine without incurring down-time. When you hot-unplug a virtual disk, you detach a virtual disk from a virtual machine instance while the virtual machine is running. Only data volumes and persistent volume claims (PVCs) can be hot-unplugged.
 
 In this exercise, let's detach the disk that we have hot-plugged in the previous exercise from our mongodb database vm by using the web console.
