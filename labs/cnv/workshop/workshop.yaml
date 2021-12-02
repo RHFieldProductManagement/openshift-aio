@@ -16,6 +16,7 @@ modules:
     - deploy-database-web
     - deploy-database-yaml
     - snapshot
+    - hot-plug
     - cloning
     - masquerade
     - micro-segmentation

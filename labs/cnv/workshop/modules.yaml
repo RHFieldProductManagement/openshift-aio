@@ -40,10 +40,13 @@ modules:
         exit_sign: Snapshot
     snapshot:
         name: Backup & Restore Virtual Machines using Snapshots
-        exit_sign: Cloning 
+        exit_sign: Hot-Plug Virtual Disks
+    hot-plug:
+        name: Hot-Plugging Virtual Disks
+        exit_sign: Clone a Virtual Machine
     cloning:
         name: Clone a Virtual Machine
-        exit_sign: Backup and Restore
+        exit_sign: Masquerade Networking
     masquerade:
         name: Masquerade Networking
         exit_sign: Network Isolation
