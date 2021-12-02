@@ -43,9 +43,9 @@ To verify if the new 5G disk is recognized and ready to use by the guest operati
 4. Navigate to the "**Console**" tab. You'll be able to login with "**centos/redhat**", noting that you may have to click on the console window for it to capture your input.
 
 5. Once you're in the virtual machine, run the lsblk command to list block devices recognized by the operating system.
-~~~bash
+```execute
 sudo lsblk
-~~~
+```
 <img src="img/hot-plug-disk-lsblk.png" width="50%"/></td>
 
 ### Exercise: Expand the VM's disk
@@ -88,9 +88,9 @@ Size of the hot-plugged disk should still listed as 5G instead of 7G.
 4. Navigate to the "**Console**" tab. You'll be able to login with "**centos/redhat**", noting that you may have to click on the console window for it to capture your input.
 
 5. Once you're in the virtual machine, run the lsblk command to list block devices recognized by the operating system.
-~~~bash
+```execute
 sudo lsblk
-~~~
+```
 <img src="img/hot-plug-disk-lsblk.png" width="50%"/></td>
 
 OpenShift Virtualization creates one pod for each running virtual machine. This pod's primary container runs the virt-launcher. The main purpose of the virt-launcher Pod is to provide the cgroups and namespaces which will be used to host the VM process.
@@ -108,18 +108,18 @@ Let's connect the terminal of `virt-launcher` pod of our virtual machine and exe
 4. Once you're in the Pod's terminal, run the following commands to list block devices attached to the running virtual machine.
 
 First list the running virtual machine and note it's Id.
-~~~bash
+```execute
 virsh list
-~~~
+```
 ~~~bash
  Id   Name                                State
 ---------------------------------------------------
  1    backup-test_mongodb-nationalparks   running
 ~~~
 Now list the block devices attached to the running virtual machine with `virsh domblklist` command.
-~~~bash
+```execute
 virsh domblklist 1
-~~~
+```
 ~~~bash
  Target   Source
 -----------------------------------------------------------------------------------------------------------
@@ -129,16 +129,16 @@ virsh domblklist 1
 ~~~
 Name of the disk we have expanded should be disk-0. You can check the name of the disk on the **Disks** tab of the virtual machine if you are not sure.
 Once you identify the disk which is `sda` in our example, then run the `virsh blockresize` command to notify the guest operating system that the disk is expanded to 7 GB.
-~~~bash
+```execute
 virsh blockresize 1 sda 7g
-~~~
+```
 ~~~bash
 Block device 'sda' is resized
 ~~~
 After executing the `virsh blockresize` command, verify by listing block devices recognized by the operating system again in the virtual machine console.
-~~~bash
+```execute
 sudo lsblk
-~~~
+```
 <img src="img/hot-plug-disk-lsblk-expanded.png" width="50%"/></td>
 
 ### Exercise: Hot-unplugging a virtual disk using the web console
@@ -179,9 +179,9 @@ To verify if the 7G disk removal is recognized by the guest operating system, le
 4. Navigate to the "**Console**" tab. You'll be able to login with "**centos/redhat**", noting that you may have to click on the console window for it to capture your input.
 
 5. Once you're in the virtual machine, run the lsblk command to list block devices recognized by the operating system.
-~~~bash
+```execute
 sudo lsblk
-~~~
+```
 <img src="img/hot-plug-disk-lsblk-removed.png" width="50%"/></td>
 
 That's it for hot-plugging and expanding virtual disks - we've hot-plugged a new 5GB disk to our mongodb database virtual machine using OpenShift web console, expanded its size to 7GB and finally hot-unplugged it from our virtual machine.
