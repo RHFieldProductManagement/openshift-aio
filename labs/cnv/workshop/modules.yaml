@@ -55,7 +55,4 @@ modules:
         exit_sign: Using the VM Console
     console:
         name: Using the VM console
-        exit_sign: Backup and Restore
-    backup-restore:
-        name: Backup and Restore
         exit_sign: Finish Workshop
