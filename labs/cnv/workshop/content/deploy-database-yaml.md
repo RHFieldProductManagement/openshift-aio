@@ -7,10 +7,10 @@ This time we are going to deploy the MongoDB Virtual Machine with using command 
 
 If you are in the in the Administrator perspective
 
-Switch to *parksmap-demo* project  first by executing following command:
+Switch to *%parksmap-project-namespace%* project  first by executing following command:
 
 ```execute
-oc project parksmap-demo
+oc project %parksmap-project-namespace%
 ```
 
 And then run the following command to instantiate the template:
@@ -41,8 +41,8 @@ Switch to *Serial Console* and wait for the login prompt.
 On the login screen, enter the following credentials:
 
 ~~~bash
-  Login: redhat
-  Password: openshift 
+  Login: %mongodb-vm-username%
+  Password: %mongodb-vm-password%
 ~~~
 
 Check whether *mongod* service is running by executing following:
@@ -71,7 +71,7 @@ Now that we have the database deployed for `mlbparks` , we can again visit the m
 service to query for data:
 
 
-[Mlbparks Data All](http://mlbparks-parksmap-demo.{{cluster_subdomain}}/ws/data/all)
+[Mlbparks Data All](http://mlbparks-%parksmap-project-namespace%.%cluster_subdomain%/ws/data/all)
 
 And the result is empty as expected.
 
@@ -81,7 +81,7 @@ And the result is empty as expected.
 
 So to load the data go to following end point:
 
-[Mlbparks Data Load](http://mlbparks-parksmap-demo.{{cluster_subdomain}}/ws/data/load)
+[Mlbparks Data Load](http://mlbparks-%parksmap-project-namespace%.%cluster_subdomain%/ws/data/load)
 
 Now you should see the
 
@@ -91,7 +91,7 @@ Items inserted in database: 30
 
 If you check parksmap application in your browser you should be able to see the stadium locations in United States as well:
 
-[Parksmap](http://parksmap-parksmap-demo.{{cluster_subdomain}})
+[Parksmap](http://parksmap-%parksmap-project-namespace%.%cluster_subdomain%)
 
  <br/> 
 

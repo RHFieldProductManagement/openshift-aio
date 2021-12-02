@@ -21,7 +21,7 @@ As a first step, we need to create a project where Parksmap application will be 
 You can create the project with the following command:
 
 ```execute
-oc new-project parksmap-demo
+oc new-project %parksmap-project-namespace%
 ```
 
 ### 2.  Grant Service Account View Permissions
@@ -39,7 +39,7 @@ The *oc policy* command above is giving a defined _role_ (*view*) to default use
 
 We will use OpenShift Web Console to deploy Parksmap Web Application components. 
 
-Please go to the [Web Console](http://console-openshift-console.{{cluster_subdomain}}/k8s/cluster/projects) 
+Please go to the [Web Console](http://console-openshift-console.%cluster_subdomain%/k8s/cluster/projects) 
 and on the login screen, enter the following credentials:
 
 - Username: *kubeadmin*
@@ -48,7 +48,7 @@ and on the login screen, enter the following credentials:
 
 ### 4.  Search for the Application Template
 
-If you are in the in the Administrator perspective, switch to Developer perspective and go to the `parksmap-demo` project. 
+If you are in the in the Administrator perspective, switch to Developer perspective and go to the `%parksmap-project-namespace%` project. 
 
 From the left menu, click `+Add`. You will see a screen where you have multiple options to deploy application to OpenShift. Click `All Services` as shown below.
 

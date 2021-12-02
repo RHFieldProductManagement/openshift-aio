@@ -10,9 +10,9 @@ by leveraging OpenShift Virtualization.
 
 In this module we will create MongoDB from a *Template*, which contains all the necessary Kubernetes resources and configuration to deploy and run MongoDB in a VM which is based on Centos.
 
-Please go back to the [Web Console](http://console-openshift-console.{{cluster_subdomain}}/k8s/cluster/projects)
+Please go back to the [Web Console](http://console-openshift-console.%cluster_subdomain%/k8s/cluster/projects)
 
-If you are in the in the Administrator perspective, switch to Developer perspective and go to the *parksmap-demo* project. 
+If you are in the in the Administrator perspective, switch to Developer perspective and go to the *%parksmap-project-namespace%* project. 
 
 - From the left menu, click *+Add*. You will see a screen where you have multiple options to deploy application. 
 
@@ -76,8 +76,8 @@ Switch to *Serial Console* and wait for the login prompt.
 On the login screen, enter the following credentials:
 
 ~~~bash
-  Login: redhat
-  Password: openshift 
+  Login: %mongodb-vm-username%
+  Password: %mongodb-vm-password%
 ~~~
 
 Check whether *mongod* service is running by executing following:
@@ -100,7 +100,7 @@ Now that we have a database deployed, we can again visit the `nationalparks` web
 service to query for data:
 
 
-[Nationalparks Data All](http://nationalparks-parksmap-demo.{{cluster_subdomain}}/ws/data/all)
+[Nationalparks Data All](http://nationalparks-%parksmap-project-namespace%.%cluster_subdomain%/ws/data/all)
 
 And the result?
 ~~~bash
@@ -113,7 +113,7 @@ application and then deployed the database. Nothing actually loaded anything
 
 The application provides an endpoint to do just that:
 
-[Nationalparks Data Load](http://nationalparks-parksmap-demo.{{cluster_subdomain}}/ws/data/load)
+[Nationalparks Data Load](http://nationalparks-%parksmap-project-namespace%.%cluster_subdomain%/ws/data/load)
 
 And the result?
 
@@ -125,7 +125,7 @@ If you then go back to `/ws/data/all` you will see tons of JSON data now.
 
 If you check your browser now:
 
-[Parksmap](http://parksmap-parksmap-demo.{{cluster_subdomain}})
+[Parksmap](http://parksmap-%parksmap-project-namespace%.%cluster_subdomain%)
 
  You'll notice that the parks suddenly are showing up as below. 
  <br/> 

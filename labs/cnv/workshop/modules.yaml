@@ -1,3 +1,11 @@
+config:
+    vars:
+    - name: parksmap-project-namespace
+      value: parksmap-demo
+    - name: mongodb-vm-username
+      value: redhat
+    - name: mongodb-vm-password
+      value: openshift
 modules:
     welcome:
         name: Welcome
