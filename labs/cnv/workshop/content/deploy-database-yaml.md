@@ -7,13 +7,13 @@ This time we are going to deploy the MongoDB Virtual Machine with using command 
 
 If you are in the in the Administrator perspective
 
-> Switch to *{{PARKSMAP_NAMESPACE}}* project  first by executing following command:
+Switch to *parksmap-demo* project  first by executing following command:
 
 ```execute
-oc project {{PARKSMAP_NAMESPACE}}
+oc project parksmap-demo
 ```
 
-> And then run the following command to instantiate the template:
+And then run the following command to instantiate the template:
 
 ```execute
 oc process mongodb-vm-template -p MONGODB_APPLICATION_NAME=mongodb-mlbparks -n openshift|oc create -f -
@@ -34,18 +34,18 @@ mongodb-nationalparks   45s   Running    True
 
 After MongoDB Virtual Machine started, 
 
-> Open *Virtual Machine Console* as shown in the figure below 
+Open *Virtual Machine Console* as shown in the figure below 
 
-> Switch to *Serial Console* and wait for the login prompt.
+Switch to *Serial Console* and wait for the login prompt.
 
-> On the login screen, enter the following credentials:
+On the login screen, enter the following credentials:
 
 ~~~bash
   Login: redhat
   Password: openshift 
 ~~~
 
-> Check whether *mongod* service is running by executing following:
+Check whether *mongod* service is running by executing following:
 
 ```execute
 systemctl status mongod
@@ -71,24 +71,27 @@ Now that we have the database deployed for `mlbparks` , we can again visit the m
 service to query for data:
 
 
-> [Mlbparks Data All](http://mlbparks-{{project_namespace}}.{{cluster_subdomain}}/ws/data/all)
+[Mlbparks Data All](http://mlbparks-parksmap-demo.{{cluster_subdomain}}/ws/data/all)
 
 And the result is empty as expected.
 
-> []
+~~~bash
+[]
+~~~
 
 So to load the data go to following end point:
 
-> [Mlbparks Data Load](http://mlbparks-{{project_namespace}}.{{cluster_subdomain}}/ws/data/load)
+[Mlbparks Data Load](http://mlbparks-parksmap-demo.{{cluster_subdomain}}/ws/data/load)
 
 Now you should see the
 
-> Items inserted in database: 30
-
+~~~bash
+Items inserted in database: 30
+~~~
 
 If you check parksmap application in your browser you should be able to see the stadium locations in United States as well:
 
-> [Parksmap](http://parksmap-{{project_namespace}}.{{cluster_subdomain}})
+[Parksmap](http://parksmap-parksmap-demo.{{cluster_subdomain}})
 
  <br/> 
 

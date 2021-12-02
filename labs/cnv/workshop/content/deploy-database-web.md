@@ -12,13 +12,13 @@ In this module we will create MongoDB from a *Template*, which contains all the 
 
 Please go back to the [Web Console](http://console-openshift-console.{{cluster_subdomain}}/k8s/cluster/projects)
 
-If you are in the in the Administrator perspective, switch to Developer perspective and go to the *{{PARKSMAP_NAMESPACE}}* project. 
+If you are in the in the Administrator perspective, switch to Developer perspective and go to the *parksmap-demo* project. 
 
-> From the left menu, click *+Add*. You will see a screen where you have multiple options to deploy application. 
+- From the left menu, click *+Add*. You will see a screen where you have multiple options to deploy application. 
 
-> Then Click *All Services* and in the *Search* text box and enter *mongo*  to find the MongoDB VM template. 
+- Then Click *All Services* and in the *Search* text box and enter *mongo*  to find the MongoDB VM template. 
 
- <br/><br/> 
+ <br/>
 
 ![Search Template](img/parksmap-mongodb-search.png)  
 
@@ -37,15 +37,15 @@ This will open a dialog that will allow you to configure the template. This temp
 - *Database Username*
 - *Database Admin Password*
   
- > Enter *mongodb-nationalparks* in  **MongoDB Application Name** field and leave other parameter values as-is.
+Enter *mongodb-nationalparks* in  **MongoDB Application Name** field and leave other parameter values as-is.
  
- <br/><br/> 
+ <br/>
 
 ![Configure Template](img/parksmap-mongodb-nationalparks.png)  
 
  <br/>
 
-> Next click the blue *Create* button. 
+Next click the blue *Create* button. 
 
 You will be directed to the *Topology* page, where you should see the visualization for the `mongodb-nationalparks` virtual machine in the `workshop` application. 
 This will make OpenShift to create both *VirtualMachine* and *Service* objects. `nationalparks` backend application will use this *mongodb-nationalparks service* to communicate with MongoDB.  
@@ -65,22 +65,22 @@ mongodb-nationalparks   45s   Running    True
 
 After MongoDB Virtual Machine started, open *Virtual Machine Console* as shown in the figure below 
 
- <br/><br/> 
+ <br/>
 
 ![Open VM Console](img/parksmap-nationalparks-mongodb-console.png)  
 
  <br/>
 
-> Switch to *Serial Console* and wait for the login prompt.
+Switch to *Serial Console* and wait for the login prompt.
 
-> On the login screen, enter the following credentials:
+On the login screen, enter the following credentials:
 
 ~~~bash
   Login: redhat
   Password: openshift 
 ~~~
 
-> Check whether *mongod* service is running by executing following:
+Check whether *mongod* service is running by executing following:
 
 ```execute
 systemctl status mongod
@@ -88,7 +88,7 @@ systemctl status mongod
 
 Please verify whether *mongod* service is up and running as shown in the figure below
 
- <br/><br/> 
+ <br/>
 
 ![MongoDB Service Status](img/parksmap-mongodb-nationalparks-check.png)  
 
@@ -100,11 +100,12 @@ Now that we have a database deployed, we can again visit the `nationalparks` web
 service to query for data:
 
 
-> [Nationalparks Data All](http://nationalparks-{{project_namespace}}.{{cluster_subdomain}}/ws/data/all)
+[Nationalparks Data All](http://nationalparks-parksmap-demo.{{cluster_subdomain}}/ws/data/all)
 
 And the result?
-
-> []
+~~~bash
+[]
+~~~
 
 Where's the data? Think about the process you went through. You deployed the
 application and then deployed the database. Nothing actually loaded anything
@@ -112,17 +113,19 @@ application and then deployed the database. Nothing actually loaded anything
 
 The application provides an endpoint to do just that:
 
-> [Nationalparks Data Load](http://nationalparks-{{project_namespace}}.{{cluster_subdomain}}/ws/data/load)
+[Nationalparks Data Load](http://nationalparks-parksmap-demo.{{cluster_subdomain}}/ws/data/load)
 
 And the result?
 
-> Items inserted in database: 2893
+~~~bash
+Items inserted in database: 2893
+~~~
 
 If you then go back to `/ws/data/all` you will see tons of JSON data now.
 
 If you check your browser now:
 
-> [Parksmap](http://parksmap-{{project_namespace}}.{{cluster_subdomain}})
+[Parksmap](http://parksmap-parksmap-demo.{{cluster_subdomain}})
 
  You'll notice that the parks suddenly are showing up as below. 
  <br/> 

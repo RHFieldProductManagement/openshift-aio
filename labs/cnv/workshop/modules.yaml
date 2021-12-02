@@ -19,7 +19,7 @@ modules:
         exit_sign: Networking Setup
     network-setup:
         name: Networking Setup
-        exit_sign: ParksMap Application
+        exit_sign: Deploy Workloads
     deploy-workloads:
         name: Deploy Workloads
         exit_sign: Live Migration
@@ -38,7 +38,7 @@ modules:
     deploy-database-yaml:
         name: Deploy Database VM using YAML
         exit_sign: Snapshot
-    snapshot:
+    snapshot-restore:
         name: Creating Virtual Machines from Snapshot
         exit_sign: Cloning 
     cloning:

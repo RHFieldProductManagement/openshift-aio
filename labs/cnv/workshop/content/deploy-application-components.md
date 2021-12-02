@@ -9,7 +9,7 @@ coordinates) that is stored in a MongoDB database.
 - MLBParks backend application queries Major League Baseball stadiums in the US that are stored in an another MongoDB database.
 
 Parksmap frontend and backend components are shown in the diagram below:
- <br/><br/> 
+ <br/>
 
 ![Application Architecture](img/roadshow-app-architecture-main.png)  
 
@@ -21,7 +21,7 @@ As a first step, we need to create a project where Parksmap application will be 
 You can create the project with the following command:
 
 ```execute
-oc new-project {{PARKSMAP_NAMESPACE}}
+oc new-project parksmap-demo
 ```
 
 ### 2.  Grant Service Account View Permissions
@@ -42,17 +42,17 @@ We will use OpenShift Web Console to deploy Parksmap Web Application components.
 Please go to the [Web Console](http://console-openshift-console.{{cluster_subdomain}}/k8s/cluster/projects) 
 and on the login screen, enter the following credentials:
 
-- Username: `{{openshift-username}}`
+- Username: *kubeadmin*
 
-- Password: `{{openshift-password}}` 
+- Password: *{{KUBEADMIN_PASSWORD}}* 
 
 ### 4.  Search for the Application Template
 
-If you are in the in the Administrator perspective, switch to Developer perspective and go to the `{{PARKSMAP_NAMESPACE}}` project. 
+If you are in the in the Administrator perspective, switch to Developer perspective and go to the `parksmap-demo` project. 
 
 From the left menu, click `+Add`. You will see a screen where you have multiple options to deploy application to OpenShift. Click `All Services` as shown below.
 
- <br/><br/> 
+ <br/>
 
 ![Service Catalog](img/parksmap-all-services.png)  
 
@@ -66,7 +66,7 @@ You can create a list of objects from a template using the CLI or, if a template
 
 In the `Search` text box, enter *parksmap* to find the application template. 
 
- <br/><br/> 
+ <br/>
 
 ![Search Template](img/parksmap-search-template.png)  
 
@@ -76,7 +76,7 @@ In the `Search` text box, enter *parksmap* to find the application template.
 
 Then click on the `Parksmap` template to open the popup menu and then click on the `Instantiate Template` button as shown below.
 
- <br/><br/> 
+ <br/>
 
 ![Instantiate Template](img/parksmap-instantiate-template.png)  
 
@@ -89,7 +89,7 @@ This will open a dialog that will allow you to configure the template. This temp
 - Mlbparks MongoDB Application Name
 - Nationalparks Application Name
 - Nationalparks MongoDB Application Name
- <br/><br/> 
+ <br/>
 
 ![Configure Template](img/parksmap-application-template.png)  
  
@@ -105,7 +105,7 @@ These few steps are the only ones you need to run to all 3 application component
 Each OpenShift node that is asked to run the images of applications has to pull (download) it, if the node does not already have it cached locally. You can check on the status of the image download and deployment in the *Pod* details page, or from the command line with the `oc get pods` command to check the readiness of pods or you can monitor it from the Developer Console.
 
 Your screen will end up looking something like this:
- <br/> <br/> 
+ <br/> 
 
 ![Configure Template](img/parksmap-topology-1.png)   
  
@@ -118,7 +118,7 @@ This is the *Topology* page, where you should see the visualization for the `par
 
 If you click on the `parksmap` entry in the Topology view, you will see some information about that deployment. 
 The *Resources* tab may be displayed by default. If so, click on the *Details* tab.  
- <br/><br/> 
+ <br/>
 
 ![Details Tab image](img/parksmap-topology-route.png)
 
@@ -132,7 +132,7 @@ Also note that there is a decorator icon on the `parksmap` visualization now. If
 
 This application is now available at the URL shown in the Developer Perspective. Click the link and you will see the following:
 
- <br/><br/> 
+ <br/>
 
 ![Parksmap UI](img/parksmap-view-not-working.png)
 

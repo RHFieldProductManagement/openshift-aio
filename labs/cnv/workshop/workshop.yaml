@@ -15,7 +15,7 @@ modules:
     - deploy-application-components
     - deploy-database-web
     - deploy-database-yaml
-    - snapshot
+    - snapshot-restore
     - cloning
     - masquerade
     - micro-segmentation
