@@ -51,7 +51,7 @@ This PVC will be cloned for each new virtual machine created using this template
 8. and click **Save and import**.
 
    </td>
-   <td><img src="img/templates-add-boot-source.png" width="80%"/></td>
+   <td><img src="img/templates-add-boot-source.png" width="100%"/></td>
   </tr>
  </table>
 
