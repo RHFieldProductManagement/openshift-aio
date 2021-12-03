@@ -100,7 +100,7 @@ Now that we have a database deployed, we can again visit the `nationalparks` web
 service to query for data:
 
 
-[Nationalparks Data All](http://nationalparks-%parksmap-project-namespace%.%cluster_subdomain%/ws/data/all)
+[http://nationalparks-%parksmap-project-namespace%.%cluster_subdomain%/ws/data/all](http://nationalparks-%parksmap-project-namespace%.%cluster_subdomain%/ws/data/all)
 
 And the result?
 ~~~bash
@@ -113,7 +113,7 @@ application and then deployed the database. Nothing actually loaded anything
 
 The application provides an endpoint to do just that:
 
-[Nationalparks Data Load](http://nationalparks-%parksmap-project-namespace%.%cluster_subdomain%/ws/data/load)
+[http://nationalparks-%parksmap-project-namespace%.%cluster_subdomain%/ws/data/load](http://nationalparks-%parksmap-project-namespace%.%cluster_subdomain%/ws/data/load)
 
 And the result?
 
@@ -125,7 +125,7 @@ If you then go back to `/ws/data/all` you will see tons of JSON data now.
 
 If you check your browser now:
 
-[Parksmap](http://parksmap-%parksmap-project-namespace%.%cluster_subdomain%)
+[http://parksmap-%parksmap-project-namespace%.%cluster_subdomain%](http://parksmap-%parksmap-project-namespace%.%cluster_subdomain%)
 
  You'll notice that the parks suddenly are showing up as below. 
  <br/> 

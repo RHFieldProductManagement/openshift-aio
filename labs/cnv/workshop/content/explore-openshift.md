@@ -29,11 +29,47 @@ application services and endpoints you (or your teams) are using for your work.
 #### Web Console
 
 OpenShift ships with a web-based console that will allow users to
-perform various tasks via a browser. 
+perform various tasks via a browser.  
 
-The first time you access the web console, you will most likely be in the Administrator perspective. You will be presented with the list of Projects that you can access, and you will see something that looks like the following image:
+From within the lab guide window you'll see a button in the middle at the top that allows you to switch between the terminal and console options. Select the console and you should see the OpenShift dashboard:
 
-![Web Console](img/explore-webconsole1sc.png)
+<img  border="1" src="img/console-button.png"/>
+
+
+However if you want to use the full functional Web Console you can open it in a seperate window or tab in your browser. 
+
+To get a feel for how the web console works, click on this  [Web Console](http://console-openshift-console.%cluster_subdomain%/k8s/cluster/projects)
+
+To login to Web Console, you need to first get the *kubeadmin-password*.
+
+You can get it from the OpenShift installation directory in the bastion node.
+
+First ssh to bastion node:
+
+```execute-1
+ssh %bastion-username%@192.168.123.100
+```
+
+When you see the prompt enter **%bastion-password%** as password
+
+Then you can execute following to get the  password
+
+```execute-1
+cat %kubeadmin-password-file%
+```
+
+Note the password and exit 
+
+```execute-1
+exit
+```
+
+On Web Console login screen, enter the following credentials:
+
+- Username: *kubeadmin*
+- Password: *$kubeadmin-password*
+
+The first time you access the web console, you will most likely be in the Administrator perspective. 
 
 At the top of the left navigation menu, you can toggle between the Administrator perspective and the Developer perspective.
 

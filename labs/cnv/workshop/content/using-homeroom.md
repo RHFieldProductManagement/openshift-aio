@@ -15,22 +15,6 @@ Try clicking on the above command if you have not done so already.
 
 Use this method of running the commands as it will save you time and avoid mistakes.
 
-Usually the command will be run in the terminal at the top, but in some cases it will be run in the bottom terminal. You do not have to worry about which, the command when clicked will be run where it needs to be.
-
-Try clicking the command below and it should go the terminal at the bottom.
-
-```execute-2
-sleep 3600
-```
-
-If you encounter a command block showing `<ctrl-c>`, this is treated in a special way:
-
-```execute-2
-<ctrl-c>
-```
-
-Click on this and you will see that it will send an interrupt to the command running in the terminal. You could also have used `<ctrl-c>` yourself in the terminal.
-
 At times, instead of running a command, you may need to copy the value and paste it into the terminal or other web page. This will be indicated using the copy symbol <span class="fas fa-copy"></span>.
 
 ```copy

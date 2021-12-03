@@ -93,4 +93,3 @@ You can now use this template to create CentOS 8 virtual machines.
 ![Templates](img/templates-boot-source-verify.png)
 
 That's it for adding boot sources to a template. We have imported a Centos 8 cloud disk image into a new PVC and attached that onto a CentOS 8 virtual machine template which we will use to create new virtual machines in the next labs.
-=======

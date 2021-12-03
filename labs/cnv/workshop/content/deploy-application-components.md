@@ -44,7 +44,7 @@ and on the login screen, enter the following credentials:
 
 - Username: *kubeadmin*
 
-- Password: *{{KUBEADMIN_PASSWORD}}* 
+- Password: **$KUBEADMIN_PASSWORD** 
 
 ### 4.  Search for the Application Template
 

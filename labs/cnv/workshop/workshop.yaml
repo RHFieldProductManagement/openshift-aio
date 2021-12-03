@@ -4,8 +4,8 @@ modules:
     activate:
     - welcome
     - using-homeroom
-    - validation
     - explore-openshift
+    - validation
     - deploy-cnv
     - storage-setup
     - network-setup
@@ -14,6 +14,7 @@ modules:
     - cloning
     - masquerade
     - console
+    - templates
     - sample-application-architecture
     - deploy-application-components
     - deploy-database-web

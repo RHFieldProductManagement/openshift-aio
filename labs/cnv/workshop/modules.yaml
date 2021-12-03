@@ -6,19 +6,29 @@ config:
       value: redhat
     - name: mongodb-vm-password
       value: openshift
+    - name: bastion-host
+      value: 192.168.123.100
+    - name: bastion-username
+      value: root
+    - name: bastion-password
+      value: redhat
+    - name: kubeadmin-password-file
+      value: /root/ocp-install/auth/kubeadmin-password
+    - name: node-network-domain
+      value: aio.example.com
 modules:
     welcome:
         name: Welcome
         exit_sign: Using Homeroom
     using-homeroom:
         name: Using Homeroom
-        exit_sign: Validate Lab
-    validation:
-        name: Validate Lab Connectivity
-        exit_sign: Explore OpenShift 
+        exit_sign: Explore OpenShift
     explore-openshift:
         name: Explore OpenShift CLI and Web Console
-        exit_sign: Deploying CNV        
+        exit_sign: Validate      
+    validation:
+        name: Validate Lab Connectivity
+        exit_sign: Deploying CNV
     deploy-cnv:
         name: Deploying OpenShift Virtualization
         exit_sign: Storage Setup
@@ -42,6 +52,9 @@ modules:
         exit_sign: VM Console 
     console:
         name: Using the VM console
+        exit_sign: Templates
+    templates:
+        name: Virtual Machine Templates and Boot Sources
         exit_sign: Parksmap Application
     sample-application-architecture:
         name: Parksmap Application Architecture

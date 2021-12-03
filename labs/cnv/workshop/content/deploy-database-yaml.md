@@ -71,7 +71,7 @@ Now that we have the database deployed for `mlbparks` , we can again visit the m
 service to query for data:
 
 
-[Mlbparks Data All](http://mlbparks-%parksmap-project-namespace%.%cluster_subdomain%/ws/data/all)
+[http://mlbparks-%parksmap-project-namespace%.%cluster_subdomain%/ws/data/all](http://mlbparks-%parksmap-project-namespace%.%cluster_subdomain%/ws/data/all)
 
 And the result is empty as expected.
 
@@ -81,7 +81,7 @@ And the result is empty as expected.
 
 So to load the data go to following end point:
 
-[Mlbparks Data Load](http://mlbparks-%parksmap-project-namespace%.%cluster_subdomain%/ws/data/load)
+[http://mlbparks-%parksmap-project-namespace%.%cluster_subdomain%/ws/data/load](http://mlbparks-%parksmap-project-namespace%.%cluster_subdomain%/ws/data/load)
 
 Now you should see the
 
@@ -91,7 +91,7 @@ Items inserted in database: 30
 
 If you check parksmap application in your browser you should be able to see the stadium locations in United States as well:
 
-[Parksmap](http://parksmap-%parksmap-project-namespace%.%cluster_subdomain%)
+[http://parksmap-%parksmap-project-namespace%.%cluster_subdomain%](http://parksmap-%parksmap-project-namespace%.%cluster_subdomain%)
 
  <br/> 
 

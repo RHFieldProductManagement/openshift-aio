@@ -1,11 +1,6 @@
 Since OpenShift 4.5, OpenShift Virtualization has been fully supported by Red Hat as a component of OpenShift itself. The mechanism for installation is to utilise the operator model and deploy via the OpenShift Operator Hub in the web-console. Note, it's entirely possible to deploy via the CLI should you wish to do so, but we're not documenting that mechanism here.
 
-From within the lab guide window you'll see a button in the middle at the top that allows you to switch between the terminal and console options. Select the console and you should see the OpenShift dashboard:
 
-<img  border="1" src="img/console-button.png"/>
-
-
-> **NOTE**: You can use the dashboard in a separate tab should you wish, you can use this link: https://console-openshift-console.apps.aio.example.com/ and you'll find the kubeadmin password in */root/ocp-install/auth/kubeadmin-password* on node *192.168.123.100* (root/redhat).
 
 Next, navigate to the top-level '**Operators**' menu entry, and select '**OperatorHub**'. This lists all of the available operators that you can install from the Red Hat Marketplace. Simply start typing '**virtualization**' in the search box and you should see an entry called "Container-native virtualization". Simply select it and you'll see a window that looks like the following:
 
@@ -37,10 +32,9 @@ Whilst this does its thing, you can move to the '**Workloads**' --> '**Pods**' m
 
 You can also return to the 'terminal' tab in your hosted lab guide and watch via the CLI:
 
-~~~bash
+```execute-1
 $ watch -n2 'oc get pods -n openshift-cnv'
-(...)
-~~~
+```
 
 > **NOTE**: It may take a few minutes for the pods to start up properly. Press **Ctrl+C** to exit the watch command.
 
@@ -52,8 +46,13 @@ This will continue for some time, depending on your environment.
 
 You will know the process is complete when you can return to the top terminal and see that the operator installation has been successful by running the following command:
 
+```execute-1
+oc get csv -n openshift-cnv
+```
+
+You should see the output below:
+
 ~~~bash
-$ oc get csv -n openshift-cnv
 NAME                                      DISPLAY                    VERSION   REPLACES                                  PHASE
 kubevirt-hyperconverged-operator.v4.9.0   OpenShift Virtualization   4.9.0     kubevirt-hyperconverged-operator.v4.8.2   Succeeded
 ~~~
@@ -62,8 +61,14 @@ kubevirt-hyperconverged-operator.v4.9.0   OpenShift Virtualization   4.9.0     k
 
 If you do not see `Succeeded` in the `PHASE` column then the deployment may still be progressing, or has failed. You will not be able to proceed until the installation has been successful. Once the `PHASE` changes to `Succeeded` you can validate that the required resources and the additional components have been deployed across the nodes. First let's check the pods deployed in the `openshift-cnv` namespace:
 
+
+```execute-1
+oc get pods -n openshift-cnv
+```
+
+This will list the list of pods in *openshift-cnv* project.
+
 ~~~bash
-$ oc get pods -n openshift-cnv
 NAME                                                  READY   STATUS    RESTARTS   AGE
 bridge-marker-52mv7                                   1/1     Running   0          6m55s
 bridge-marker-74rzv                                   1/1     Running   0          6m55s
@@ -84,14 +89,24 @@ hco-webhook-5c8d75b559-d4h5r                          1/1     Running   0       
 > **NOTE**: All pods shown from this command should be in the `Running` state. You will have many different types, the above snippet is just an example of the output at one point in time, you may have more or less at any one point. Below we discuss some of the pod types and what they do.
 
 You may check by filtering with grep the 'Running' ones and then counting the lines:
-~~~bash
-$ oc get pods -n openshift-cnv | grep -v Running
-NAME                                                  READY   STATUS    RESTARTS   AGE
-(this should be empty)
 
-$ oc get pods -n openshift-cnv | wc -l
-47
+```execute-1
+oc get pods -n openshift-cnv | grep -v Running
+```
+
+This should return an empty result
+
+~~~bash
+NAME                                                  READY   STATUS    RESTARTS   AGE
 ~~~
+
+And when you count the lines
+
+```execute-1
+oc get pods -n openshift-cnv |  wc -l
+```
+
+It should be **47**
 
 
 Together, all of these pods are responsible for various functions of running a virtual machine on-top of OpenShift/Kubernetes. See the table below that describes some of the various different pod types and their function:
@@ -118,8 +133,13 @@ Together, all of these pods are responsible for various functions of running a v
 
 There's also a few custom resources that get defined too, for example the `NodeNetworkState` (`nns` for short) definitions that can be used with the `nmstate-handler` pods to ensure that the NetworkManager state on each node is configured as required, e.g. for defining interfaces/bridges on each of the machines for connectivity for both the physical machine itself and for providing network access for pods (and virtual machines) within OpenShift/Kubernetes:
 
+```execute-1
+oc get nns -A
+```
+
+Now you can see the list of NodeNetworkStates
+
 ~~~bash
-$ oc get nns -A
 NAME                           AGE
 ocp4-master1.aio.example.com   8m37s
 ocp4-master2.aio.example.com   8m27s
@@ -127,8 +147,16 @@ ocp4-master3.aio.example.com   8m37s
 ocp4-worker1.aio.example.com   8m51s
 ocp4-worker2.aio.example.com   8m50s
 ocp4-worker3.aio.example.com   8m54s
+~~~
 
-$ oc get nns/ocp4-worker1.aio.example.com -o yaml
+And in order to get details of onew of them:
+
+```execute-1
+oc get nns/ocp4-worker1.aio.example.com -o yaml
+```
+
+You should see NodeNetworkState definition in *yaml* format
+~~~yaml
 apiVersion: nmstate.io/v1beta1
 kind: NodeNetworkState
 metadata:
@@ -181,13 +209,14 @@ metadata:
 
 Here you can see the current state of the node (some of the output has been cut), the interfaces attached, and their physical/logical addresses. In a later section we're going to be modifying the network node state by applying a new configuration to allow nodes to utilise another interface to provide pod networking via a **bridge**. We will do this via a `NodeNetworkConfigurationEnactment` or `nnce` in short, to which we do not currently have any configured:
 
+```execute-1
+oc get nnce -n openshift-cnv
+```
+
+It should not find any *nnce*
 ~~~bash
-$ oc get nnce -n openshift-cnv
 No resources found in openshift-cnv namespace.
 ~~~
-
-
-
 
 
 ### Viewing the OpenShift Virtualization Dashboard

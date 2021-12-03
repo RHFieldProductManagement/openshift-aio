@@ -1,4 +1,4 @@
-# Background: Virtual Machine snapshots
+### Background: Virtual Machine snapshots
 
 A snapshot represents the state and data of a virtual machine (VM) at a specific point in time. You can use a snapshot to restore an existing VM to a previous state (represented by the snapshot) for backup and disaster recovery or to rapidly roll back to a previous development version.
 
@@ -18,7 +18,7 @@ OpenShift Virtualization supports VM snapshots on the following:
 - Red Hat OpenShift Container Storage
 - Any other storage provider with the Container Storage Interface (CSI) driver that supports the Kubernetes Volume Snapshot API
 
-# Exercise: Installing QEMU guest agent
+### Exercise: Installing QEMU guest agent
 
 To create snapshots of an online (Running state) VM with the highest integrity, install the QEMU guest agent.
 
@@ -42,7 +42,7 @@ sudo yum install -y qemu-guest-agent
 sudo systemctl enable --now qemu-guest-agent
 ```
 
-# Exercise: Creating a virtual machine snapshot in the web console
+### Exercise: Creating a virtual machine snapshot in the web console
 
 Virtual machine (VM) snapshots can be created either by using the web console or in the CLI. In this exercise, let's create a snapshot of our mongodb database vm by using the web console.
 <table>
@@ -75,7 +75,7 @@ It should take just a little seconds to actually create the snapshot and make it
 
 <img src="img/vm-snapshot-ready.png"/>
 
-# Exercise: Destroy database
+### Exercise: Destroy database
 
 After taking an online snapshot of the database vm, let's destroy the database by forcefully deleting everything under it's data path.
 
@@ -94,7 +94,7 @@ sudo systemctl start mongod
 
 Now you can check by refreshing `ParksMap` web page (Map Visualizer on OpenShift 4), it should **fail** to load national parks locations from the backend service and no longer display them on the map.
 
-# Exercise: Restoring a virtual machine from a snapshot in the web console
+### Exercise: Restoring a virtual machine from a snapshot in the web console
 
 In this exercise, let's restore our mongodb database vm by using the web console to the snapshot created in the previous exercise.
 You can only restore to a powered off (offline) VM so we will first power off the virtual machine in this exercise.
@@ -126,7 +126,7 @@ It should take just a little seconds to actually restore the snapshot and make t
 After the snapshot was restored successfully and it's status become **Ready**, then you can click **Actions** → **Start Virtual Machine** to power it on.
 Once the VM is powered on and boots successfully, you can refresh `ParksMap` web page (Map Visualizer on OpenShift 4). It should successfully load national parks locations from the backend service and start displaying them on the map again.
 
-# Background: Virtual machine snapshot controller and custom resource definitions (CRDs)
+### Background: Virtual machine snapshot controller and custom resource definitions (CRDs)
 
 The VM snapshot feature introduces three new API objects defined as CRDs for managing snapshots:
 
@@ -138,7 +138,7 @@ The VM snapshot feature introduces three new API objects defined as CRDs for man
 
 The VM snapshot controller binds a `VirtualMachineSnapshotContent` object with the `VirtualMachineSnapshot` object for which it was created, with a one-to-one mapping.
 
-# Exercise: Creating an virtual machine snapshot in the CLI
+### Exercise: Creating an virtual machine snapshot in the CLI
 
 In previous exercises in this module, we created and restored vm snapshot in the OpenShift web console. However, It's also possible to do same operations in the CLI using the CRDs above. Using CLI and Yaml/Json definitions of `VirtualMachineSnapshot` and `VirtualMachineRestore` objects to create and restore snapshot respectively, allows automating all snapshot releated operations.
 
@@ -242,7 +242,7 @@ You can see these details by describing the VirtualMachineSnapshotContent bound 
 oc describe vmsnapshotcontent vmsnapshot-content-7a46dfc9-9904-42e9-a0a3-c02ef43d0f2b
 ```
 
-# Exercise: Delete the VM's boot disk
+### Exercise: Delete the VM's boot disk
 
 To see how to restore the VM in the CLI, let's delete the VM's boot disk completely this time after powering of the VM.
 
@@ -361,4 +361,3 @@ After the snapshot was restored successfully and it's `complete` flag is set to 
 Once the VM is powered on and boots successfully, you can refresh `ParksMap` web page (Map Visualizer on OpenShift 4). It should successfully load national parks locations from the backend service and start displaying them on the map again.
 
 That's it for taking vm snapshots and performing restores - we've created snapshots of our mongodb database vm using both OpenShift web console and CLI, and restored it after deleting data files and underlying vm disk.
-=======

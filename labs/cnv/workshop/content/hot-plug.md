@@ -185,4 +185,3 @@ sudo lsblk
 <img src="img/hot-plug-disk-lsblk-removed.png" width="50%"/></td>
 
 That's it for hot-plugging and expanding virtual disks - we've hot-plugged a new 5GB disk to our mongodb database virtual machine using OpenShift web console, expanded its size to 7GB and finally hot-unplugged it from our virtual machine.
-=======
