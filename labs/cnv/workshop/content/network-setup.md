@@ -7,8 +7,13 @@ In this lab we're going to enable multiple options - pod networking **and** a se
 The first step is to use the new Kubernetes NetworkManager state configuration to setup the underlying hosts to our liking. Recall that we can get the **current** state by requesting the `NetworkNodeState` (much of the following is snipped for brevity):
 
 
-~~~bash
-$ oc get nns/ocp4-worker1.cnv.example.com -o yaml
+```execute-1
+oc get nns/ocp4-worker1.cnv.example.com -o yaml
+```
+
+This will display the NodeNetworkState in yaml format
+
+~~~yaml
 apiVersion: nmstate.io/v1beta1
 kind: NodeNetworkState
 metadata:
@@ -19,7 +24,7 @@ metadata:
     app.kubernetes.io/managed-by: hco-operator
     app.kubernetes.io/part-of: hyperconverged-cluster
     app.kubernetes.io/version: v4.9.0
-  name: ocp4-worker1.aio.example.com
+  name: ocp4-worker1.%node-network-domain%
 (...)
     - ipv4:
         address:
@@ -79,7 +84,7 @@ In there you'll spot the interface that we'd like to use to create a bridge, `en
 
 Now we can apply a new `NodeNetworkConfigurationPolicy` for our worker nodes to setup a desired state for `br1` via `enp3s0`, noting that in the `spec` we specify a `nodeSelector` to ensure that this **only** gets applied to our worker nodes; eventually allowing us to attach VM's to this bridge:
 
-~~~bash
+```execute-1
 $ cat << EOF | oc apply -f -
 apiVersion: nmstate.io/v1alpha1
 kind: NodeNetworkConfigurationPolicy
@@ -103,20 +108,35 @@ spec:
           port:
             - name: enp3s0
 EOF
+```
 
+Check the output
+
+~~~bash
 nodenetworkconfigurationpolicy.nmstate.io/br1-enp3s0-policy-workers created
 ~~~
 
 Then enquire as to whether it was successfully applied:
 
-~~~bash
+```execute-1
 $ oc get nnce
-NAME                                                     STATUS
-ocp4-worker1.aio.example.com.br1-enp3s0-policy-workers   Available
-ocp4-worker2.aio.example.com.br1-enp3s0-policy-workers   Available
-ocp4-worker3.aio.example.com.br1-enp3s0-policy-workers   Available
+```
 
-$ oc get nncp
+Check the status:
+
+~~~bash
+NAME                                                     STATUS
+ocp4-worker1.%node-network-domain%.br1-enp3s0-policy-workers   Available
+ocp4-worker2.%node-network-domain%.br1-enp3s0-policy-workers   Available
+ocp4-worker3.%node-network-domain%.br1-enp3s0-policy-workers   Available
+~~~
+
+```execute-1
+oc get nncp
+```
+
+Check the result:
+~~~bash
 NAME                        STATUS
 br1-enp3s0-policy-workers   Available
 ~~~
@@ -172,7 +192,7 @@ status:
 If you'd like to fully verify that this has been successfully configured on the host, we can do that easily via the `oc debug node` option (pick any of your workers):
 
 ~~~bash
-$ oc debug node/ocp4-worker1.aio.example.com
+$ oc debug node/ocp4-worker1.%node-network-domain%
 Starting pod/ocp4-worker1aioexamplecom-debug ...
 To use host binaries, run `chroot /host`
 Pod IP: 192.168.123.104
