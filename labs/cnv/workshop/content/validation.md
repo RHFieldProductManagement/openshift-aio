@@ -42,11 +42,11 @@ Then you should see :
 
 ~~~bash
 NAME      VERSION   AVAILABLE   PROGRESSING   SINCE   STATUS
-version   4.9.5     True        False         27m     Cluster version is 4.9.5.0
+version   4.9.5     True        False         27m     Cluster version is 4.9.5.
 ~~~
 
 After that check the cluster operators 
-
+=======
 
 ```execute
 oc get clusteroperators
@@ -56,16 +56,17 @@ This command will list the all cluster operators and their availability as below
 
 ~~~bash
 NAME                                       VERSION   AVAILABLE   PROGRESSING   DEGRADED   SINCE   MESSAGE
-authentication                             4.9.0     True        False         False      23h     
-baremetal                                  4.9.0     True        False         False      23h     
-cloud-controller-manager                   4.9.0     True        False         False      23h     
-cloud-credential                           4.9.0     True        False         False      23h     
-cluster-autoscaler                         4.9.0     True        False         False      23h     
-config-operator                            4.9.0     True        False         False      23h     
-console                                    4.9.0     True        False         False      23h     
-csi-snapshot-controller                    4.9.0     True        False         False      23h     
-dns                                        4.9.0     True        False         False      23h     
-etcd                                       4.9.0     True        False         False      23h 
+authentication                             4.9.5     True        False         False      7h26m   
+baremetal                                  4.9.5     True        False         False      7h48m   
+cloud-controller-manager                   4.9.5     True        False         False      7h51m   
+cloud-credential                           4.9.5     True        False         False      8h      
+cluster-autoscaler                         4.9.5     True        False         False      7h48m   
+config-operator                            4.9.5     True        False         False      7h50m   
+console                                    4.9.5     True        False         False      7h29m   
+csi-snapshot-controller                    4.9.5     True        False         False      7h48m   
+dns                                        4.9.5     True        False         False      7h48m   
+etcd                                       4.9.5     True        False         False      7h48m   
+image-registry                             4.9.5     True        False         False      7h18m
 (...)
 ~~~
 
@@ -158,6 +159,7 @@ duckhunt-js   duckhunt-js-test.apps.%cluster_subdomain%          duckhunt-js   8
 ~~~
 
 You should be able to open up the application in the same browser that you're reading this guide from, either copy and paste the address, or click this link: [http://duckhunt-js-test.%cluster_subdomain%](http://duckhunt-js-test.%cluster_subdomain%). If your OpenShift cluster is working as expected and the application build was successful, you should now be able to have a quick play with this... good luck ;-)
+> **NOTE**: If you've deployed this environment via RHPDS, your URL above may be slightly different, and the hyperlink above will not work as expected. Use the output from the `oc get route duckhunt-js` as the correct route/address to use.
 
 <img src="img/duckhunt.png"/>
 

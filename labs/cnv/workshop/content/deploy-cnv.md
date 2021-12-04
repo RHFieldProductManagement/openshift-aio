@@ -2,7 +2,7 @@ Since OpenShift 4.5, OpenShift Virtualization has been fully supported by Red Ha
 
 
 
-Next, navigate to the top-level '**Operators**' menu entry, and select '**OperatorHub**'. This lists all of the available operators that you can install from the Red Hat Marketplace. Simply start typing '**virtualization**' in the search box and you should see an entry called "Container-native virtualization". Simply select it and you'll see a window that looks like the following:
+Next, navigate to the top-level '**Operators**' menu entry, and select '**OperatorHub**'. This lists all of the available operators that you can install from the Red Hat Marketplace. Simply start typing '**virtualization**' in the search box and you should see an entry called "OpenShift Virtualization". Simply select it and you'll see a window that looks like the following:
 
 <img  border="1" src="img/ocp-virt-operator-install.png"/>
 

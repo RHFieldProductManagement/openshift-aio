@@ -14,13 +14,12 @@ metadata:
   annotations:
     name.os.template.kubevirt.io/rhel8: Red Hat Enterprise Linux 8.0
   labels:
-    flavor.template.kubevirt.io/small: "true"
-    kubevirt.io/os: rhel8
-    os.template.kubevirt.io/rhel8: "true"
-    template.kubevirt.ui: openshift_rhel8-generic-large
-    vm.kubevirt.io/template: rhel8-generic-small
-    workload.template.kubevirt.io/generic: "true"
     app: rhel8-server-ocs
+    kubevirt.io/os: rhel8
+    os.template.kubevirt.io/rhel8: 'true'
+    template.kubevirt.ui: openshift_rhel8-generic-small
+    vm.kubevirt.io/template: openshift_rhel8-generic-small
+    workload.template.kubevirt.io/generic: 'true'
   name: rhel8-server-ocs
 spec:
   running: true
@@ -30,16 +29,10 @@ spec:
         vm.kubevirt.io/name: rhel8-server-ocs
     spec:
       domain:
-        clock:
-          timer:
-            hpet:
-              present: false
-            hyperv: {}
-            pit:
-              tickPolicy: delay
-            rtc:
-              tickPolicy: catchup
-          utc: {}
+        cpu:
+          cores: 1
+          sockets: 1
+          threads: 1
         devices:
           disks:
           - disk:
@@ -49,14 +42,6 @@ spec:
           - bridge: {}
             model: e1000
             name: tuning-bridge-fixed
-        features:
-          acpi: {}
-          apic: {}
-          hyperv:
-            relaxed: {}
-            spinlocks:
-              spinlocks: 8191
-            vapic: {}
         firmware:
           uuid: 5d307ca9-b3ef-428c-8861-06e72d69f223
         machine:
@@ -302,13 +287,12 @@ metadata:
   annotations:
     name.os.template.kubevirt.io/rhel8: Red Hat Enterprise Linux 8.0
   labels:
-    flavor.template.kubevirt.io/small: "tiny"
-    kubevirt.io/os: rhel8
-    os.template.kubevirt.io/rhel8: "true"
-    template.kubevirt.ui: openshift_rhel8-generic-tiny
-    vm.kubevirt.io/template: tiny
-    workload.template.kubevirt.io/generic: "true"
     app: rhel8-server-hostpath
+    kubevirt.io/os: rhel8
+    os.template.kubevirt.io/rhel8: 'true'
+    template.kubevirt.ui: openshift_rhel8-generic-small
+    vm.kubevirt.io/template: openshift_rhel8-generic-small
+    workload.template.kubevirt.io/generic: 'true'
   name: rhel8-server-hostpath
 spec:
   running: true
@@ -318,16 +302,10 @@ spec:
         vm.kubevirt.io/name: rhel8-server-hostpath
     spec:
       domain:
-        clock:
-          timer:
-            hpet:
-              present: false
-            hyperv: {}
-            pit:
-              tickPolicy: delay
-            rtc:
-              tickPolicy: catchup
-          utc: {}
+        cpu:
+          cores: 1
+          sockets: 1
+          threads: 1
         devices:
           disks:
           - disk:
@@ -337,28 +315,21 @@ spec:
           - bridge: {}
             model: e1000
             name: tuning-bridge-fixed
-        features:
-          acpi: {}
-          apic: {}
-          hyperv:
-            relaxed: {}
-            spinlocks:
-              spinlocks: 8191
-            vapic: {}
         firmware:
           uuid: 5d307ca9-b3ef-428c-8861-06e72d69f223
         machine:
           type: q35
         resources:
           requests:
-            memory: 1024M
+            memory: 2048M
+      evictionStrategy: LiveMigrate
       networks:
         - multus:
             networkName: tuning-bridge-fixed
           name: tuning-bridge-fixed
       terminationGracePeriodSeconds: 0
       volumes:
-      - name: rhel8-hostpath
+      - name: rhel8-ocs
         persistentVolumeClaim:
           claimName: rhel8-hostpath
 EOF
