@@ -1,31 +1,80 @@
+config:
+    vars:
+    - name: parksmap-project-namespace
+      value: parksmap-demo
+    - name: mongodb-vm-username
+      value: redhat
+    - name: mongodb-vm-password
+      value: openshift
+    - name: bastion-host
+      value: 192.168.123.100
+    - name: bastion-username
+      value: root
+    - name: bastion-password
+      value: redhat
+    - name: kubeadmin-password-file
+      value: /root/ocp-install/auth/kubeadmin-password
+    - name: node-network-domain
+      value: aio.example.com
 modules:
     welcome:
         name: Welcome
-        exit_sign: Lab Validation
+        exit_sign: Using Homeroom
+    using-homeroom:
+        name: Using Homeroom
+        exit_sign: Explore OpenShift
+    explore-openshift:
+        name: Explore OpenShift CLI and Web Console
+        exit_sign: Validate      
     validation:
-        name: Validate Connectivity
-        exit_sign: Deploy CNV
+        name: Validate Lab Connectivity
+        exit_sign: Deploying CNV
     deploy-cnv:
-        name: Deploy CNV
+        name: Deploying OpenShift Virtualization
         exit_sign: Storage Setup
     storage-setup:
         name: Storage Setup
         exit_sign: Networking Setup
     network-setup:
-        name: Network Setup
+        name: Networking Setup
         exit_sign: Deploy Workloads
     deploy-workloads:
         name: Deploy Workloads
         exit_sign: Live Migration
     live-migration:
         name: Live Migration
-        exit_sign: Cloning Workloads
+        exit_sign: Clone a Virtual Machine
     cloning:
-        name: Clone a Workload
+        name: Clone a Virtual Machine
         exit_sign: Masquerade Networking
     masquerade:
         name: Masquerade Networking
-        exit_sign: CNV Console
+        exit_sign: VM Console 
     console:
-        name: Using the console
-        exit_sign: Finish Workshop
+        name: Using the VM console
+        exit_sign: Templates
+    templates:
+        name: Virtual Machine Templates and Boot Sources
+        exit_sign: Parksmap Application
+    sample-application-architecture:
+        name: Parksmap Application Architecture
+        exit_sign: Deploying Parksmap 
+    deploy-application-components:
+        name: Deploying Parksmap Application Components
+        exit_sign: Deploy first DB
+    deploy-database-web:
+        name: Deploy Database VM using Web Console
+        exit_sign: Deploy second DB
+    deploy-database-yaml:
+        name: Deploy Database VM using YAML
+        exit_sign: Network Isolation
+    micro-segmentation:
+        name: Network Isolation for Virtual Machines 
+        exit_sign: Snapshots
+    snapshot-restore:
+        name: Backup and Restore Virtual Machines using Snapshots
+        exit_sign: Hot-plug 
+    hot-plug:
+        name: Hot-plugging Virtual Disks
+        exit_sign: Finish Lab 
+

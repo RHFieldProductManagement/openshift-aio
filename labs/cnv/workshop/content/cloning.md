@@ -301,7 +301,7 @@ fc34-original   37m   Stopped   False
 
 
 
-### Clone the VM
+### Clone the VM (Option 1)
 
 Now that we've got a working virtual machine with a test workload we're ready to actually clone it, to prove that the built-in cloning utilities work, and that the cloned machine shares the same workload. There are a couple of ways of doing this, first we'll use the CLI to do so, and we'll simply clone the underlying storage volume, to do this we'll need to create a PV (persistent volume) to clone into. This is done by creating a special resource called a `DataVolume`, this custom resource type is provide by CDI. DataVolumes orchestrate import, clone, and upload operations and help the process of importing data into a cluster. DataVolumes are integrated into OpenShift Virtualization.
 
@@ -515,3 +515,42 @@ virtualmachine.kubevirt.io "fc34-original" deleted
 virtualmachine.kubevirt.io "fc34-original-clone" deleted
 ~~~
 
+### Cloning VM using Openshift Console(Option 2)
+
+Firstly, we are installing httpd package for test.You can use same virtual machine as you have created before
+
+~~~bash
+$ yum install httpd -y
+$ systemctl start httpd
+$ systemctl enable httpd
+~~~
+
+And lets  check your HTTP server via browser. First of all , you should get your VM's current public ip then try to connect using this ip.That's it.
+
+![](img/clone1.png)
+
+Then we are starting clone  job as you can see below screenshot.
+
+![](img/clone2.png)
+
+I can change namespace and after finishing clone,  I can start this VM. You'll need to click "**Clone Virtual Machine**" button.
+
+![](img/clone3.png)
+
+As you can see your console, current vm is closing now, and new vm is provisioning. 
+
+![](img/clone4.png)
+
+At this point, I'll need some test for this new vm. I am starting VM now. You'll need to click  "**...**" and "**Start Virtual Machine**" buttons.
+
+![](img/clone5.png)
+
+After vm started , check current public ip and then connect your browser with this new ip. That's it.
+
+![](img/clone6.png)
+
+### Clean up
+
+Before moving on to the next lab let's clean up the VMs so we ensure our environment has all the resources it might need; we're going to delete our VM's
+
+![](img/clone7.png)
