@@ -22,8 +22,9 @@ Then check OCS operator by executing below
 oc get csv -n openshift-storage
 ```
 
+Result should be similar to:
+
 ~~~bash
-$ oc get csv -n openshift-storage
 NAME                  DISPLAY                       VERSION   REPLACES              PHASE
 ocs-operator.v4.8.3   OpenShift Container Storage   4.8.3     ocs-operator.v4.8.2   Succeeded
 ~~~
