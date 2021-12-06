@@ -1,23 +1,23 @@
-In this lab we're going to clone a workload and prove that it's identical to the previous. For convenience we're going to download and customise a Fedora 31 image, launch a virtual machine via OpenShift virtualisation based on it, and then clone it - we'll then test to see if the cloned machine works as expected. Before we begin we need to setup our Fedora 31 cloud image, let's first connect to our bastion host as we need somewhere to process and serve the image:
+In this lab we're going to clone a workload and prove that it's identical to the previous. For convenience we're going to download and customise a Fedora 34 image, launch a virtual machine via OpenShift Virtualization based on it, install a basic application inside the VM, and then clone it - we'll then test to see if the cloned machine works as expected and is "the same" as before. Before we begin we need to setup our Fedora 34 cloud image, let's first connect to our bastion host as we need somewhere to process and serve the image:
 
 ~~~bash
-$ ssh root@ocp4-bastion
+$ ssh root@192.168.123.100
 (password is "redhat")
 ~~~
 
-Change directory to `/var/www/html` and download the latest Fedora 31 cloud image there:
+Change directory to `/var/www/html` and download the latest Fedora 34 cloud image there:
 
 ~~~bash
 # cd /var/www/html
 
-# wget https://download.fedoraproject.org/pub/fedora/linux/releases/34/Cloud/x86_64/images/Fedora-Cloud-Base-34-1.2.x86_64.raw.xz
+# wget https://www.mirrorservice.org/sites/dl.fedoraproject.org/pub/fedora/linux/releases/34/Cloud/x86_64/images/Fedora-Cloud-Base-34-1.2.x86_64.raw.xz
 (...)
 
 # xz -d Fedora-Cloud-Base-34-1.2.x86_64.raw.xz
 (no output but may take a minute)
 
 # ls -l | grep -i fedora
--rw-r--r--. 1 root root  5368709120 Apr 23 10:59 Fedora-Cloud-Base-34-1.2.x86_64.raw
+-rw-r--r--. 1 root root  5368709120 Apr 23  2021 Fedora-Cloud-Base-34-1.2.x86_64.raw
 ~~~
 
 Now we need to customise this image, we're going to do the following:
@@ -31,7 +31,7 @@ Now we need to customise this image, we're going to do the following:
 
 # systemctl enable --now libvirtd
 
-# virt-customize -a /var/www/html/Fedora-Cloud-Base-34-1.2.x86_64.raw --run-command 'sed -i s/^#PermitRootLogin.*/PermitRootLogin\ yes/ /etc/ssh/sshd_config'
+# virt-customize -a /var/www/html/Fedora-Cloud-Base-34-1.2.x86_64.raw --run-command 'sed -i s/^#PermitRootLogin.*/PermitRootLogin\ yes/ /etc/ssh/sshd_config && touch /.autorelabel'
 
 [   0.0] Examining the guest ...
 (...)
@@ -44,84 +44,60 @@ Now we need to customise this image, we're going to do the following:
 # exit
 logout
 Connection to ocp4-bastion closed.
+
+$ oc whoami
+system:serviceaccount:workbook:cnv
 ~~~
 
-> **NOTE**: Make sure that you've disconnected from this machine before proceeding.
+> **NOTE**: Make sure that you've disconnected from this machine, and  before proceeding.
 
-Now that we've prepared our Fedora 31 VM and placed it on an accessible location on our bastion host: (for reference it's at: http://192.168.123.100:81/Fedora-Cloud-Base-34-1.2.x86_64.raw). 
+Now that we've prepared our Fedora 34 VM and placed it on an accessible location on our bastion host: (for reference it's at: http://192.168.123.100:81/Fedora-Cloud-Base-34-1.2.x86_64.raw).
 
-Let's build a PV that will eventually house a copy of this image so we can build a VM from it afterwards:
-
-~~~bash
-$ cat << EOF | oc apply -f -
-apiVersion: v1
-kind: PersistentVolume
-metadata:
-  name: fc34-pv
-spec:
-  accessModes:
-  - ReadWriteOnce
-  - ReadWriteMany
-  capacity:
-    storage: 10Gi
-  nfs:
-    path: /nfs/fc31
-    server: 192.168.123.100
-  persistentVolumeReclaimPolicy: Delete
-  storageClassName: nfs
-  volumeMode: Filesystem
-EOF
-
-persistentvolume/fc34-pv created
-~~~
-
-And make sure the volume is `Available`:
-
-~~~bash
- $ oc get pv/fc34-pv
-NAME                                       CAPACITY   ACCESS MODES   RECLAIM POLICY   STATUS      CLAIM
-                      STORAGECLASS           REASON   AGE
-fc34-pv                                    10Gi       RWO,RWX        Delete           Available
-                      nfs                             20s
-~~~
-
-Next we need to create a PVC for that PV that utilises the CDI utility to get the Fedora image from the endpoint we placed it on. The syntax should be familiar to you now with the `cdi.kubevirt.io/storage.import.endpoint` annotation indicating the endpoint for CDI to import from.
+Let's build a PVC that will eventually house a copy of this image so we can build a VM from it afterwards, this utilises the CDI utility to get the Fedora image from the endpoint we placed it on:
 
 ~~~bash
 $ cat << EOF | oc apply -f -
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: "fc34-nfs"
+  name: "fc34-original"
   labels:
     app: containerized-data-importer
   annotations:
     cdi.kubevirt.io/storage.import.endpoint: "http://192.168.123.100:81/Fedora-Cloud-Base-34-1.2.x86_64.raw"
 spec:
-  volumeMode: Filesystem
-  storageClassName: nfs
+  volumeMode: Block
+  storageClassName: ocs-storagecluster-ceph-rbd
   accessModes:
   - ReadWriteMany
   resources:
     requests:
-      storage: 10Gi
+      storage: 40Gi
 EOF
 
-persistentvolumeclaim/fc34-nfs created
+persistentvolumeclaim/fc34-original created
+~~~
+
+And make sure the claim is `Bound` and has a matching volume:
+
+~~~bash
+$ oc get pvc
+NAME            STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS                  AGE
+fc34-original   Bound    pvc-f335830c-d096-4ffa-8018-a1aac3b3cedf   40Gi       RWX            ocs-storagecluster-ceph-rbd   3m4s
 ~~~
 
 As before we can watch the process and see the pods (you'll need to be quick with the next two commands, as it's only a 10GB image):
 
 ~~~bash
-$ oc get pod/importer-fc34-nfs
-NAME                                        READY   STATUS    RESTARTS   AGE
-importer-fc34-nfs                           1/1     Running   0          5s
+$ oc get pod/importer-fc34-original
+NAME                     READY   STATUS    RESTARTS   AGE
+importer-fc34-original   1/1     Running   0          21s
 ~~~
 
 The import:
 
 ~~~bash
-$ oc logs importer-fc34-nfs -f
+$ oc logs importer-fc34-original -f
 I0319 02:41:06.647561       1 importer.go:51] Starting importer
 I0319 02:41:06.651389       1 importer.go:107] begin import process
 I0319 02:41:06.654768       1 data-processor.go:275] Calculating available size
@@ -135,18 +111,18 @@ I0319 02:41:08.657711       1 prometheus.go:69] 17.53
 I0319 02:41:09.678442       1 prometheus.go:69] 24.25
 ~~~
 
-A stripped down importer description, noting that it's unlikely that you'll be able to execute this command unless you're very quick!
+Ctrl-C to exit, or just wait for it to finish... you can also view a stripped down importer description below, noting that it's unlikely that you'll be able to execute this command unless you're very quick!
 
 ~~~bash
 $ oc describe pod $(oc get pods | awk '/importer/ {print $1;}')
-Name:         importer-fc34-nfs
+Name:         importer-fc34-original
 Namespace:    default
 Priority:     0
-Node:         ocp4-worker2.cnv.example.com/192.168.123.105
+Node:         ocp4-worker2.aio.example.com/192.168.123.105
 Start Time:   Thu, 19 Mar 2020 02:41:03 +0000
 Labels:       app=containerized-data-importer
               cdi.kubevirt.io=importer
-              cdi.kubevirt.io/storage.import.importPvcName=fc34-nfs
+              cdi.kubevirt.io/storage.import.importPvcName=fc34-original
               prometheus.cdi.kubevirt.io=
 Annotations:  cdi.kubevirt.io/storage.createdByController: yes
               k8s.v1.cni.cncf.io/networks-status:
@@ -165,47 +141,35 @@ Annotations:  cdi.kubevirt.io/storage.createdByController: yes
 Volumes:
   cdi-data-vol:
     Type:       PersistentVolumeClaim (a reference to a PersistentVolumeClaim in the same namespace)
-    ClaimName:  fc34-nfs
+    ClaimName:  fc34-original
     ReadOnly:   false
 (...)
-~~~
-
-And finally our working PVC:
-
-~~~bash
-$ oc get pvc/fc34-nfs
-NAME             STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS           AGE
-fc34-nfs         Bound    fc34-pv                                    10Gi       RWO,RWX        nfs                    2m13s
 ~~~
 
 
 
 ### Fedora 34 Virtual Machine
 
-Now it's time to launch our Fedora VM. Again we are just using the same pieces we've been using throughout the labs. For review we are using the `fc34-nfs` PVC we just prepared (created with CDI importing the Fedora image, stored on NFS), and we are utilising the standard bridged networking on the workers via the `tuning-bridge-fixed` construct - the same as we've been using for the other two virtual machines:
+Now it's time to launch our Fedora VM. Again we are just using the same pieces we've been using throughout the labs. For review we are using the `fc34-original` PVC we just prepared (created with CDI importing the Fedora image, stored on OCS), and we are utilising the standard bridged networking on the workers via the `tuning-bridge-fixed` construct - the same as we've been using for the other two virtual machines we created previously:
 
 ~~~bash
 $ cat << EOF | oc apply -f -
 apiVersion: kubevirt.io/v1alpha3
 kind: VirtualMachine
 metadata:
-  name: fc34-nfs
+  name: fc34-original
   labels:
-    app: fc34-nfs
-    flavor.template.kubevirt.io/small: 'true'
-    os.template.kubevirt.io/fedora31: 'true'
+    app: fc34-original
+    os.template.kubevirt.io/fedora34: 'true'
     vm.kubevirt.io/template-namespace: openshift
     workload.template.kubevirt.io/server: 'true'
+spec:
 spec:
   running: true
   template:
     metadata:
       labels:
-        flavor.template.kubevirt.io/small: 'true'
-        kubevirt.io/size: small
-        os.template.kubevirt.io/fedora33: 'true'
-        vm.kubevirt.io/name: fc34-nfs
-        workload.template.kubevirt.io/server: 'true'
+        vm.kubevirt.io/name: fc34-original
     spec:
       domain:
         cpu:
@@ -213,7 +177,6 @@ spec:
           sockets: 1
           threads: 1
         devices:
-          autoattachPodInterface: false
           disks:
             - bootOrder: 1
               disk:
@@ -231,7 +194,7 @@ spec:
           requests:
             memory: 2Gi
       evictionStrategy: LiveMigrate
-      hostname: fc34-nfs
+      hostname: fc34-original
       networks:
         - multus:
             networkName: tuning-bridge-fixed
@@ -240,86 +203,54 @@ spec:
       volumes:
         - name: disk0
           persistentVolumeClaim:
-            claimName: fc34-nfs
+            claimName: fc34-original
 EOF
 
-virtualmachine.kubevirt.io/fc34-nfs created    
+virtualmachine.kubevirt.io/fc34-original created
 ~~~
 
 We can view the running VM:
 
 ~~~bash
- $ oc get vmi/fc34-nfs
-NAME                    AGE     PHASE     IP                  NODENAME
-fc34-nfs                28m     Running                       ocp4-worker2.cnv.example.com
+$ oc get vmi
+NAME            AGE   PHASE     IP               NODENAME                       READY
+fc34-original   65s   Running   192.168.123.64   ocp4-worker3.aio.example.com   True
 ~~~
 
-> **NOTE:** The IP address for the Fedora 31 virtual machine will be missing as the `qemu-guest-agent` isn't installed by default, but it should still have networking access. We'll need to utilise the console to get these next steps finalised.
+> **NOTE:** The IP address for the Fedora 34 virtual machine may be missing in your output above as it takes a while for the `qemu-guest-agent` to report the data through to OpenShift and we also requested an SELinux relabel, so we'll need to be patient.
 
-Navigate to the OpenShift UI so we can access the console of the `fc34-nfs` virtual machine. You'll need to select "**Workloads**" --> "**Virtual Machines**" --> "**fc34-nfs**" --> "**Consoles**". You'll be able to login with "**root/redhat**", noting that you may have to click on the console window for it to capture your input. Tip: You might find `Serial Console` option is more responsive.
-
-> **NOTE** If you don't see an VMs make sure to change to the Default project via the drop down at the top of the console.
-
-Once you're in the virtual machine let's install the `qemu-guest-agent` package so we can easily see the IP address of the machine (and the eventual clone):
-
-> **NOTE**: In some cases we've seen DNS not being setup correctly on this Fedora31 guest and some of the above commands failing, simply set the nameserver to "8.8.8.8" on this machine - we only need to download a few packages. If you see this just run `echo "nameserver 8.8.8.8" > /etc/resolv.conf`. Then retry the package install.
+When you've got an IP address, we should be able to SSH to it from our terminal window, noting you'll need to adapt the address below to match your environment:
 
 ~~~bash
-Ensure the SELinux permissions on sshd are OK by running
+$ oc get vmi/fc34-original
+NAME            AGE   PHASE     IP               NODENAME                       READY
+fc34-original   11m   Running   192.168.123.64   ocp4-worker3.aio.example.com   True
 
-~~~bash
-[root@localhost ~]# restorecon -Rv /etc/ssh/sshd_config
-
-Relabeled /etc/ssh/sshd_config from system_u:object_r:unlabeled_t:s0 to system_u:object_r:etc_t:s0
-~~~
-
-And then exit the shell:
-
-~~~bash
-[root@localhost ~]# logout
-~~~
-
-Now if we return to our lab terminal we should be able to see the IP address of the Fedora 31 machine via the OpenShift API; if so, let's try ssh'ing to it:
-
-~~~bash
-$ oc get vmi/fc34-nfs
-NAME       AGE     PHASE     IP               NODENAME
-fc34-nfs   7m54s   Running   192.168.123.60   ocp4-worker2.cnv.example.com
-
-$ ssh root@192.168.123.60
+$ ssh root@192.168.123.64
 (the password is "redhat")
 
-[root@localhost ~]#
+[root@fedora ~]#
 ~~~
 
 
-Let's install `nginx` via `systemd` and `podman`, i.e. have *systemd* call *podman* to start an *nginx* container at boot time:
+At this stage, we're going to deploy a basic application into our Fedora-based virtual machine; let's install `nginx` via `systemd` and `podman`, i.e. have *systemd* call *podman* to start an *nginx* container at boot time, and have it display a simple web-page:
 
 ~~~bash
-[root@localhost ~]# dnf install podman -y
-
-
-Last metadata expiration check: 0:38:21 ago on Thu 19 Mar 2020 03:42:07 AM UTC.
-Dependencies resolved.
-==================================================================================================================================================================================
- Package                                             Architecture                   Version                                                 Repository                       Size
-==================================================================================================================================================================================
-Installing:
- podman                                              x86_64                         2:1.8.1-2.fc31                                          updates                          13 M
+[root@fedora ~]# dnf install podman -y
 (...)
 
-[root@localhost ~]# cat >> /etc/systemd/system/nginx.service << EOF
+[root@fedora ~]# cat >> /etc/systemd/system/nginx.service << EOF
 [Unit]
 Description=Nginx Podman container
 Wants=syslog.service
 [Service]
-ExecStart=/usr/bin/podman run --net=host docker.io/nginxdemos/hello:latest
+ExecStart=/usr/bin/podman run --net=host docker.io/nginxdemos/hello:plain-text
 ExecStop=/usr/bin/podman stop --all
 [Install]
 WantedBy=multi-user.target
 EOF
 
-[root@localhost ~]# systemctl enable --now nginx
+[root@fedora ~]# systemctl enable --now nginx
 
 Created symlink /etc/systemd/system/multi-user.target.wants/nginx.service → /etc/systemd/system/nginx.service.
 
@@ -332,66 +263,49 @@ Created symlink /etc/systemd/system/multi-user.target.wants/nginx.service → /e
 
 (should see "active (running)" in green above)
 
-[root@localhost ~]# logout
+[root@fedora ~]# logout
 Connection to 192.168.123.64 closed.
 
-$
+$ oc whoami
+system:serviceaccount:workbook:cnv
 ~~~
 
-Let's quickly verify that this works as expected - you should be able to navigate directly to the IP address of your machine in your browser - recalling that in my example it's *192.168.123.60*, it may be different for you, but unlikely if you've not created any additional VM's along the way:
-
-<img src="img/nginx-fc31.png"/>
-
-> **NOTE**: These steps are important for both this lab and a future one; please ensure they complete correctly.
-
-We need to shutdown the VM so we can clone it without risking filesystem corruption, but for us to do that we need to change some of the default behaviour of our virtual machine to stop OpenShift and OpenShift virtualisation from automatically restarting our VM if we do try to shut it down. We need to remove the `running: true` line, and replace it with `runStrategy: RerunOnFailure` within the the `vm` object:
+Let's quickly verify that this works as expected - you should be able to navigate directly to the IP address of your machine via `curl` - recalling that in my example it's *192.168.123.64*, it may be different for you, but unlikely if you've not created any additional VM's along the way:
 
 ~~~bash
-$ oc edit vm/fc34-nfs
-(...)
-
-1. Remove the line containing "running: true"
-2. Replace it with "runStrategy: RerunOnFailure"
-3. Save the file and exit the editor
-
-virtualmachine.kubevirt.io/fc34-nfs edited
+$ curl http://192.168.123.69
+Server address: 192.168.123.69:80
+Server name: fedora
+Date: 25/Nov/2021:15:09:21 +0000
+URI: /
+Request ID: 517056307646f72f6d320830b6a9dfb6
 ~~~
 
-> **NOTE**: You can prefix the `oc edit` command with "`EDITOR=<your favourite editor>`" if you'd prefer to use something other than vi to do this work. Also note that "ReRunOnFailure" simply means that OpenShift virtualisation will do its best to automatically restart this VM if a failure has occurred, but won't always enforce it to be running, e.g. if the user shuts it down
+> **NOTE**: We've purposely installed a plain-text server-side option here as we cannot route to the 192.168.123.0/24 network via the internet. In a later step we'll change this to a visual one and we'll expose it via the OpenShift ingress service, and it'll be available as a route. But let's move on!
 
 
-Now reopen the  ssh-session to the Fedora 34 machine and power it off:
+Now that we know our VM is working, we need to shutdown the VM so we can clone it without risking filesystem corruption. We'll use the `virtctl` command to help us with this as it saves us logging back into the VM, and instructs VM shutdown via the guest agent:
 
 ~~~bash
-$ oc get vmi/fc34-nfs
-NAME       AGE   PHASE     IP                  NODENAME
-fc31-nfs   18m   Running   192.168.123.60/24   ocp4-worker1.cnv.example.com
-
-$ ssh root@192.168.123.60
-(password is "redhat")
-
-[root@localhost ~]# poweroff
-[root@localhost ~]# Connection to 192.168.123.60 closed by remote host.
-Connection to 192.168.123.60 closed.
+$ virtctl stop fc34-original
+VM fc34-original was scheduled to stop
 ~~~
 
-Now if you check the list of `vmi` objects you should see that it's marked as `Succeeded` rather than being automatically restarted by OpenShift virtualisation:
+Now if you check the list of `vm` objects you should see that it's marked as `Stopped` rather than being automatically restarted by OpenShift Virtualization:
 
 ~~~bash
-$ oc get vmi
-NAME                    AGE   PHASE       IP                  NODENAME
-fc34-nfs                19m   Succeeded   192.168.123.65/24   ocp4-worker1.cnv.example.com
-rhel8-server-hostpath   91m   Running     192.168.123.63/24   ocp4-worker1.cnv.example.com
-rhel8-server-nfs        94m   Running     192.168.123.62/24   ocp4-worker1.cnv.example.com
+$ oc get vm
+NAME            AGE   STATUS    READY
+fc34-original   37m   Stopped   False
 ~~~
 
 
 
 ### Clone the VM (Option 1)
 
-Now that we've got a working virtual machine with a test workload we're ready to actually clone it, to prove that the built-in cloning utilities work, and that the cloned machine shares the same workload. First we need to create a PV (persistent volume) to clone into. This is done by creating a special resource called a `DataVolume`, this custom resource type is provide by CDI. DataVolumes orchestrate import, clone, and upload operations and help the process of importing data into a cluster. DataVolumes are integrated into OpenShift virtualisation.
+Now that we've got a working virtual machine with a test workload we're ready to actually clone it, to prove that the built-in cloning utilities work, and that the cloned machine shares the same workload. There are a couple of ways of doing this, first we'll use the CLI to do so, and we'll simply clone the underlying storage volume, to do this we'll need to create a PV (persistent volume) to clone into. This is done by creating a special resource called a `DataVolume`, this custom resource type is provide by CDI. DataVolumes orchestrate import, clone, and upload operations and help the process of importing data into a cluster. DataVolumes are integrated into OpenShift Virtualization.
 
-The volume we are creating is named `fc34-clone`, we'll be pulling the data from the volume ("source") `fc34-nfs` and we'll tell the CDI to provision onto a specific node. We're only using this option to demonstrate the annotation, but also because we're going to clone from an NFS-based volume onto a hostpath based volume; this is important because hostpath volumes are not shared-storage based, so the location you specify here is important as that's exactly where the cloned VM will have to run:
+The volume we are creating is named `fc34-clone` and we'll be pulling the data from the volume ("source") `fc34-original`:
 
 ~~~bash
 $ cat << EOF | oc apply -f -
@@ -399,28 +313,32 @@ apiVersion: cdi.kubevirt.io/v1alpha1
 kind: DataVolume
 metadata:
   name: fc34-clone
-  annotations:
-    volume.kubernetes.io/selected-node: ocp4-worker2.cnv.example.com                        
 spec:
   source:
     pvc:
       namespace: default
-      name: fc34-nfs
+      name: fc34-original
   pvc:
+    volumeMode: Block
+    storageClassName: ocs-storagecluster-ceph-rbd
     accessModes:
-      - ReadWriteOnce
-    storageClassName: hostpath-provisioner
+      - ReadWriteMany
     resources:
       requests:
-        storage: 20Gi
+        storage: 40Gi
 EOF
 
 datavolume.cdi.kubevirt.io/fc34-clone created
 ~~~
 
-You can watch the progress with where it will go through `CloneScheduled` and `CloneInProgress` phases along with a handy status precentage:
+Usually, a clone goes through a number of stages, where you can watch the progress where it will go through `CloneScheduled` and `CloneInProgress` phases along with a handy status percentage, but in our case we're using OpenShift Container Storage which takes an instant clone of a volume within the storage platform for us. So I'm providing the below output to show you what it would usually look like on a platform that didn't support such functionality, e.g. NFS, there's no need to type *these* commands:
 
 ~~~bash
+$ oc get pods
+NAME                                              READY   STATUS              RESTARTS   AGE
+3c3943f9-0a5c-4ce9-a913-782f8754f418-source-pod   0/1     ContainerCreating   0          6s
+cdi-upload-fc34-clone                             1/1     Running             0          34s
+
 $ watch -n5 oc get datavolume
 Every 5.0s: oc get datavolume
 
@@ -438,26 +356,24 @@ fc34-clone   Succeeded   100.0%     3m13s
 (Ctrl-C to stop/quit)
 ~~~
 
-> **NOTE**: It may take a few minutes for the clone to start as it's got to pull the CDI clone images down too.
-
-
-
-View all your PVCs, and the new clone:
+Regardless, you should be able to view the status of our clone, and it should say "**Succeeded**", and we should be able to view all your PVCs including the new clone:
 
 ~~~bash
+$ oc get dv/fc34-clone
+NAME         PHASE       PROGRESS   RESTARTS   AGE
+fc34-clone   Succeeded                         4m
+
 $ oc get pvc
-NAME             STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS           AGE
-fc34-clone       Bound    pvc-f3b17f37-1afc-4d55-8caa-a44b34efda2c   79Gi       RWO            hostpath-provisioner   4m15s
-fc34-nfs         Bound    fc34-pv                                    10Gi       RWO,RWX        nfs                    74m
-rhel8-hostpath   Bound    pvc-62e166e0-ddd4-4b40-8cb1-89ee8ee7dfed   79Gi       RWO            hostpath-provisioner   167m
-rhel8-nfs        Bound    nfs-pv1                                    40Gi       RWO,RWX        nfs                    26h
+NAME            STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS                  AGE
+fc34-clone      Bound    pvc-3c3943f9-0a5c-4ce9-a913-782f8754f418   40Gi       RWX            ocs-storagecluster-ceph-rbd   83s
+fc34-original   Bound    pvc-f335830c-d096-4ffa-8018-a1aac3b3cedf   40Gi       RWX            ocs-storagecluster-ceph-rbd   41m
 ~~~
 
 
 
 ### Start the cloned VM
 
-Finally we can start up a new VM using the cloned PVC:
+Finally we can start up a new VM using the cloned PVC, let's create a new definition of a `VirtualMachine` to house this VM and start it automatically (`running: true`):
 
 ~~~bash
 $ cat << EOF | oc apply -f -
@@ -467,20 +383,16 @@ metadata:
   name: fc34-clone
   labels:
     app: fc34-clone
-    flavor.template.kubevirt.io/small: 'true'
-    os.template.kubevirt.io/fedora31: 'true'
+    os.template.kubevirt.io/fedora34: 'true'
     vm.kubevirt.io/template-namespace: openshift
     workload.template.kubevirt.io/server: 'true'
+spec:
 spec:
   running: true
   template:
     metadata:
       labels:
-        flavor.template.kubevirt.io/small: 'true'
-        kubevirt.io/size: small
-        os.template.kubevirt.io/fedora33: 'true'
         vm.kubevirt.io/name: fc34-clone
-        workload.template.kubevirt.io/server: 'true'
     spec:
       domain:
         cpu:
@@ -488,7 +400,6 @@ spec:
           sockets: 1
           threads: 1
         devices:
-          autoattachPodInterface: false
           disks:
             - bootOrder: 1
               disk:
@@ -506,7 +417,7 @@ spec:
           requests:
             memory: 2Gi
       evictionStrategy: LiveMigrate
-      hostname: fc31-clone
+      hostname: fc34-clone
       networks:
         - multus:
             networkName: tuning-bridge-fixed
@@ -524,47 +435,84 @@ virtualmachine.kubevirt.io/fc34-clone created
 After a few minutes you should see the new virtual machine running:
 
 ~~~bash
+$ oc get vm
+NAME            AGE   STATUS    READY
+fc34-clone      84s   Running   True
+fc34-original   76m   Stopped   False
+
 $ oc get vmi
-NAME                    AGE     PHASE       IP                  NODENAME
-NAME               AGE    PHASE       IP                NODENAME
-fc34-clone         59s    Running     192.168.123.61    ocp4-worker2.cnv.example.com
-fc34-nfs           50m    Succeeded   192.168.123.60    ocp4-worker2.cnv.example.com
-rhel8-server-nfs   153m   Running     192.168.178.117   ocp4-worker2.cnv.example.com
+NAME         AGE   PHASE     IP               NODENAME                       READY
+fc34-clone   88s   Running   192.168.123.70   ocp4-worker2.aio.example.com   True
 ~~~
 
 > **Note** Give the command 2-3 minutes to report the IP. 
 
-This machine will also be visible from the console, and you can login using "**root/redhat**" just like before:
+This machine will also be visible from the OpenShift Virtualization console, and you can login using "**root/redhat**" if you want to try:
 
 <img src="img/fc34-clone-console.png"/>
 
 ### Test the clone
 
-Connect your browser to http://192.168.123.61/ (noting that your IP from the clone and that your IP may be different) and you should find the **ngnix** server you configured on the original host, prior to the clone, pleasantly serving your request:
-
-<img src="img/ngnix-clone.png"/>
-
-
-
-That's it! You've proven that your clone has worked, and that the hostpath based volume is an identical copy of the original NFS-based one.
-
-### Clean up
-
-Before moving on to the next lab let's clean up the VMs so we ensure our environment has all the resources it might need; we're going to delete our Fedora VMs and our RHEL8 hostpath VM:
+Like before, we should be able to just directly connect to the VM on port 80 via `curl` and it should show our simple NGINX based application responding... at least it should, if the clone worked properly. Let's try it! Remember to adapt to the IP address of *your* machine:
 
 ~~~bash
-$ oc delete vm/fc34-clone vm/fc34-nfs vm/rhel8-server-hostpath
-virtualmachine.kubevirt.io "fc34-clone" deleted
-virtualmachine.kubevirt.io "fc34-nfs" deleted
-virtualmachine.kubevirt.io "rhel8-server-hostpath" deleted
+$ curl http://192.168.123.70
+Server address: 192.168.123.70:80
+Server name: fedora
+Date: 25/Nov/2021:15:58:20 +0000
+URI: /
+Request ID: 30d16f4250df0d0d82ec2af2ebb60728
 ~~~
 
-> **NOTE**: If you check `oc get vmi` too quickly you might see the VMs in a `Failed` state. This is normal and when you check again they should disappear accordingly.
+There we go, our VM was cloned, at least the backend storage volume was cloned and we created a new virtual machine from it. Now you're probably thinking "wow, that was a lot of work just to clone a VM", and you'd be right! There's a much more simple workflow via the UI, and one that copies over all of the same configuration without us having to define a new VM ourselves. Let's first delete our clone, and then we'll move onto re-cloning the original via the UI:
 
 ~~~bash
+$ oc delete vm/fc34-clone oc delete dv/fc34-clone pvc/fc34-clone
+virtualmachine.kubevirt.io "fc34-clone" deleted
+datavolume.cdi.kubevirt.io "fc34-clone" deleted
+persistentvolumeclaim "fc34-clone" deleted
+~~~
+
+Now, if we navigate to the OpenShift Console, and ensure that we're in the list of Virtual Machines by selecting "**Workloads**" --> "**Virtualization**", we should see our "*fc34-original*" VM as stopped:
+
+<img src="img/vm-stopped.png"/>
+
+Select "*fc34-original*" and then from the "**Actions**" drop-down on the right hand side, select "**Clone Virtual Machine**". This will bring up a new window where we can confirm our requirements:
+
+<img src="img/clone-vm.png"/>
+
+We'll leave the defaults here, but make sure to select "**Start virtual machine on clone**" as this will ensure that our freshly cloned VM is automatically started for us. When you're ready, select the blue "**Clone Virtual Machine**" button at the bottom; this will create an identical virtual machine for us, just with a new name, "*fc34-original-clone*".
+
+As soon as this happens, a new virtual machine will be created and started for you. You can see this in "**Workloads**" --> "**Virtualization**" or via the CLI:
+
+~~~bash
+$ oc get vm
+NAME                  AGE    STATUS    READY
+fc34-original         106m   Stopped   False
+fc34-original-clone   89s    Running   True
+
 $ oc get vmi
-NAME               AGE   PHASE     IP                  NODENAME
-rhel8-server-nfs   23h   Running   192.168.123.62/24   ocp4-worker1.cnv.example.com
+NAME                  AGE   PHASE     IP               NODENAME                       READY
+fc34-original-clone   89s   Running   192.168.123.71   ocp4-worker3.aio.example.com   True
+~~~
+
+Like before, we should be able to confirm that it really is our clone:
+
+~~~bash
+$ curl http://192.168.123.71
+Server address: 192.168.123.71:80
+Server name: fedora
+Date: 25/Nov/2021:16:26:05 +0000
+URI: /
+Request ID: a966b369edd1941e931d5caddcb099df
+~~~
+
+There we go! We have successfully cloned a VM via the CLI (and backend DataVolume) as well as used the UI to do it for us. Let's clean up our clone, and our original before proceeding:
+
+~~~bash
+$ oc delete vm/fc34-original vm/fc34-original-clone
+virtualmachine.kubevirt.io "fc34-original" deleted
+virtualmachine.kubevirt.io "fc34-original-clone" deleted
 ~~~
 
 ### Cloning VM using Openshift Console(Option 2)
