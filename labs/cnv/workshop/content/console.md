@@ -92,7 +92,7 @@ Click "**Next** >" to move to the networking section. Here you will need to clic
 
 Once you have this set click "**Next >**" to move to the "**Storage**" section. First select "**Attach Disk**" and select the `rhel8-nfs` PVC. If you'll recall this PVC sets the RHEL8 image as an endpoint via CDI:
 
-~~~bash
+~~~yaml
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:

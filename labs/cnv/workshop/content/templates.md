@@ -43,7 +43,7 @@ This PVC will be cloned for each new virtual machine created using this template
 
 4. In the **Add boot source to template window**, select **Import via URL (creates PVC)** from the Boot source type list.
 
-5. Input `http://192.168.123.100:81/centos8.img` as the URL of the guest image into the **Import URL** field.
+5. Input `http://%bastion-host%:81/rhel8-kvm.img` as the URL of the guest image into the **Import URL** field.
    
 6. Set **Persistent Volume Claim size** as **20 GiB**. This will also be the size of the root disk of the VMs created by using this template.
    

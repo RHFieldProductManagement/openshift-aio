@@ -21,7 +21,7 @@ networks:
 
 So let's go ahead and create a `VirtualMachine` using our existing Fedora 34 image via a PVC we created previously. *Look closely, we are using our cloned PVC so we get the benefits of the installed **NGINX** server, qemu-guest-agent and ssh configuration!*
 
-```execute
+```execute-1
 cat << EOF | oc apply -f -
 apiVersion: kubevirt.io/v1alpha3
 kind: VirtualMachine
@@ -84,7 +84,7 @@ virtualmachine.kubevirt.io/fc34-podnet created
 
 We can see the Virtual Machine Instance is created on the pod network, note the IP address in the 10.12x range:
 
-```execute
+```execute-1
 oc get vmi
 ```
 
@@ -102,6 +102,10 @@ oc get pods -o wide
 ```
 
 Check the VM's IP:
+
+```execute-1
+oc get pods | grep fc31-podnet
+```
 
 ~~~bash
 NAME                              READY   STATUS    RESTARTS   AGE   IP             NODE                           NOMINATED NODE   READINESS GATES
@@ -126,6 +130,11 @@ $ oc describe pod/virt-launcher-fc34-podnet-cxztw | grep -A 9 networks-status
 
 As this lab guide is being hosted within the same cluster, you should be able to ping and connect into this VM directly from the terminal window on this IP, adjust to suit your config:
 
+
+```copy
+ping -c1 10.128.2.27
+```
+
 ~~~bash
 $ ping -c1 10.129.2.210
 PING 10.129.2.210 (10.129.2.210) 56(84) bytes of data.
@@ -134,8 +143,11 @@ PING 10.129.2.210 (10.129.2.210) 56(84) bytes of data.
 --- 10.129.2.210 ping statistics ---
 1 packets transmitted, 1 received, 0% packet loss, time 0ms
 rtt min/avg/max/mdev = 1.692/1.692/1.692/0.000 ms
+~~~
 
 
+
+~~~bash
 $ ssh root@10.129.2.210
 root@10.129.2.210's password:
 (password is "redhat")
@@ -169,13 +181,11 @@ URI: /
 Request ID: ae6332e46227c84fe604b6f5c9ec0822
 ~~~
 
-
-
 ## Exposing the VM to the outside world
 
 In this step we're going to interface our VM to the outside world using OpenShift/Kubernetes networking constructs, namely services and routes; this will make our VM available via the OpenShift ingress service and you should be able to hit our VM from the internet. As validated in the previous step, our VM has NGINX running on port 80, let's use the `virtctl` utility to expose the virtual machine instance on that port. First `expose` it on port 80 and create a service (an entrypoint) based on our VM:
 
-```execute
+```execute-1
 virtctl expose virtualmachineinstance fc34-podnet --name fc34-service --port 80
 ```
 
@@ -185,7 +195,7 @@ This should create a new service for us:
 Service fc34-service successfully exposed for virtualmachineinstance fc34-podnet
 ~~~
 
-```execute
+```execute-1
 oc get svc/fc34-service
 ```
 
@@ -198,7 +208,7 @@ fc34-service    ClusterIP   172.30.31.70    <none>        80/TCP    34s
 
 Next we create a route for our service, this will associate a URL that we can connect to:
 
-```execute
+```execute-1
 oc create route edge --service=fc34-service
 ```
 
@@ -210,7 +220,7 @@ route.route.openshift.io/fc34-service created
 
 And view the route:
 
-```execute
+```execute-1
 oc get routes
 ```
 
@@ -227,13 +237,8 @@ You can now visit the endpoint at [https://fc34-service-default.apps.%cluster_su
 
 > **NOTE**: If you get an "Application is not available" message, make sure that you're accessing the route with **https** - the router performs TLS termination for us, and therefore there's not actually anything listening on port 80 on the outside world, it just forwards 443 (OpenShift ingress) -> 80 (pod network).
 
-
-
 There we go, we've successfully exposed our VM onto the internet via the pod network, just like any other containerised application. Let's cleanup this VM before proceeding:
 
-```execute
+```execute-1
 oc delete vm/fc34-podnet
 ```
-
-
-

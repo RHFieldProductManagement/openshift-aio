@@ -85,7 +85,7 @@ In there you'll spot the interface that we'd like to use to create a bridge, `en
 Now we can apply a new `NodeNetworkConfigurationPolicy` for our worker nodes to setup a desired state for `br1` via `enp3s0`, noting that in the `spec` we specify a `nodeSelector` to ensure that this **only** gets applied to our worker nodes; eventually allowing us to attach VM's to this bridge:
 
 ```execute-1
-$ cat << EOF | oc apply -f -
+cat << EOF | oc apply -f -
 apiVersion: nmstate.io/v1alpha1
 kind: NodeNetworkConfigurationPolicy
 metadata:
@@ -119,7 +119,7 @@ nodenetworkconfigurationpolicy.nmstate.io/br1-enp3s0-policy-workers created
 Then enquire as to whether it was successfully applied:
 
 ```execute-1
-$ oc get nnce
+oc get nnce
 ```
 
 Check the status:
@@ -143,8 +143,14 @@ br1-enp3s0-policy-workers   Available
 
 We can also dive into the `NetworkNodeConfigurationPolicy` (**nncp**) a little further:
 
-~~~bash
-$ oc get nncp/br1-enp3s0-policy-workers -o yaml
+
+```execute-1
+oc get nncp/br1-enp3s0-policy-workers -o yaml
+```
+
+You will see NetworkNodeConfigurationPolicy definition in yaml format:
+
+~~~yaml
 apiVersion: nmstate.io/v1beta1
 kind: NodeNetworkConfigurationPolicy
 metadata:
@@ -191,24 +197,64 @@ status:
 
 If you'd like to fully verify that this has been successfully configured on the host, we can do that easily via the `oc debug node` option (pick any of your workers):
 
+```execute-1
+oc debug node/ocp4-worker1.%node-network-domain%
+```
+
+Wait for debug pod:
+
 ~~~bash
-$ oc debug node/ocp4-worker1.%node-network-domain%
 Starting pod/ocp4-worker1aioexamplecom-debug ...
 To use host binaries, run `chroot /host`
 Pod IP: 192.168.123.104
 If you don't see a command prompt, try pressing enter.
+~~~
 
-sh-4.4# ip link show dev enp3s0
+Now execute following:
+
+```execute-1
+chroot /host
+```
+
+Then:
+
+```execute-1
+ip link show dev enp3s0
+```
+
+This should show followingL
+~~~bash
 4: enp3s0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel master br1 state UP mode DEFAULT group default qlen 1000
     link/ether 52:54:00:00:01:04 brd ff:ff:ff:ff:ff:ff
+~~~
 
-sh-4.4# exit
+Now exit from debug pod
 
+```execute-1
+exit
+```
+
+```execute-1
+exit
+```
+
+This will remove the debug pod as follows
+
+~~~bash
 Removing debug pod ...
+~~~
 
-$ oc whoami
+Ensure you are in the correct shell:
+
+```execute-1
+oc whoami
+```
+
+You should see *cnv* service account:
+~~~bash
 system:serviceaccount:workbook:cnv
 ~~~
+
 
 As you can see, *enp3s0* is attached to "*br1*" and has the MAC address of the underlying "physical" adaptor.
 
@@ -216,8 +262,9 @@ As you can see, *enp3s0* is attached to "*br1*" and has the MAC address of the u
 
 Now that the "physical" networking is configured on the underlying worker nodes, we need to then define a `NetworkAttachmentDefinition` so that when we want to use this bridge, OpenShift and OpenShift Virtualization know how to attach into it. This associates the bridge we just defined with a logical name, known here as '**tuning-bridge-fixed**':
 
-~~~bash
-$ cat << EOF | oc apply -f -
+
+```execute-1
+cat << EOF | oc apply -f -
 apiVersion: "k8s.cni.cncf.io/v1"
 kind: NetworkAttachmentDefinition
 metadata:
@@ -239,7 +286,12 @@ spec:
     ]
   }'
 EOF
+```
 
+
+Verify the Network Attchment Definition is created now:
+
+~~~bash
 networkattachmentdefinition.k8s.cni.cncf.io/tuning-bridge-fixed created
 ~~~
 

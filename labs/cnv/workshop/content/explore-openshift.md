@@ -47,7 +47,7 @@ You can get it from the OpenShift installation directory in the bastion node.
 First ssh to bastion node:
 
 ```execute-1
-ssh %bastion-username%@192.168.123.100
+ssh %bastion-username%@%bastion-host%
 ```
 
 When you see the prompt enter **%bastion-password%** as password

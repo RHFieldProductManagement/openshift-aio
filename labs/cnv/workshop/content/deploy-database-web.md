@@ -54,7 +54,7 @@ This will make OpenShift to create both *VirtualMachine* and *Service* objects. 
 
 It will take some time MongoDB VM to start and initialize. You can check the status of VM in the Web Console by clicking on the VM  details in the Topology View or execute following command in the terminal 
 
-```execute
+```execute-1
 oc get vm
 ```
 
@@ -82,7 +82,7 @@ On the login screen, enter the following credentials:
 
 Check whether *mongod* service is running by executing following:
 
-```execute
+```execute-1
 systemctl status mongod
 ```
 
@@ -131,5 +131,125 @@ If you check your browser now:
  <br/> 
 
 ![Parksmap](img/parksmap-nationalparks-ui.png)  
+
+### 5. Understand the MongoDB Virtual Machine Template
+
+As you've seen so far, the web console and the templates makes it very easy to deploy things onto
+OpenShift. When we deploy the database virtual machine, we pass in some values for configuration.
+These values are used to set the username, password, name of the database, etc... 
+
+Let's have a look at the template definition. Execute the following command to find the template:
+
+```execute-1
+oc get templates -n openshift| grep mongodb-vm-template
+```
+
+This should list the MongoDB Virtual Machine Template we are looking for:
+
+~~~bash
+mongodb-vm-template                                                                                                                8 (all set)       2
+~~~
+
+Now let's check the template definition:
+
+```execute-1
+oc get template mongodb-vm-template -n openshift -o yaml
+```
+
+There are many details, but let's focus on the `cloudInitNoCloud` section. This is the part where put the instructions to initialize the Virtual Machine. 
+~~~yaml
+...
+
+- cloudInitNoCloud:
+  userData: |-
+    #cloud-config
+    user: ${VM_USER_NAME}
+    password: ${VM_PASSWORD}
+    chpasswd: { expire: False }
+    yum_repos:
+      mongodb-org-3.6:
+        baseurl: https://repo.mongodb.org/yum/redhat/$releasever/mongodb-org/3.6/x86_64/
+        enabled: true
+        gpgcheck: true
+        gpgkey: https://www.mongodb.org/static/pgp/server-3.6.asc
+        name: MongoDB Repository
+    packages:
+      - bash-completion
+      - mongodb-org
+    runcmd:
+      - systemctl daemon-reload
+      - systemctl enable mongod.service
+      - systemctl start mongod.service
+      - >
+        mongo admin --host localhost --eval "db.createUser({user: 'root', pwd: '${MONGODB_ADMIN_PASSWORD}', roles: [{role: 'root', db: 'admin'}]});"
+      - >
+        mongo admin --host localhost --eval "db.getSiblingDB('mongodb').createUser({user: '${MONGODB_USER}', pwd: '${MONGODB_PASSWORD}', roles: [{role: 'dbOwner', db: '${MONGODB_DATABASE}'}]});"
+      - >
+        sed -i -e 's/bindIp: 127.0.0.1/bindIp: 0.0.0.0/g' /etc/mongod.conf
+      - >
+        sed -i -e 's/^#security:/security:/g' /etc/mongod.conf
+      - >
+        sed -i -e '/^security:/a \  authorization: enabled' /etc/mongod.conf
+      - systemctl restart mongod.service
+name: cloudinitdisk
+
+...
+~~~
+
+Let's check the VirtualMachine object now
+
+```execute-1
+ oc get vm mongodb-nationalparks -n %parksmap-project-namespace% -o yaml
+```
+
+When we instantiate the template, OpenShift replaces the parameters with the values provided :
+
+~~~yaml
+...
+ - cloudInitNoCloud:
+    userData: |-
+      #cloud-config
+      user: redhat
+      password: openshift
+      chpasswd: { expire: False }
+      yum_repos:
+        mongodb-org-3.6:
+          baseurl: https://repo.mongodb.org/yum/redhat/$releasever/mongodb-org/3.6/x86_64/
+          enabled: true
+          gpgcheck: true
+          gpgkey: https://www.mongodb.org/static/pgp/server-3.6.asc
+          name: MongoDB Repository
+      packages:
+        - bash-completion
+        - mongodb-org
+      runcmd:
+        - systemctl daemon-reload
+        - systemctl enable mongod.service
+        - systemctl start mongod.service
+        - >
+          mongo admin --host localhost --eval "db.createUser({user: 'root', pwd: 'mongodb', roles: [{role: 'root', db: 'admin'}]});"
+        - >
+          mongo admin --host localhost --eval "db.getSiblingDB('mongodb').createUser({user: 'mongodb', pwd: 'mongodb', roles: [{role: 'dbOwner', db: 'mongodb'}]});"
+        - >
+          sed -i -e 's/bindIp: 127.0.0.1/bindIp: 0.0.0.0/g' /etc/mongod.conf
+        - >
+          sed -i -e 's/^#security:/security:/g' /etc/mongod.conf
+        - >
+          sed -i -e '/^security:/a \  authorization: enabled' /etc/mongod.conf
+        - systemctl restart mongod.service
+  name: cloudinitdisk
+...
+~~~
+
+OpenShift utilizes `cloud-init` which is a widely adopted project used for early initialization of a VM. Used by cloud providers such as AWS and GCP, `cloud-init` has established itself as the defacto method of providing startup scripts to VMs.
+
+Cloud-init documentation can be found here: 
+[https://cloudinit.readthedocs.io/en/latest/](https://cloudinit.readthedocs.io/en/latest/)
+
+OpenShift Virtualization supports cloud-init's "NoCloud" and "ConfigDrive" datasources which involve injecting startup scripts into a VM instance through the use of an ephemeral disk. VMs with the cloud-init package installed will detect the ephemeral disk and execute custom userdata scripts at boot.
+
+Other than cloud-init, OpenShift Virtualization also supports `SysPrep` whichan automation tool for Windows that automates Windows installation, setup, and custom software provisioning. 
+
+So you can now automate your Windows virtual machine setup by uploading answer files in XML format in the Advanced → SysPrep section of the Create virtual machine from template wizard
 
 
