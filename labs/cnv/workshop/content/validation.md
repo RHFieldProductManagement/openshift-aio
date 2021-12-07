@@ -155,7 +155,7 @@ Now you should be able to see the route endpoint as below:
 
 ~~~bash
 NAME          HOST/PORT                                  PATH   SERVICES      PORT       TERMINATION   WILDCARD
-duckhunt-js   duckhunt-js-test.apps.%cluster_subdomain%          duckhunt-js   8080-tcp                 None
+duckhunt-js   duckhunt-js-test.%cluster_subdomain%          duckhunt-js   8080-tcp                 None
 ~~~
 
 You should be able to open up the application in the same browser that you're reading this guide from, either copy and paste the address, or click this link: [http://duckhunt-js-test.%cluster_subdomain%](http://duckhunt-js-test.%cluster_subdomain%). If your OpenShift cluster is working as expected and the application build was successful, you should now be able to have a quick play with this... good luck ;-)

@@ -33,7 +33,7 @@ Whilst this does its thing, you can move to the '**Workloads**' --> '**Pods**' m
 You can also return to the 'terminal' tab in your hosted lab guide and watch via the CLI:
 
 ```execute-1
-$ watch -n2 'oc get pods -n openshift-cnv'
+watch -n2 'oc get pods -n openshift-cnv'
 ```
 
 > **NOTE**: It may take a few minutes for the pods to start up properly. Press **Ctrl+C** to exit the watch command.
