@@ -16,6 +16,8 @@ config:
       value: /root/ocp-install/auth/kubeadmin-password
     - name: node-network-domain
       value: aio.example.com
+    - name: cloud-image-name-fedora
+      value: Fedora-Cloud-Base-34-1.2.x86_64.raw
 modules:
     welcome:
         name: Welcome

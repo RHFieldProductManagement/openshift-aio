@@ -21,8 +21,9 @@ networks:
 
 So let's go ahead and create a `VirtualMachine` using our existing Fedora 31 image via a PVC we created previously. *Look closely, we are using our cloned PVC so we get the benefits of the installed **NGINX** server, qemu-guest-agent and ssh configuration!*
 
-~~~bash
-$ cat << EOF | oc apply -f -
+
+```execute-1
+cat << EOF | oc apply -f -
 apiVersion: kubevirt.io/v1alpha3
 kind: VirtualMachine
 metadata:
@@ -79,14 +80,20 @@ spec:
           persistentVolumeClaim:
             claimName: fc31-clone
 EOF
-    
+```
+
+
+~~~bash    
 virtualmachine.kubevirt.io/fc31-podnet created    
 ~~~
 
 We can see the Virtual Machine Instance is created on the pod network:
 
+```execute-1
+oc get vmi/fc31-podnet
+```
+
 ~~~bash
-$ oc get vmi/fc31-podnet
 NAME               AGE   PHASE     IP                  NODENAME
 fc31-podnet        77s   Running   10.128.2.66         ocp4-worker1.cnv.example.com
 ~~~
@@ -103,15 +110,21 @@ So, what do we do?
 
 If you recall, all VMs are managed by pods, and the pod manages the networking. So we can ask the pod associated with the VM for the actual IP ranges being managed here. It's easy ... first find the name of the `launcher` pod associated with this instance:
 
+```execute-1
+oc get pods | grep fc31-podnet
+```
+
 ~~~bash
-$ oc get pods | grep fc31-podnet
 virt-launcher-fc31-podnet-t9w8w             1/1     Running     0          62m
 ~~~
 
 Then let's ask check with the *pod* for the actual IPs it is managing for the VM:
 
-~~~bash
- $ oc describe pod/virt-launcher-fc31-podnet-t9w8w | grep -A 11 networks-status
+```copy
+oc describe pod/virt-launcher-fc31-podnet-t9w8w | grep -A 11 networks-status
+```
+
+~~~yaml
  Annotations:  k8s.v1.cni.cncf.io/networks-status:
                 [{
                     "name": "openshift-sdn",
@@ -128,16 +141,22 @@ Then let's ask check with the *pod* for the actual IPs it is managing for the VM
 
 As this lab guide is being hosted within the same cluster, you should be able to ping and connect into this VM directly from the terminal window on this IP. And when we connect to the guest we will be able see that the IP assigned to the NIC address is indeed different as it's being masqueraded by the underlying host:
 
+
+```copy
+ping -c1 10.128.2.27
+```
+
 ~~~bash
-[~] $ ping -c1 10.128.2.27
 PING 10.128.2.27 (10.128.2.27) 56(84) bytes of data.
 64 bytes from 10.128.2.27: icmp_seq=1 ttl=63 time=1.69 ms
 
 --- 10.128.2.27 ping statistics ---
 1 packets transmitted, 1 received, 0% packet loss, time 0ms
 rtt min/avg/max/mdev = 1.692/1.692/1.692/0.000 ms
+~~~
 
 
+~~~bash
 [~] $ ssh root@10.128.2.27
 root@10.128.2.27's password:
 (password is "redhat")
@@ -153,11 +172,14 @@ root@10.128.2.27's password:
 [root@fc31-podnet ~]# exit
 logout
 Connection to 10.128.2.27 closed.
-
 $
 ~~~
 
 And again, if you ask OpenShift for the IP, the qemu-guest-agent supplies the *actual* IP that the VM is set to, just like it's designed to do.
+
+```execute-1
+oc get vmi/fc31-podnet
+```
 
 ~~~bash
 [~] $ oc get vmi/fc31-podnet
