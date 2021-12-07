@@ -311,7 +311,7 @@ fc31-podnet        37m   Running   10.0.2.2/24         ocp4-worker2.%node-networ
 Now we know which worker it's on we can jump to the VM via the underlying hosts `NodePort` (password is "redhat"):
 
 ```copy
-ssh root@oocp4-worker2.%node-network-domain% -p 32269
+ssh root@ocp4-worker2.%node-network-domain% -p 32269
 ```
 
 
@@ -335,7 +335,7 @@ logout
 ```
 
 ~~~bash
-Connection to oocp4-worker2.%node-network-domain% closed.
+Connection to ocp4-worker2.%node-network-domain% closed.
 
 $
 ~~~

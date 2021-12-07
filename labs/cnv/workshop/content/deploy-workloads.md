@@ -93,7 +93,7 @@ This command will list the VirtualMachineInstance objects:
 
 ~~~bash
 NAME               AGE   PHASE     IP    NODENAME                       READY
-rhel8-server-ocs   15s   Running         ocp4-worker3.aio.example.com   True
+rhel8-server-ocs   15s   Running         ocp4-worker3.%node-network-domain%   True
 ~~~
 
 > **NOTE**: A `vm` object is the definition of the virtual machine, whereas a `vmi` is an instance of that virtual machine definition. In addition, you need to have the `qemu-guest-agent` installed in the guest for the IP address to show in this list, and it may take a minute or two to appear.
@@ -113,7 +113,7 @@ virt-launcher-rhel8-server-ocs-z5rmr   1/1     Running   0          3m5s
 
 Then execute following to describe the details:
 
-```execute-1
+```copy
 oc describe pod virt-launcher-rhel8-server-ocs-z5rmr
 ```
 
@@ -123,7 +123,7 @@ This command will list pod details in yaml format:
 Name:         virt-launcher-rhel8-server-ocs-z5rmr
 Namespace:    default
 Priority:     0
-Node:         ocp4-worker3.aio.example.com/192.168.123.106
+Node:         ocp4-worker3.%node-network-domain%/192.168.123.106
 Start Time:   Mon, 08 Nov 2021 13:47:23 +0000
 Labels:       kubevirt.io=virt-launcher
               kubevirt.io/created-by=8d58ce9f-61bd-4c5f-82d1-15dbc9c3897e
@@ -179,7 +179,7 @@ virt-launcher-rhel8-server-ocs-z5rmr   1/1     Running   0          30h
 
 Execute following to open a bash shell in the pod:
 
-```execute-1
+```copy
 oc exec -it virt-launcher-rhel8-server-ocs-z5rmr bash
 ```
 And then you can run the usual virsh commands:
@@ -323,7 +323,7 @@ This is your host:
 
 ~~~bash
 NAME               AGE   PHASE     IP               NODENAME                       READY
-rhel8-server-ocs   30h   Running   192.168.123.64   ocp4-worker3.aio.example.com   True
+rhel8-server-ocs   30h   Running   192.168.123.64   ocp4-worker3.%node-network-domain%   True
 ~~~
 
 Then connect to it and track back the link - here you'll need to adjust the commands below - if your veth pair on the pod side was **"net1@if29"** then the **ifindex** in the command below will be **"29"**, if it was **"net1@if5"** then **"ifindex"** will be **"5"** and so on...
@@ -331,7 +331,7 @@ Then connect to it and track back the link - here you'll need to adjust the comm
 To do this we need to get to the worker running our virtual machine, and we can use the `oc debug node` function to do this (adjust to suit the host of your virtual machine from the previous command):
 
 ```execute-1
-oc debug node/ocp4-worker3.aio.example.com
+oc debug node/ocp4-worker3.%node-network-domain%
 ```
 
 This will open a debug pod:
@@ -504,8 +504,8 @@ oc get vmi
 And after a few seconds, this should launch...
 ~~~bash
 NAME                    AGE   PHASE     IP               NODENAME                       READY
-rhel8-server-hostpath   71s   Running   192.168.123.65   ocp4-worker2.aio.example.com   True
-rhel8-server-ocs        30h   Running   192.168.123.64   ocp4-worker3.aio.example.com   True
+rhel8-server-hostpath   71s   Running   192.168.123.65   ocp4-worker2.%node-network-domain%   True
+rhel8-server-ocs        30h   Running   192.168.123.64   ocp4-worker3.%node-network-domain%   True
 ~~~
 
 Now look deeper:
@@ -521,7 +521,7 @@ And looking deeper we can see the hostpath claim we explored earlier being utili
 Name:         virt-launcher-rhel8-server-hostpath-9sqxm
 Namespace:    default
 Priority:     0
-Node:         ocp4-worker2.aio.example.com/192.168.123.105
+Node:         ocp4-worker2.%node-network-domain%/192.168.123.105
 Start Time:   Tue, 09 Nov 2021 20:33:22 +0000
 Labels:       kubevirt.io=virt-launcher
               kubevirt.io/created-by=7a19cb48-18bb-4d16-a7eb-4f7811675c17
@@ -598,7 +598,7 @@ oc get vmi/rhel8-server-hostpath
 
 ~~~bash
 NAME                    AGE     PHASE     IP               NODENAME                       READY
-rhel8-server-hostpath   6m43s   Running   192.168.123.65   ocp4-worker2.aio.example.com   True
+rhel8-server-hostpath   6m43s   Running   192.168.123.65   ocp4-worker2.%node-network-domain%   True
 ~~~
 
 And get the name of the launcher pod:
@@ -638,7 +638,7 @@ oc describe pod virt-launcher-rhel8-server-hostpath-9sqxm | grep "Node:"
 Then you should see the worker node that the pod is running on:
 
 ~~~bash
-Node:         ocp4-worker2.aio.example.com/192.168.123.105
+Node:         ocp4-worker2.%node-network-domain%/192.168.123.105
 ~~~
 
 
@@ -649,7 +649,7 @@ This will open a debug pod:
 
 
 ```execute-1
-oc debug node/ocp4-worker2.aio.example.com
+oc debug node/ocp4-worker2.%node-network-domain%
 ```
 
 ~~~bash
