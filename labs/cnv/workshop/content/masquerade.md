@@ -182,7 +182,6 @@ oc get vmi/fc31-podnet
 ```
 
 ~~~bash
-[~] $ oc get vmi/fc31-podnet
 NAME          AGE   PHASE     IP            NODENAME
 fc31-podnet   74m   Running   10.0.2.2/24   ocp4-worker2.cnv.example.com
 ~~~
@@ -197,44 +196,73 @@ In this step we're going to interface our VM to the outside world using OpenShif
 
 At the moment `virtctl` must be downloaded from the upstream Kubevirt repository as it's not yet packaged in a Red Hat repository or via an RPM, therefore we need to pull it directly:
 
-~~~bash
-$ export KUBEVIRT_VERSION=$(curl -s https://api.github.com/repos/kubevirt/kubevirt/releases | grep tag_name | grep -v -- - | sort -V | tail -1 | awk -F':' '{print $2}' | sed 's/,//' | xargs)
 
-$ curl -L -o virtctl https://github.com/kubevirt/kubevirt/releases/download/${KUBEVIRT_VERSION}/virtctl-${KUBEVIRT_VERSION}-linux-amd64
-(...)
+```execute-1
+export KUBEVIRT_VERSION=$(curl -s https://api.github.com/repos/kubevirt/kubevirt/releases | grep tag_name | grep -v -- - | sort -V | tail -1 | awk -F':' '{print $2}' | sed 's/,//' | xargs)
+```
 
-$ chmod +x virtctl
-~~~
+```execute-1
+curl -L -o virtctl https://github.com/kubevirt/kubevirt/releases/download/${KUBEVIRT_VERSION}/virtctl-${KUBEVIRT_VERSION}-linux-amd64
+```
+
+Add permission 
+```execute-1
+chmod +x virtctl
+```
 
 >**Note** If you have trouble with the above url's and can't download the virtctl client just go to https://github.com/kubevirt/kubevirt/releases/ and click on the latest release and find the `virtctl-VERSION-rc.1-linux-amd64` file. Copy the link location and download that URL with `curl -L -o virtctl URL`
 
 If you remember, our Fedora 31 image has NGINX running on port 80, let's use the `virtctl` utility to expose the virtual machine instance on that port:
 
-~~~bash
-$ ./virtctl expose virtualmachineinstance fc31-podnet --name fc31-service --port 80
-Service fc31-service successfully exposed for virtualmachineinstance fc31-podnet
+```execute-1
+./virtctl expose virtualmachineinstance fc31-podnet --name fc31-service --port 80
+```
 
-$ oc get svc/fc31-service
+You should see an output similar to below:
+
+~~~bash
+Service fc31-service successfully exposed for virtualmachineinstance fc31-podnet
+~~~
+
+
+Then check the service:
+
+```execute-1
+oc get svc/fc31-service
+```
+
+~~~bash
 NAME            TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)   AGE
 fc31-service2   ClusterIP   172.30.202.35   <none>        80/TCP    34s
 ~~~
 
-Next we create a route for our service:
+Next we create a route (ingress) for our service:
+
+```execute-1
+oc create route edge --service=fc31-service
+```
+
+A route should be created:
 
 ~~~bash
-$ oc create route edge --service=fc31-service
 route.route.openshift.io/fc31-service created
 ~~~
 
 And view the route:
 
+
+```execute-1
+oc get routes
+```
+
+And get the endpointL 
+
 ~~~bash
-$ oc get routes
 NAME            HOST/PORT                                    PATH   SERVICES        PORT    TERMINATION   WILDCARD
-fc31-service    fc31-service-default.apps.cnv.example.com           fc31-service    <all>   edge          None
+fc31-service    fc31-service-default.%cluster_subdomain%           fc31-service    <all>   edge          None
 ~~~
 
-You can now visit the endpoint at [https://fc31-service-default.apps.cnv.example.com/](https://fc31-service-default.apps.cnv.example.com/) in a new browser tab and find the NGINX server from your Fedora based VM.
+You can now visit the endpoint at [https://fc31-service-default.%cluster_subdomain%](https://fc31-service-default.%cluster_subdomain%) in a new browser tab and find the NGINX server from your Fedora based VM.
 
 <img src="img/masq-https.png"/>
 
@@ -245,34 +273,56 @@ You can now visit the endpoint at [https://fc31-service-default.apps.cnv.example
 ### Via the NodePort service
 In this step we're going to further expose our server, but via SSH, and not the web server port. To do that we'll use a `NodePort`, which exposes the service on the underlying worker node's IP, but on a custom port. Let's create a new service via NodePort; in this case we name it `fc31-ssh-node`:
 
+
+```execute-1
+./virtctl expose virtualmachineinstance fc31-podnet --name fc31-ssh-node --type NodePort --port 22
+```
+
+You should see an output similar to below:
+
+
 ~~~bash
-$ ./virtctl expose virtualmachineinstance fc31-podnet --name fc31-ssh-node --type NodePort --port 22
 Service fc31-ssh-node successfully exposed for virtualmachineinstance fc31-podnet
 ~~~
 
 And check which port has been allocated:
 
+```execute-1
+oc get svc/fc31-ssh-node
+```
+
 ~~~bash
-$ oc get svc/fc31-ssh-node
 NAME            TYPE           CLUSTER-IP      EXTERNAL-IP                            PORT(S)        AGE
 fc31-ssh-node   NodePort       172.30.72.188   <none>                                 22:32269/TCP   4s
 ~~~
 
 In this case our node is accessible on port **32269**. Review which node has been deployed to:
 
+
+```execute-1
+oc get vmi/fc31-podnet
+```
+
 ~~~bash
-$ oc get vmi/fc31-podnet
 NAME               AGE   PHASE     IP                  NODENAME
-fc31-podnet        37m   Running   10.0.2.2/24         ocp4-worker2.cnv.example.com
+fc31-podnet        37m   Running   10.0.2.2/24         ocp4-worker2.%node-network-domain%
 ~~~
 
-Now we know which worker it's on we can jump to the VM via the underlying hosts `NodePort`:
+Now we know which worker it's on we can jump to the VM via the underlying hosts `NodePort` (password is "redhat"):
+
+```copy
+ssh root@oocp4-worker2.%node-network-domain% -p 32269
+```
+
+
+
+```execute-1
+uname -a
+```
+
+You should see something similar below:
 
 ~~~bash
-$ ssh root@ocp4-worker2.cnv.example.com -p 32269
-(password is "redhat")
-
-[root@fc31-podnet ~]# uname -a
 Linux fc31-podnet 5.3.7-301.fc31.x86_64 #1 SMP Mon Oct 21 19:18:58 UTC 2019 x86_64 x86_64 x86_64 GNU/Linux
 ~~~
 
@@ -280,9 +330,12 @@ Linux fc31-podnet 5.3.7-301.fc31.x86_64 #1 SMP Mon Oct 21 19:18:58 UTC 2019 x86_
 
 Be sure to logout of the VM before proceeding:
 
+```execute-1
+logout
+```
+
 ~~~bash
-[root@fc31-podnet ~]# logout
-Connection to ocp4-worker2.cnv.example.com closed.
+Connection to oocp4-worker2.%node-network-domain% closed.
 
 $
 ~~~
@@ -291,15 +344,18 @@ $
 
 We can also create a service to expose port 22 directly on the cluster so we won't need an alternate port. As before expose an ssh service; in this case we name it `fc31-ssh`:
 
-~~~bash
-$ ./virtctl expose virtualmachineinstance fc31-podnet --name fc31-ssh --port 22
+```execute-1
+./virtctl expose virtualmachineinstance fc31-podnet --name fc31-ssh --port 22
 Service fc31-ssh successfully exposed for virtualmachineinstance fc31-podnet
-~~~
+```
 
 We can now see it in our `oc get svc` output:
 
+```execute-1
+oc get svc/fc31-ssh
+```
+
 ~~~bash
-$ oc get svc/fc31-ssh
 NAME            TYPE           CLUSTER-IP       EXTERNAL-IP                            PORT(S)        AGE
 fc31-ssh        ClusterIP      172.30.212.222   <none>                                 22/TCP         7s
 ~~~
