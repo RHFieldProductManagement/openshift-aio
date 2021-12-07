@@ -226,7 +226,6 @@ metadata:
     vm.kubevirt.io/template-namespace: openshift
     workload.template.kubevirt.io/server: 'true'
 spec:
-spec:
   running: true
   template:
     metadata:
