@@ -322,7 +322,7 @@ persistentvolumeclaim "rhel8-ocs" deleted
 persistentvolumeclaim "rhel8-hostpath" deleted
 ~~~
 
-##Live Migration using GUI (Option 2)
+## Live Migration using GUI (Option 2)
 
 You can use current VM for Live Migration test. I'll need to click detail.Then "**Action**" and "**Migrate Virtual Machine**" button.
 

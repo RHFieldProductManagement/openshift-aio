@@ -699,7 +699,7 @@ virtualmachine.kubevirt.io "fc34-original" deleted
 virtualmachine.kubevirt.io "fc34-original-clone" deleted
 ~~~
 
-### Cloning VM using Openshift Console(Option 2)
+## Cloning VM using Openshift Console(Option 2)
 
 Firstly, we are installing httpd package for test.You can use same virtual machine as you have created before
 

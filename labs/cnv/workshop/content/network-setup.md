@@ -8,7 +8,7 @@ The first step is to use the new Kubernetes NetworkManager state configuration t
 
 
 ```execute-1
-oc get nns/ocp4-worker1.cnv.example.com -o yaml
+oc get nns/ocp4-worker1.%node-network-domain% -o yaml
 ```
 
 This will display the NodeNetworkState in yaml format

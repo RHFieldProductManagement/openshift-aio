@@ -48,7 +48,7 @@ spec:
           type: q35
         resources:
           requests:
-            memory: 1024M
+            memory: 512M
       evictionStrategy: LiveMigrate
       networks:
         - multus:
@@ -461,7 +461,7 @@ spec:
           type: q35
         resources:
           requests:
-            memory: 2048M
+            memory: 512M
       evictionStrategy: LiveMigrate
       networks:
         - multus:
@@ -469,7 +469,7 @@ spec:
           name: tuning-bridge-fixed
       terminationGracePeriodSeconds: 0
       volumes:
-      - name: rhel8-ocs
+      - name: rhel8-hostpath
         persistentVolumeClaim:
           claimName: rhel8-hostpath
 EOF
