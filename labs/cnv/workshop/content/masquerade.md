@@ -132,7 +132,7 @@ As this lab guide is being hosted within the same cluster, you should be able to
 
 
 ```copy
-ping -c1 10.128.2.27
+ping -c1 10.129.2.210
 ```
 
 ~~~bash
