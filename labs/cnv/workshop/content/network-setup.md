@@ -8,7 +8,7 @@ The first step is to use the new Kubernetes NetworkManager state configuration t
 
 
 ```execute-1
-oc get nns/ocp4-worker1.cnv.example.com -o yaml
+oc get nns/ocp4-worker1.aio.example.com -o yaml
 ```
 
 This will display the NodeNetworkState in yaml format
@@ -122,7 +122,7 @@ Then enquire as to whether it was successfully applied:
 oc get nnce
 ```
 
-Check the status:
+Check the status (it may take a few checks before all show as "**Available**", i.e. applied the requested configuration):
 
 ~~~bash
 NAME                                                     STATUS
@@ -131,11 +131,14 @@ ocp4-worker2.%node-network-domain%.br1-enp3s0-policy-workers   Available
 ocp4-worker3.%node-network-domain%.br1-enp3s0-policy-workers   Available
 ~~~
 
+You can also request the status of the overall policy:
+
 ```execute-1
 oc get nncp
 ```
 
-Check the result:
+Check the result, again we're expecting to see "**Available**":
+
 ~~~bash
 NAME                        STATUS
 br1-enp3s0-policy-workers   Available
@@ -210,25 +213,25 @@ Pod IP: 192.168.123.104
 If you don't see a command prompt, try pressing enter.
 ~~~
 
-Now execute following:
+Now move into the host directory so we can access host binaries/filesystems:
 
 ```execute-1
 chroot /host
 ```
 
-Then:
+Then check the status of our **enp3s0** device:
 
 ```execute-1
 ip link show dev enp3s0
 ```
 
-This should show followingL
+This should show following, with the key bit showing "**master br1**", so we know it has been consumed into our new bridge:
 ~~~bash
 4: enp3s0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel master br1 state UP mode DEFAULT group default qlen 1000
     link/ether 52:54:00:00:01:04 brd ff:ff:ff:ff:ff:ff
 ~~~
 
-Now exit from debug pod
+Now exit from debug pod, remembering to execute this twice to return back to our lab workbook:
 
 ```execute-1
 exit
@@ -237,12 +240,6 @@ exit
 ```execute-1
 exit
 ```
-
-This will remove the debug pod as follows
-
-~~~bash
-Removing debug pod ...
-~~~
 
 Ensure you are in the correct shell:
 
@@ -250,7 +247,7 @@ Ensure you are in the correct shell:
 oc whoami
 ```
 
-You should see *cnv* service account:
+You should see *cnv* service account as previously:
 ~~~bash
 system:serviceaccount:workbook:cnv
 ~~~
@@ -260,7 +257,15 @@ As you can see, *enp3s0* is attached to "*br1*" and has the MAC address of the u
 
 > **NOTE**: Make sure you exit out of the debug pod before proceeding.
 
-Now that the "physical" networking is configured on the underlying worker nodes, we need to then define a `NetworkAttachmentDefinition` so that when we want to use this bridge, OpenShift and OpenShift Virtualization know how to attach into it. This associates the bridge we just defined with a logical name, known here as '**tuning-bridge-fixed**':
+Now that the "physical" networking is configured on the underlying worker nodes, we need to then define a `NetworkAttachmentDefinition` so that when we want to use this bridge, OpenShift and OpenShift Virtualization know how to attach into it.
+
+We need to ensure that we're in the right project first, i.e. "default":
+
+```execute-1
+oc project default
+```
+
+This associates the bridge we just defined with a logical name, known here as '**tuning-bridge-fixed**':
 
 
 ```execute-1

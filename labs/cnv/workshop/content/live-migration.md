@@ -5,13 +5,13 @@ Live migration is an administrative function in OpenShift Virtualization. While 
 In our lab we only need to have only one VM running. Let's remove the hostpath-based VM, as this cannot be live migrated anyway, as it's utilising hypervisor based storage and is therefore RWO (read-write once) by definition. Our OCS-based virtual machine is using shared-storage on Ceph, and therefore should support live migration.
 
 
-First delete the VM we created earlier
+First delete the VM we created earlier:
 
 ```execute-1
 oc delete vm/rhel8-server-hostpath
 ```
 
-And wait for VM is deleted:
+This should advise that the instance has been removed:
 
 ~~~bash
 virtualmachine.kubevirt.io "rhel8-server-hostpath" deleted
@@ -75,11 +75,13 @@ Check `VirtualMachineInstanceMigration` object is created:
 virtualmachineinstancemigration.kubevirt.io/migration-job created
 ~~~
 
-Now let's watch the migration job in action. First it will show `phase: Scheduling` 
+Now let's watch the migration job in action. First it will show `phase: Scheduling` :
 
 ```execute-1
 watch -n1 oc get virtualmachineinstancemigration/migration-job -o yaml
 ```
+
+With the output:
 
 ~~~bash
 Every 1.0s: oc get virtualmachineinstancemigration/migration-job -o yaml                 Fri Mar 20 00:33:35 2020
@@ -93,7 +95,7 @@ status:
   phase: Scheduling                                  <----------- Here you can see it's scheduling
 ~~~
 
-And then move to `phase: TargetReady` and onto`phase: Succeeded`:
+And then move to `phase: TargetReady` and onto `phase: Succeeded`:
 
 ~~~bash
 Every 1.0s: oc get virtualmachineinstancemigration/migration-job -o yaml                 Fri Mar 20 00:33:43 2020
@@ -192,12 +194,14 @@ Now check the VMIs:
 oc get vmi
 ```
 
+You should see the one VM running:
+
 ~~~bash
 NAME               AGE   PHASE     IP               NODENAME                       READY
 rhel8-server-ocs   45h   Running   192.168.123.64   ocp4-worker1.aio.example.com   True
 ~~~
 
-So in this environment, we have one virtual machine running on *ocp4-worker1*. Let's take down the node for maintenance and ensure that our workload (VM) stays up and running:
+In this environment, we have one virtual machine running on *ocp4-worker1* (yours may vary). Let's take down the node for maintenance and ensure that our workload (VM) stays up and running:
 
 
 ```execute-1
@@ -271,7 +275,7 @@ We can remove the maintenance flag by simply deleting the `NodeMaintenance` obje
 ```execute-1
 oc get nodemaintenance
 ```
-Here is it:
+It should just show the one:
 
 ~~~bash
 NAME                  AGE
@@ -283,6 +287,8 @@ Now delete it:
 ```execute-1
 oc delete nodemaintenance/worker1-maintenance
 ```
+
+It should return the following output:
 
 ~~~bash
 nodemaintenance.nodemaintenance.kubevirt.io "worker1-maintenance" deleted
@@ -317,29 +323,9 @@ Now delete the PVCs:
 oc delete pvc rhel8-ocs rhel8-hostpath
 ```
 
+It should show both being removed:
+
 ~~~bash
 persistentvolumeclaim "rhel8-ocs" deleted
 persistentvolumeclaim "rhel8-hostpath" deleted
 ~~~
-
-##Live Migration using GUI (Option 2)
-
-You can use current VM for Live Migration test. I'll need to click detail.Then "**Action**" and "**Migrate Virtual Machine**" button.
-
-![](img/livemigration1.png)
-
-Click "**Migrate**" 
-
-![](img/livemigration2.png)
-
-As you can see on your console,VM status is updated to "**Migrating**" State.
-
-![](img/livemigration3.png)
-
-If you want to look logs, You'll need to click "**Events**" tab on your VM details screen.
-
-![](img/livemigration4.png)
-
-After migration job is finished, You'll need to check your current host.It should changed
-
-![](img/livemigration5.png)

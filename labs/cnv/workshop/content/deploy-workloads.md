@@ -2,7 +2,7 @@ Now let's bring all these configurations together and actually launch some workl
 
 > **NOTE**: We're calling most of the resources "RHEL 8" here, regardless of whether you're actually using CentOS 8 as your base image - it won't impact anything for our purposes here.
 
-To begin with let's use the OpenShift Data Foundation volume we created earlier to launch some VMs. We are going to create a machine called `rhel8-server-ocs`. As you'll recall we have created a PVC called `rhel8-ocs` that was created using the CDI utility with a CentOS 8 base image. To connect the machine to the network we will utilise the `NetworkAttachmentDefinition` we created for the underlying host's third NIC (`enp3s0` via `br1`). This is the `tuning-bridge-fixed` interface which refers to that bridge created previously. It's also important to remember that OpenShift 4.x uses Multus as it's default networking CNI so we also ensure Multus knows about this `NetworkAttachmentDefinition`. Lastly we have set the `evictionStrategy` to `LiveMigrate` so that any request to move the instance will use this method. We will explore this in more depth in a later lab.
+To begin with let's use the OpenShift Data Foundation volume we created earlier to launch some VMs. We are going to create a machine called `rhel8-server-ocs`. As you'll recall we have created a PVC called `rhel8-ocs` that was created using the CDI utility with a CentOS 8 base image (yes, it's called RHEL8, but here we're actually using CentOS8). To connect the machine to the network we will utilise the `NetworkAttachmentDefinition` we created for the underlying host's third NIC (`enp3s0` via `br1`). This is the `tuning-bridge-fixed` interface which refers to that bridge created previously. It's also important to remember that OpenShift 4.x uses Multus as it's default networking CNI so we also ensure Multus knows about this `NetworkAttachmentDefinition`. Lastly we have set the `evictionStrategy` to `LiveMigrate` so that any request to move the instance will use this method. We will explore this in more depth in a later lab.
 
 Let's apply a VM configuration via the CLI first:
 
@@ -62,7 +62,7 @@ spec:
 EOF
 ```
 
-You should see VirtualMachine object is created.
+You should see VirtualMachine object is created:
 
 ~~~bash
 virtualmachine.kubevirt.io/rhel8-server-ocs created
@@ -387,9 +387,7 @@ Or visually represented:
 
 <img src="img/veth-pair.png" />
 
-Exit the debug shell(s) before proceeding:
-
-Exit the shell before proceeding:
+Exit the debug shell(s) before proceeding, remembering to do this twice as the first exits from the chroot, the second from the debug pod:
 
 ```execute-1
 exit
@@ -411,10 +409,6 @@ Now ensure you are in the default project:
 ```execute-1
 oc project default
 ```
-
-~~~ bash
-Already on project "default" on server "https://172.30.0.1:443".
-~~~
 
 Now that we have the OCS instance running, let's do the same for the **hostpath** setup we created. Let's leverage the hostpath PVC that we created in a previous step - this is essentially the same as our OCS-based VM instance, except we reference the `rhel8-hostpath` PVC instead:
 
@@ -461,7 +455,7 @@ spec:
           type: q35
         resources:
           requests:
-            memory: 2048M
+            memory: 1024M
       evictionStrategy: LiveMigrate
       networks:
         - multus:
@@ -469,7 +463,7 @@ spec:
           name: tuning-bridge-fixed
       terminationGracePeriodSeconds: 0
       volumes:
-      - name: rhel8-ocs
+      - name: rhel8-hostpath
         persistentVolumeClaim:
           claimName: rhel8-hostpath
 EOF
@@ -586,10 +580,6 @@ Now exit from the pod:
 ```execute-1
 exit
 ```
-~~~bash
-logout
-~~~
-
 First, recall which host your virtual machine is running on:
 
 ```execute-1
@@ -642,10 +632,7 @@ Node:         ocp4-worker2.%node-network-domain%/192.168.123.105
 ~~~
 
 
-Open a debug pod:
-
-
-This will open a debug pod:
+Open a debug pod on the node in question, yours may be a different node, adjust to suit your environment:
 
 
 ```execute-1
@@ -684,8 +671,6 @@ Here you can see that the container has been configured to have a `hostPath` fro
 
 Exit the debug shell(s) before proceeding:
 
-Exit the shell before proceeding:
-
 ```execute-1
 exit
 ```
@@ -699,6 +684,9 @@ Execute `oc whoami` here just makes sure you're in the right place:
 ```execute-1
 oc whoami
 ```
+
+You should see:
+
 ~~~bash
 system:serviceaccount:workbook:cnv
 ~~~
@@ -708,9 +696,5 @@ Then ensure you are in the default project:
 ```execute-1
 oc project default
 ```
-
-~~~bash
-Already on project "default" on server "https://172.30.0.1:443".
-~~~
 
 That's it for deploying basic workloads - we've deployed a VM on-top of OCS and one on-top of hostpath.

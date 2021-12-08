@@ -1,10 +1,10 @@
-Now that we've got OpenShift Virtualization deployed, let's take a look at storage. First, switch back to the "**Terminal**" view in your lab environment. What you'll find is that OpenShift Data Foundation (ODF, although formerly known as OpenShift Container Storage/OCS) has been deployed for you:
+Now that we've got OpenShift Virtualization deployed, let's take a look at storage. First, switch back to the "**Terminal**" view in your lab environment. What you'll find is that OpenShift Data Foundation (ODF, although formerly known as OpenShift Container Storage/OCS - a software storage platform based on [Ceph](https://www.redhat.com/en/technologies/storage/ceph)) has been deployed for you:
 
 ```execute-1
 oc get sc
 ```
 
-This command should show the list of Storage Classes  
+This command should show the list of Storage Classes that are installed:
 
 ~~~bash
 NAME                                    PROVISIONER                             RECLAIMPOLICY   VOLUMEBINDINGMODE      ALLOWVOLUMEEXPANSION   AGE
@@ -16,7 +16,7 @@ openshift-storage.noobaa.io             openshift-storage.noobaa.io/obc         
 ~~~
 
 
-Then check OCS operator by executing below
+Then check which version of the OCS operator is installed by executing the following:
 
 ```execute-1
 oc get csv -n openshift-storage
@@ -26,10 +26,10 @@ Result should be similar to:
 
 ~~~bash
 NAME                  DISPLAY                       VERSION   REPLACES              PHASE
-ocs-operator.v4.8.4   OpenShift Container Storage   4.8.4     ocs-operator.v4.8.3   Succeeded
+ocs-operator.v4.8.5   OpenShift Container Storage   4.8.5     ocs-operator.v4.8.4   Succeeded
 ~~~
 
-We're going to setup two different types of storage in this section, firstly OCS/ODF based shared storage, and also `hostpath` storage which uses the hypervisor's local disks, somewhat akin to ephemeral storage provided by OpenStack.
+We're going to setup two different types of storage in this section, firstly OCS/ODF based shared storage, and also `hostpath` storage which uses the hypervisor's local disk(s) which can be useful when there's plenty of fast storage available to the host.
 
 First, make sure you're in the default project:
 
@@ -45,11 +45,13 @@ Now using project "default" on server "https://172.30.0.1:443".
 
 >**NOTE**: If you don't use the default project for the next few lab steps, it's likely that you'll run into some errors - some resources are scoped, i.e. aligned to a namespace, and others are not. Ensuring you're in the default namespace now will ensure that all of the coming lab steps should flow together.
 
-Now let's create a new OCS-based Peristent Volume Claim (PVC). For this volume claim we will use a special annotation `cdi.kubevirt.io/storage.import.endpoint` which utilises the Kubernetes Containerized Data Importer (CDI). 
+Now let's create a new OCS-based Peristent Volume Claim (PVC) - a request for a dedicated storage volume that can be used for persistent storage with VM's and containerised applications. For this volume claim we will use a special annotation `cdi.kubevirt.io/storage.import.endpoint` which utilises the Kubernetes Containerized Data Importer (CDI).
 
-> **NOTE**: CDI is a utility to import, upload, and clone virtual machine images for OpenShift virtualisation. The CDI controller watches for this annotation on the PVC and if found it starts a process to import, upload, or clone. When the annotation is detected the `CDI` controller starts a pod which imports the image from that URL. Cloning and uploading follow a similar process. Read more about the Containerised Data Importer [here](https://github.com/kubevirt/containerized-data-importer).
+> **NOTE**: CDI is a utility to import, upload, and clone virtual machine images for OpenShift virtualisation. The CDI controller watches for this annotation on the PVC and if found it starts a process to import, upload, or clone. When the annotation is detected the `CDI` controller starts a pod which imports the image from that URL. Cloning and uploading follow a similar process. Read more about the Containerized Data Importer [here](https://github.com/kubevirt/containerized-data-importer).
 
-Basically we are asking OpenShift to create this PVC and use the image in the endpoint to fill it. In this case we use `"http://192.168.123.100:81/rhel8-kvm.img"` in the annotation to ensure that upon instantiation of the PV it is populated with the contents of our specific RHEL8 KVM image. In addition to triggering the CDI utility we also specify the storage class that OCS/ODF uses (`ocs-storagecluster-ceph-rbd`) which will dynamically create the PV in the backend Ceph storage platform. Finally note the `requests` section - we are asking for a 40gb volume size.
+Basically we are asking OpenShift to create this volume and use the image in the endpoint to fill it. In this case we use `"http://192.168.123.100:81/rhel8-kvm.img"` in the annotation to ensure that upon instantiation of the PV it is populated with the contents of a CentOS8 (although it's labelled "rhel8") KVM image which can be later used as a backing store for a virtual machine.
+
+In addition to triggering the CDI utility we also specify the storage class that OCS/ODF uses (`ocs-storagecluster-ceph-rbd`) which will dynamically create the PV in the backend Ceph storage platform. Finally note the `requests` section - we are asking for a 40gb volume size.
 
 OK, let's create the PVC with all this included!
 
@@ -319,11 +321,16 @@ This deploys a new `systemd` unit file on the worker nodes to create a new direc
 ```execute-1 
 oc get mcp
 ```
+
+This should show the following:
+
 ~~~bash
 NAME     CONFIG                                             UPDATED   UPDATING   DEGRADED   MACHINECOUNT   READYMACHINECOUNT   UPDATEDMACHINECOUNT   DEGRADEDMACHINECOUNT   AGE
 master   rendered-master-9d055df78d00fda1c014f7247c4270b2   True      False      False      3              3                   3                     0                      95m
 worker   rendered-worker-08d4857819910827ea841dcf71bc4a0a   False     True       False      3              0                   0                     0                      95m
 ~~~
+
+When we look at our nodes, we should start to see some of the nodes being drained:
 
 ```execute-1 
 oc get nodes
@@ -344,7 +351,7 @@ ocp4-worker3.%node-network-domain%   Ready                      worker   76m   v
 >
 > <img src="img/disconnected-terminal.png"/>
 
-> It should automatically reconnect but if it doesn't, you can try reloading the terminal by clicking the three bars in the top right hand corner:
+> It should automatically reconnect but if it doesn't, you can try reloading the terminal by clicking the three bars in the top right hand corner and selecting "Reload Terminal":
 
 <img src="img/reload-terminal.png"/>
 
@@ -368,7 +375,7 @@ Now wait for the following command to return `True` as it indicates when the `Ma
 oc get machineconfigpool worker -o=jsonpath="{.status.conditions[?(@.type=='Updated')].status}{\"\n\"}"
 ```
 
-You see *True* as output
+Make sure that you see *True* as the output, that means that we've successfully applied our MachineConfig:
 
 ~~~bash
 True
@@ -405,7 +412,7 @@ When you've applied this config, an additional pod will be spawned on each of th
 oc get pods -n openshift-cnv | grep hostpath
 ```
 
-note the shorter age in the output below:
+Note the shorter age in the output below:
 
 ~~~bash 
 hostpath-provisioner-fxwnc                             1/1     Running   0               16s
@@ -447,7 +454,7 @@ metadata:
     app: containerized-data-importer
   annotations:
     cdi.kubevirt.io/storage.import.endpoint: "http://192.168.123.100:81/rhel8-kvm.img"
-    volume.kubernetes.io/selected-node: ocp4-worker2.%node-network-domain%                       
+    volume.kubernetes.io/selected-node: ocp4-worker2.%node-network-domain%
 spec:
   volumeMode: Filesystem
   storageClassName: hostpath-provisioner
@@ -459,12 +466,12 @@ spec:
 EOF
 ```
 
-PersistentVolumeClaim should be created:
+A PersistentVolumeClaim should be created:
 
 ~~~bash
 persistentvolumeclaim/rhel8-hostpath created
 ~~~
-Now check that it successfully binds 
+Now check that it successfully binds:
 
 ```execute-1 
 oc get pvc
@@ -529,11 +536,9 @@ Source:
 Events:            <none>
 ~~~
 
-There's a few important details here worth noting, namely the `kubevirt.io/provisionOnNode` annotation, and the path of the volume on that node. In the example above you can see that the volume was provisioned on *ocp4-worker2.%node-network-domain%*, the second of our three worker nodes (in your environment it may have been scheduled onto a different worker). 
+There's a few important details here worth noting, namely the `kubevirt.io/provisionOnNode` annotation, and the path of the volume on that node. In the example above you can see that the volume was provisioned on *ocp4-worker2.%node-network-domain%*, the second of our three worker nodes (in your environment it may have been scheduled onto a different worker).  Let's look more closely to verify that this truly has been created for us on the designated worker.
 
-Let's look more closely to verify that this truly has been created for us on the designated worker.
-
-> **NOTE**: You may have to substitute `ocp4-worker1` with `ocp4-worker2` if your hostpath volume was scheduled to worker2. You'll need to also match the UUID to the one that was generated by your PVC. 
+> **NOTE**: You'll need to also match the UUID to the one that was generated by your PVC.
 
 
 ```execute-1 
@@ -553,16 +558,14 @@ If you don't see a command prompt, try pressing enter.
 chroot /host
 ```
 
-Now you are in host root directory in `ocp4-worker2`:
-
-Then execute 
+Now you are in host root directory in `ocp4-worker2`. Then execute:
 
 ```copy
 ls -l /var/hpvolumes/pvc-0f3ff50d-12b1-4ad6-8beb-be742a6e674a/
 ```
 
 
-Expect to see a similar output as below
+Expect to see a similar output as below:
 
 ~~~bash
 total 5784756                                                                                           
@@ -573,7 +576,6 @@ Check the file with the below command:
 
 ```copy
 file /var/hpvolumes/pvc-0f3ff50d-12b1-4ad6-8beb-be742a6e674a/disk.img
-/var/hpvolumes/pvc-0f3ff50d-12b1-4ad6-8beb-be742a6e674a/disk.img:
 ```
 
 Then expect to see a similar output as below:
@@ -598,6 +600,7 @@ Make sure that you've executed the two `exit` commands above - we need to make s
 oc whoami
 ```
 
+Make sure it shows:
 
 ~~~bash
 system:serviceaccount:workbook:cnv

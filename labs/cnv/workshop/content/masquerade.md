@@ -104,8 +104,10 @@ oc get pods -o wide
 Check the VM's IP:
 
 ```execute-1
-oc get pods | grep fc31-podnet
+oc get pods | grep fc34-podnet
 ```
+
+You can see that it has an IP address already assigned:
 
 ~~~bash
 NAME                              READY   STATUS    RESTARTS   AGE   IP             NODE                           NOMINATED NODE   READINESS GATES
@@ -143,11 +145,7 @@ PING 10.129.2.210 (10.129.2.210) 56(84) bytes of data.
 --- 10.129.2.210 ping statistics ---
 1 packets transmitted, 1 received, 0% packet loss, time 0ms
 rtt min/avg/max/mdev = 1.692/1.692/1.692/0.000 ms
-~~~
 
-
-
-~~~bash
 $ ssh root@10.129.2.210
 root@10.129.2.210's password:
 (password is "redhat")
@@ -163,10 +161,14 @@ root@10.129.2.210's password:
 [root@fc34-podnet ~]# exit
 logout
 Connection to 10.129.2.210 closed.
+~~~
 
+Make sure you ensure you're disconnected before proceeding:
+
+```execute-1
 $ oc whoami
 system:serviceaccount:workbook:cnv
-~~~
+```
 
 **Wait a second**... look at the IP address that's been assigned to our VM and the one it recognises... it's different to the one we connected on. Well, this is the masquerading in action - our host is masquerading (on all ports) from the pod network to the network given to our VM (**10.0.2.2** in our case).
 
@@ -194,6 +196,8 @@ This should create a new service for us:
 ~~~bash
 Service fc34-service successfully exposed for virtualmachineinstance fc34-podnet
 ~~~
+
+Let's take a look at that service:
 
 ```execute-1
 oc get svc/fc34-service
@@ -231,7 +235,7 @@ NAME           HOST/PORT                                              PATH   SER
 fc34-service   fc34-service-default.apps.%cluster_subdomain%        fc34-service   <all>   edge          None
 ~~~
 
-You can now visit the endpoint at [https://fc34-service-default.apps.%cluster_subdomain%/](https://fc34-service-default.apps.%cluster_subdomain%/) in a new browser tab and find the NGINX server from your Fedora based VM - you should see the same content that we curl'd in a previous step, just now it's exposed on the internet:
+You can now visit the endpoint at [https://fc34-service-default.%cluster_subdomain%/](https://fc34-service-default.%cluster_subdomain%/) in a new browser tab and find the NGINX server from your Fedora based VM - you should see the same content that we curl'd in a previous step, just now it's exposed on the internet:
 
 <img src="img/masq-https.png"/>
 

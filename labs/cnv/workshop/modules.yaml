@@ -51,9 +51,6 @@ modules:
         exit_sign: Masquerade Networking
     masquerade:
         name: Masquerade Networking
-        exit_sign: VM Console 
-    console:
-        name: Using the VM console
         exit_sign: Templates
     templates:
         name: Virtual Machine Templates and Boot Sources

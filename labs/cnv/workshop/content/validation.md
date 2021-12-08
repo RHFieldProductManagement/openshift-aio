@@ -1,3 +1,10 @@
+Before we begin, it's important to make sure that we're in the CLI view, so select the "Terminal" button at the top of the screen. We also need to make sure that we're disconnected from the bastion machine that we connected to in a previous window, so make sure that you're the correct user:
+
+```execute
+oc whoami
+```
+This should return "**system:serviceaccount:workbook:cnv**". If it doesn't, select the menu from the top right hand corner and choose "Reload Terminal". This should take you right back to the beginning. Now you should be ready to continue...
+
 On the right hand side where the web terminal is, let's see if we can execute the following:
 
 ```execute
@@ -10,13 +17,13 @@ You should be able to see the list of nodes as below:
 NAME                           STATUS   ROLES    AGE   VERSION
 ocp4-master1.%node-network-domain%  Ready    master   57m   v1.22.0-rc.0+a44d0f0
 ocp4-master2.%node-network-domain%  Ready    master   58m   v1.22.0-rc.0+a44d0f0
-ocp4-master3.%node-network-domain% Ready    master   58m   v1.22.0-rc.0+a44d0f0
+ocp4-master3.%node-network-domain%  Ready    master   58m   v1.22.0-rc.0+a44d0f0
 ocp4-worker1.%node-network-domain%  Ready    worker   38m   v1.22.0-rc.0+a44d0f0
 ocp4-worker2.%node-network-domain%  Ready    worker   38m   v1.22.0-rc.0+a44d0f0
 ocp4-worker3.%node-network-domain%  Ready    worker   38m   v1.22.0-rc.0+a44d0f0
 ~~~
 
-If you do not see **three** masters and **three** workers listed in your output, you may need to approve the CSR requests, note that you only need to do this if you're missing nodes, but it won't harm to run this regardless:
+If you do not see **three** masters and **three** workers listed in your output, you may need to approve the CSR requests, note that you only need to do this if you're missing nodes, but it won't harm to run this regardless ("No resources found" is a completely normal response here):
 
 ```execute
 for csr in $(oc get csr | awk '/Pending/ {print $1}'); \
@@ -31,6 +38,8 @@ certificatesigningrequest.certificates.k8s.io/csr-4k6n8 approved
 ~~~
 
 > **NOTE**: If you needed to do this, it may take a few minutes for the worker to be in a `Ready` state, this is due to it needing to deploy all of the necessary pods. We can proceed though and it'll catch up in the background.
+>
+> **IMPORTANT**: If you do not have any CSR's to approve and you've still not got 6 nodes then it's likely that your environment has failed to deploy properly, we're trying to figure out why it very rarely does this. Please delete your environment and attempt another deployment - we apologise!
 
 Next let's validate the version that we've got deployed, and the status of the cluster operators:
 
@@ -38,21 +47,20 @@ Next let's validate the version that we've got deployed, and the status of the c
 oc get clusterversion
 ```
 
-Then you should see :
+Then you should see the following, we're currently fixed on 4.9.5, but we'll bump this when we get a chance:
 
 ~~~bash
 NAME      VERSION   AVAILABLE   PROGRESSING   SINCE   STATUS
 version   4.9.5     True        False         27m     Cluster version is 4.9.5.
 ~~~
 
-After that check the cluster operators 
-=======
+After that check the cluster operators:
 
 ```execute
 oc get clusteroperators
 ```
 
-This command will list the all cluster operators and their availability as below
+This command will list the all cluster operators, the main components of OpenShift itself, and their availability as shown below:
 
 ~~~bash
 NAME                                       VERSION   AVAILABLE   PROGRESSING   DEGRADED   SINCE   MESSAGE
@@ -173,3 +181,7 @@ Then wait for project deletion
 ~~~bash
 project.project.openshift.io "test" deleted
 ~~~
+
+
+
+Now we can move onto deploying OpenShift Virtualization...

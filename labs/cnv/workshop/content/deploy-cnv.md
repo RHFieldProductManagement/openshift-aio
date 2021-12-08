@@ -1,8 +1,6 @@
 Since OpenShift 4.5, OpenShift Virtualization has been fully supported by Red Hat as a component of OpenShift itself. The mechanism for installation is to utilise the operator model and deploy via the OpenShift Operator Hub in the web-console. Note, it's entirely possible to deploy via the CLI should you wish to do so, but we're not documenting that mechanism here.
 
-
-
-Next, navigate to the top-level '**Operators**' menu entry, and select '**OperatorHub**'. This lists all of the available operators that you can install from the Red Hat Marketplace. Simply start typing '**virtualization**' in the search box and you should see an entry called "OpenShift Virtualization". Simply select it and you'll see a window that looks like the following:
+When you're ready, navigate to the top-level '**Operators**' menu entry, and select '**OperatorHub**' (you'll need to make sure that you're in the Administrator perspective). This lists all of the available operators that you can install from the operator catalogue. Simply start typing '**virtualization**' in the search box and you should see an entry called "**OpenShift Virtualization**" - please don't select "**KubeVirt**" as this is the community operator. Simply select it and you'll see a window that looks like the following:
 
 <img  border="1" src="img/ocp-virt-operator-install.png"/>
 
@@ -13,14 +11,14 @@ Next you'll want to select the '**Install**' button, which will take you to a se
 
 
 
-Make sure that the namespace it will be installed to is "**openshift-cnv**" - it should be the default entry, but make sure. When you're ready, press the **'Install'** button. After a minute or two you'll see that the operator has been configured successfully:
+Make sure that the namespace it will be installed to is "**openshift-cnv**" - it should be the default entry, but make sure. When you're ready, press the blue **'Install'** button. After a minute or two you'll see that the operator has been configured successfully:
 
 <img  border="1" src="img/ocp-virt-operatore-install-success.png"/>
 
 
-Next we need to deploy the HyperConverged resource, which, in addition to the OpenShift Virtualization operator, creates and maintains an OpenShift Virtualization Deployment for the cluster. This may raise some questions about "hyperconverged infrastructures", however this relates to the fact that we're converging virtual machines and containers, and is how an "instance" of OpenShift Virtualization is instantiated - it does not impact the relation between compute and storage as we will see later in the labs. Click on "**Create HyperConverged**" in the same screen to proceed.
+Next we need to deploy the HyperConverged resource, which, in addition to the OpenShift Virtualization operator, creates and maintains an OpenShift Virtualization Deployment for the cluster. This may raise some questions about "hyperconverged infrastructures", however this relates to the fact that we're converging virtual machines and containers, and is how an "instance" of OpenShift Virtualization is instantiated - it does not impact the relation between compute and storage as we will see later in the labs. Click on "**Create HyperConverged**", as a required operand, in the same screen to proceed.
 
-This will open the next screen where we can accept all the defaults for this lab - for production use, there are many additional flags, parameters, and attributes that can be applied at this stage, for example enabling tech-preview features, specifying host devices that can be utilised, implementing CPU masks, and so on. Continue the installation by click on "**Create**" at the bottom.
+This will open the next screen where we can (again) accept all the defaults for this lab - for production use, there are many additional flags, parameters, and attributes that can be applied at this stage, for example enabling tech-preview features, specifying host devices that can be utilised, implementing CPU masks, and so on. Continue the installation by click on "**Create**" at the bottom.
 
 <img  border="1" src="img/ocp-virt-operatore-create-HyperC.png"/>
 
@@ -36,21 +34,19 @@ You can also return to the 'terminal' tab in your hosted lab guide and watch via
 watch -n2 'oc get pods -n openshift-cnv'
 ```
 
-> **NOTE**: It may take a few minutes for the pods to start up properly. Press **Ctrl+C** to exit the watch command.
+> **NOTE**: It may take a few minutes for the pods to start up properly, and you may see a few pods in an error state along the way - this is just Kubernetes' reconciliation loop. Press **Ctrl+C** to exit the watch command.
 
 During this process you will see a lot of pods create and terminate, which will look something like the following depending on when you view it; it's always changing:
 
 <img src="img/deploy-cnv-watch.png"/>
 
-This will continue for some time, depending on your environment.
-
-You will know the process is complete when you can return to the top terminal and see that the operator installation has been successful by running the following command:
+This will continue for some time, depending on your environment. You will know the process is complete when you can return (again, *Ctrl-C* to exit the watch command) to the top terminal and see that the operator installation has been successful by running the following command:
 
 ```execute-1
 oc get csv -n openshift-cnv
 ```
 
-You should see the output below:
+You should see the output below; if it still says "**Installing**" in "**PHASE**", then keep waiting and try again:
 
 ~~~bash
 NAME                                      DISPLAY                    VERSION   REPLACES                                  PHASE
@@ -94,19 +90,11 @@ You may check by filtering with grep the 'Running' ones and then counting the li
 oc get pods -n openshift-cnv | grep -v Running
 ```
 
-This should return an empty result
+This should return an empty result, i.e. ALL pods are running successfully:
 
 ~~~bash
 NAME                                                  READY   STATUS    RESTARTS   AGE
 ~~~
-
-And when you count the lines
-
-```execute-1
-oc get pods -n openshift-cnv |  wc -l
-```
-
-It should be **47**
 
 
 Together, all of these pods are responsible for various functions of running a virtual machine on-top of OpenShift/Kubernetes. See the table below that describes some of the various different pod types and their function:
@@ -131,7 +119,7 @@ Together, all of these pods are responsible for various functions of running a v
 
 
 
-There's also a few custom resources that get defined too, for example the `NodeNetworkState` (`nns` for short) definitions that can be used with the `nmstate-handler` pods to ensure that the NetworkManager state on each node is configured as required, e.g. for defining interfaces/bridges on each of the machines for connectivity for both the physical machine itself and for providing network access for pods (and virtual machines) within OpenShift/Kubernetes:
+There's also a few custom resources that get defined too, for example the `NodeNetworkState` (`nns` for short) which provides a current network configuration of our nodes - this is used to verify whether physical networking configurations have been successfully applied by the `nmstate-handler` pods - ensuring that the NetworkManager state on each node is configured as required, e.g. for defining interfaces/bridges on each of the machines for connectivity for both the physical machine itself and for providing network access for pods (and virtual machines) within OpenShift/Kubernetes:
 
 ```execute-1
 oc get nns -A
@@ -213,7 +201,7 @@ Here you can see the current state of the node (some of the output has been cut)
 oc get nnce -n openshift-cnv
 ```
 
-It should not find any *nnce*
+It should not find any *nnce* definitions yet, as we've not defined any:
 ~~~bash
 No resources found in openshift-cnv namespace.
 ~~~
@@ -226,3 +214,5 @@ When OpenShift Virtualization is deployed it adds additional components to OpenS
 <img src="img/ocpvirt-dashboard.png"/>
 
 > **NOTE**: Please don't try and create any virtual machines just yet, we'll get to that shortly!
+
+Before we get started with workload deployment we need to configure some storage, let's get to that next...

@@ -7,31 +7,28 @@ In these labs you'll utilise a virtual environment built with the [OpenShift AIO
 This is the self-hosted lab guide that will run you through the following:
 
 - *Validating the OpenShift deployment*
-- *Explore OpenShift CLI and Web Console*
+- *Give you an overview of the Lab Guide ([Homeroom](https://github.com/openshift-homeroom)) itself*
+- *Exploring the OpenShift CLI and Web Console*
 - *Deploying OpenShift Virtualization*
 - *Setting up Storage for OpenShift Virtualization*
 - *Setting up Networking for OpenShift Virtualization*
 - *Performing Live Migrations and Node Maintenance*
-- *Creating Virtual Machines from Snapshot*
+- *Creating Virtual Machines from Snapshot*s
 - *Cloning a Virtual Machine*
-- *Utilising network masquerading on pod networking for VM's*
-- *Utilising network masquerading on pod networking for VM's*
-- *ParksMap Application Architecture*
-- *Deploying Parksmap Application Components*
-- *Deploying Database VM using Web Console*
-- *Deploying Database VM using YAML*
+- *Utilising Pod Networking for VM's*
+- *Deploying a real-world application example with ParksMap*
 - *Performing Backup and Restore of Virtual Machines*
-- *Network Isolation for Virtual Machines*
+- *Implementing Network Isolation for Virtual Machines*
 
-Within the lab you can cut and paste commands directly from the instructions; but also be sure to review all commands carefully both for functionality and syntax!
+Within the lab you can click a button to inject the commands into the CLI, but sometimes you will need to cut and paste commands directly from the instructions; but also be sure to review all commands carefully both for functionality and syntax!
 
 > **NOTE**: In some browsers and operating systems you may need to use Ctrl-Shift-C / Ctrl-Shift-V to copy/paste within this lab environment!
 
 Please be very aware, we're continuing to update this for the latest OpenShift 4.9 release, therefore there may be some bugs/typo's, and we very much welcome feedback on the content, what's missing, what would be good to have, etc. Please feel free to submit PR's or raise [GitHub issues](https://github.com/RHFieldProductManagement/openshift-aio/issues/new), we're glad of the feedback!
 
-Lastly, this page dynamically allows you to switch between the OpenShift CLI and the OpenShift console, without having to login. Simply use these two buttons to switch between them whilst keeping the instructions on the left-hand side:
+Lastly, this page dynamically allows you to switch between the OpenShift CLI and the OpenShift console, without having to login. Simply use these two buttons at the top of the screen to switch between them whilst keeping the instructions on the left-hand side:
 
 <img src="img/terminal-window.png" style="border:2px solid black"/>
 
-When you're ready, select "Lab Validation" at the bottom to get started...
+When you're ready, select "Using Homeroom" at the bottom to get started...
 
