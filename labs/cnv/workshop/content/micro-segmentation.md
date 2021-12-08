@@ -57,18 +57,47 @@ Let's verify that nationalparks could access mongodb-mlbparks and mlbparks could
 3. Click the **Terminal** tab.
 
 4. Run following commands and verify both mongodb services are accessible.
+  
+
+```copy
+curl mongodb-mlbparks:27017
+```
+
+You should see similar output below: 
 ~~~bash
-sh-4.4$ curl mongodb-mlbparks:27017
 It looks like you are trying to access MongoDB over HTTP on the native driver port.
-sh-4.4$ curl mongodb-nationalparks:27017
+~~~
+
+Now for mongodb-nationalparks
+
+```copy
+curl mongodb-nationalparks:27017
+```
+You should see similar output below: 
+
+~~~bash
 It looks like you are trying to access MongoDB over HTTP on the native driver port.
 ~~~
 
 5. Repeat above steps for **mlbparks** pod.
+
+```copy
+curl mongodb-mlbparks:27017
+```
+
+You should see similar output below: 
 ~~~bash
-sh-4.4$ curl mongodb-mlbparks:27017
 It looks like you are trying to access MongoDB over HTTP on the native driver port.
-sh-4.4$ curl mongodb-nationalparks:27017
+~~~
+
+Now for mongodb-nationalparks
+
+```copy
+curl mongodb-nationalparks:27017
+```
+You should see similar output below: 
+
+~~~bash
 It looks like you are trying to access MongoDB over HTTP on the native driver port.
 ~~~
 
@@ -81,12 +110,12 @@ Now, let's apply following network policy to restrict access to **mongodb-mlbpar
 3. Click **Edit YAML**.
 
 4. Paste the following policy and click **Create**.
-~~~yml
+~~~yaml
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
   name: mlbparks-policy
-  namespace: <your-namespace>
+  namespace: %parksmap-project-namespace%
 spec:
   podSelector:
     matchLabels:
@@ -95,7 +124,7 @@ spec:
   - from:
     - namespaceSelector:
         matchLabels:
-          kubernetes.io/metadata.name: <your-namespace>
+          kubernetes.io/metadata.name: %parksmap-project-namespace%
       podSelector:
         matchLabels:
           component: mlbparks
@@ -119,7 +148,7 @@ apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
   name: nationalparks-policy
-  namespace: <your-namespace>
+  namespace: %parksmap-project-namespace%
 spec:
   podSelector:
     matchLabels:
@@ -128,7 +157,7 @@ spec:
   - from:
     - namespaceSelector:
         matchLabels:
-          kubernetes.io/metadata.name: <your-namespace>
+          kubernetes.io/metadata.name: %parksmap-project-namespace%
       podSelector:
         matchLabels:
           component: nationalparks
@@ -145,20 +174,47 @@ Finally, Let's verify that nationalparks could access only mongodb-nationalparks
 3. Click the **Terminal** tab.
 
 4. Run following commands and verify both mongodb services are accessible.
+
+
+```copy
+curl mongodb-mlbparks:27017
+```
+
+You should see similar output below: 
 ~~~bash
-sh-4.4$ curl mongodb-nationalparks:27017
 It looks like you are trying to access MongoDB over HTTP on the native driver port.
-sh-4.4$ curl mongodb-mlbparks:27017
-curl: (7) Failed to connect to mongodb-mlbparks port 27017: Connection timed out
-sh-4.4$ 
+~~~
+
+Now for mongodb-nationalparks
+
+```copy
+curl mongodb-nationalparks:27017
+```
+You should see similar output below: 
+
+~~~bash
+It looks like you are trying to access MongoDB over HTTP on the native driver port.
 ~~~
 
 5. Repeat above steps for **mlbparks** pod.
 
-```bash
-sh-4.2$ curl mongodb-mlbparks:27017
-It looks like you are trying to access MongoDB over HTTP on the native driver port.
-sh-4.2$ curl mongodb-nationalparks:27017
-curl: (7) Failed connect to mongodb-nationalparks:27017; Connection timed out
-sh-4.2$ 
+
+```copy
+curl mongodb-mlbparks:27017
 ```
+
+You should see similar output below: 
+~~~bash
+curl: (7) Failed connect to mongodb-nationalparks:27017; Connection timed out
+~~~
+
+Now for mongodb-nationalparks
+
+```copy
+curl mongodb-nationalparks:27017
+```
+You should see similar output below: 
+
+~~~bash
+curl: (7) Failed connect to mongodb-nationalparks:27017; Connection timed out
+~~~
