@@ -48,7 +48,7 @@ spec:
           type: q35
         resources:
           requests:
-            memory: 2048M
+            memory: 1024M
       evictionStrategy: LiveMigrate
       networks:
         - multus:
