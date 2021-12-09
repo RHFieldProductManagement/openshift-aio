@@ -1,6 +1,66 @@
 In this lab we're going to clone a workload and prove that it's identical to the previous. For convenience we're going to download and customise a Fedora 34 image, launch a virtual machine via OpenShift Virtualization based on it, install a basic application inside the VM, and then clone it - we'll then test to see if the cloned machine works as expected and is "the same" as before. Before we begin we need to setup our Fedora 34 cloud image, let's first connect to our bastion host as we need somewhere to process and serve the image:
 
 
+## Cloning VM using Web Console
+
+Firstly, we are installing httpd package for test.You can use same virtual machine as you have created before.
+
+
+# Work in Progress
+1. Navigate to the OpenShift Web UI so we can access the console of the `mongodb-nationalparks` virtual machine. You'll need to select "**Workloads**" --> "**Virtualization**" --> "**Virtual Machines**" --> "**mongodb-nationalparks**" --> "**Console**". You'll be able to login with "**centos/redhat**", noting that you may have to click on the console window for it to capture your input.
+
+2. Once you're in the virtual machine, delete everything under it's data path.
+```execute
+sudo systemctl stop mongod
+```
+```execute
+sudo rm -rf /var/lib/mongo/*
+```
+```execute
+sudo systemctl start mongod
+```
+
+
+~~~bash
+$ yum install httpd -y
+$ systemctl start httpd
+$ systemctl enable httpd
+~~~
+
+And lets  check your HTTP server via browser. First of all , you should get your VM's current public ip then try to connect using this ip.That's it.
+
+![](img/clone1.png)
+
+Then we are starting clone  job as you can see below screenshot.
+
+![](img/clone2.png)
+
+I can change namespace and after finishing clone,  I can start this VM. You'll need to click "**Clone Virtual Machine**" button.
+
+![](img/clone3.png)
+
+As you can see your console, current vm is closing now, and new vm is provisioning. 
+
+![](img/clone4.png)
+
+At this point, I'll need some test for this new vm. I am starting VM now. You'll need to click  "**...**" and "**Start Virtual Machine**" buttons.
+
+![](img/clone5.png)
+
+After vm started , check current public ip and then connect your browser with this new ip. That's it.
+
+![](img/clone6.png)
+
+### Clean up
+
+Before moving on to the next lab let's clean up the VMs so we ensure our environment has all the resources it might need; we're going to delete our VM's
+
+![](img/clone7.png)
+
+
+## Cloning a Virtual Machine using CLI
+
+
 
 First ssh to bastion node (password is *%bastion-password%*):
 
@@ -699,42 +759,3 @@ virtualmachine.kubevirt.io "fc34-original" deleted
 virtualmachine.kubevirt.io "fc34-original-clone" deleted
 ~~~
 
-## Cloning VM using Openshift Console(Option 2)
-
-Firstly, we are installing httpd package for test.You can use same virtual machine as you have created before
-
-~~~bash
-$ yum install httpd -y
-$ systemctl start httpd
-$ systemctl enable httpd
-~~~
-
-And lets  check your HTTP server via browser. First of all , you should get your VM's current public ip then try to connect using this ip.That's it.
-
-![](img/clone1.png)
-
-Then we are starting clone  job as you can see below screenshot.
-
-![](img/clone2.png)
-
-I can change namespace and after finishing clone,  I can start this VM. You'll need to click "**Clone Virtual Machine**" button.
-
-![](img/clone3.png)
-
-As you can see your console, current vm is closing now, and new vm is provisioning. 
-
-![](img/clone4.png)
-
-At this point, I'll need some test for this new vm. I am starting VM now. You'll need to click  "**...**" and "**Start Virtual Machine**" buttons.
-
-![](img/clone5.png)
-
-After vm started , check current public ip and then connect your browser with this new ip. That's it.
-
-![](img/clone6.png)
-
-### Clean up
-
-Before moving on to the next lab let's clean up the VMs so we ensure our environment has all the resources it might need; we're going to delete our VM's
-
-![](img/clone7.png)

@@ -47,7 +47,7 @@ On the login screen, enter the following credentials:
 
 Check whether *mongod* service is running by executing following:
 
-```execute
+```copy
 systemctl status mongod
 ```
 

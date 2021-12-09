@@ -28,15 +28,15 @@ application services and endpoints you (or your teams) are using for your work.
 
 #### Web Console
 
-OpenShift ships with a web-based console that will allow users to
-perform various tasks via a browser.  
+OpenShift ships with a web-based console that will allow users to perform various tasks via a browser.  
 
 From within the lab guide window you'll see a button in the middle at the top that allows you to switch between the terminal and console options. Select the console and you should see the OpenShift dashboard:
 
 <img  border="1" src="img/console-button.png"/>
 
+<BR/>
 
-However if you want to use the full functional Web Console you can open it in a seperate window or tab in your browser. 
+> **Hint**: Please use Web Console in a seperate tab for the full functionality. 
 
 To get a feel for how the web console works, click on this  [Web Console](http://console-openshift-console.%cluster_subdomain%/k8s/cluster/projects)
 

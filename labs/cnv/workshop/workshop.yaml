@@ -13,7 +13,6 @@ modules:
     - live-migration
     - cloning
     - masquerade
-    - console
     - templates
     - sample-application-architecture
     - deploy-application-components
