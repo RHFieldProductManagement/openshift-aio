@@ -106,7 +106,7 @@ And when you count the lines
 oc get pods -n openshift-cnv |  wc -l
 ```
 
-It should be **47**
+It should be **48**
 
 
 Together, all of these pods are responsible for various functions of running a virtual machine on-top of OpenShift/Kubernetes. See the table below that describes some of the various different pod types and their function:
@@ -141,18 +141,18 @@ Now you can see the list of NodeNetworkStates
 
 ~~~bash
 NAME                           AGE
-ocp4-master1.aio.example.com   8m37s
-ocp4-master2.aio.example.com   8m27s
-ocp4-master3.aio.example.com   8m37s
-ocp4-worker1.aio.example.com   8m51s
-ocp4-worker2.aio.example.com   8m50s
-ocp4-worker3.aio.example.com   8m54s
+ocp4-master1.%node-network-domain%   8m37s
+ocp4-master2.%node-network-domain%   8m27s
+ocp4-master3.%node-network-domain%   8m37s
+ocp4-worker1.%node-network-domain%   8m51s
+ocp4-worker2.%node-network-domain%   8m50s
+ocp4-worker3.%node-network-domain%   8m54s
 ~~~
 
-And in order to get details of onew of them:
+And in order to get details of one of them:
 
 ```execute-1
-oc get nns/ocp4-worker1.aio.example.com -o yaml
+oc get nns/ocp4-worker1.%node-network-domain% -o yaml
 ```
 
 You should see NodeNetworkState definition in *yaml* format
@@ -162,7 +162,7 @@ kind: NodeNetworkState
 metadata:
   creationTimestamp: "2021-10-21T14:56:59Z"
   generation: 1
-  name: ocp4-worker1.aio.example.com
+  name: ocp4-worker1.%node-network-domain%
 (...)
    interfaces:
     - ipv4:

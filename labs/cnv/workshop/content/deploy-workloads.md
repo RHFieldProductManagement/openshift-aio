@@ -1,3 +1,6 @@
+
+## Deploy Virtual Machine using CLI
+
 Now let's bring all these configurations together and actually launch some workloads!
 
 > **NOTE**: We're calling most of the resources "RHEL 8" here, regardless of whether you're actually using CentOS 8 as your base image - it won't impact anything for our purposes here.
@@ -298,6 +301,8 @@ exit
 ```execute-1
 exit
 ```
+
+## Bonus Lab: Deploy VM using Hostpath Storage
 
 Execute `oc whoami` here just makes sure you're in the right place:
 
@@ -714,3 +719,22 @@ Already on project "default" on server "https://172.30.0.1:443".
 ~~~
 
 That's it for deploying basic workloads - we've deployed a VM on-top of OCS and one on-top of hostpath.
+
+Before moving to next lab let's remove the hostpath-based VM:
+
+```execute-1
+oc delete vm/rhel8-server-hostpath
+```
+
+And wait for VM is deleted:
+
+~~~bash
+virtualmachine.kubevirt.io "rhel8-server-hostpath" deleted
+~~~
+
+And delete PVC for hostpath:
+
+
+```execute-1
+oc delete pvc rhel8-hostpath
+```

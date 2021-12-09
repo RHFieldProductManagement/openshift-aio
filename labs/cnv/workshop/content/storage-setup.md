@@ -268,7 +268,7 @@ exit
 You'll see that this image matches the correct size, corresponds to the PV that we requested be created for us, and has consumed approximately ~9GB of the disk, as we've cloned a copy of CentOS8 into our persistent volume via the data importer tool. We'll use this persistent volume to spawn a virtual machine in a later step.
 
 
-## Hostpath Storage
+## Bonus Lab: Hostpath Storage (Time: 20 min)
 
 Now let's create a second storage type based on `hostpath` storage, which utilises the disk on the hypervisors (workers) to provide storage space for us, useful when you want to leverage fast storage locally and don't need to rely on shared storage - the data here is essentially ephemeral and limits certain functionality such as live migration. As we're not using a pre-configured shared storage pool for this we need to ask OpenShift's `MachineConfigOperator` to do some work for us directly on our worker nodes.
 

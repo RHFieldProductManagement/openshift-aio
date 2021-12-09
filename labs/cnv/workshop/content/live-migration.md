@@ -2,21 +2,7 @@ Live Migration is the process of moving an instance from one node in a cluster t
 
 Live migration is an administrative function in OpenShift Virtualization. While the action is visible to all users, only admins can initiate a migration. Migration limits and timeouts are managed via the `kubevirt-config` `configmap`. For more details about limits see the [documentation](https://access.redhat.com/documentation/en-us/openshift_container_platform/4.3/html-single/container-native_virtualization/index#cnv-live-migration-limits-ref_cnv-live-migration-limits).
 
-In our lab we only need to have only one VM running. Let's remove the hostpath-based VM, as this cannot be live migrated anyway, as it's utilising hypervisor based storage and is therefore RWO (read-write once) by definition. Our OCS-based virtual machine is using shared-storage on Ceph, and therefore should support live migration.
-
-
-First delete the VM we created earlier
-
-```execute-1
-oc delete vm/rhel8-server-hostpath
-```
-
-And wait for VM is deleted:
-
-~~~bash
-virtualmachine.kubevirt.io "rhel8-server-hostpath" deleted
-~~~
-
+In our lab we only need to have only one VM running. 
 We should only have the one VM running now-
 
 ```execute-1
@@ -25,12 +11,12 @@ oc get vmi
 
 ~~~bash
 NAME               AGE   PHASE     IP               NODENAME                       READY
-rhel8-server-ocs   45h   Running   192.168.123.64   ocp4-worker3.aio.example.com   True
+rhel8-server-ocs   45h   Running   192.168.123.64   ocp4-worker3.%node-network-domain%  True
 ~~~
 
 > **NOTE**: In OpenShift Virtualization, the "Virtual Machine" object can be thought of as the virtual machine "source" that virtual machine instances are created from. A "Virtual Machine Instance" is the actual running instance of the virtual machine. The instance is the object you work with that contains IP, networking, and workloads, etc. That's why we delete a VM, and list VMI's.
 
-In this example we can see the `rhel8-server-ocs` instance is on `ocp4-worker3.aio.example.com`. As you may recall we deployed this instance with the `LiveMigrate` `evictionStrategy` strategy but you can also review an instance with `oc describe` to ensure it is enabled.
+In this example we can see the `rhel8-server-ocs` instance is on `ocp4-worker3.%node-network-domain%`. As you may recall we deployed this instance with the `LiveMigrate` `evictionStrategy` strategy but you can also review an instance with `oc describe` to ensure it is enabled.
 
 
 ```execute-1
@@ -45,6 +31,33 @@ This command should have a similar output as below
   Migration Method:  LiveMigration
 ~~~
 
+
+## Live Migration using Web Console 
+
+You can use current VM for Live Migration test. I'll need to click detail.Then "**Action**" and "**Migrate Virtual Machine**" button.
+
+![](img/livemigration1.png)
+
+Click "**Migrate**" 
+
+![](img/livemigration2.png)
+
+As you can see on your console,VM status is updated to "**Migrating**" State.
+
+![](img/livemigration3.png)
+
+If you want to look logs, You'll need to click "**Events**" tab on your VM details screen.
+
+![](img/livemigration4.png)
+
+After migration job is finished, You'll need to check your current host.It should changed
+
+![](img/livemigration5.png)
+
+
+
+
+## Live Migration using CLI 
 The easiest way to initiate a migration is to create an `VirtualMachineInstanceMigration` object in the cluster directly against the `vmi` we want to migrate (this can also be conducted via the OpenShift console if we like, and we'll take a look at it in a later lab section). But wait! Once we create this object it will trigger the migration, so first, let's review what it looks like:
 
 ~~~yaml
@@ -117,7 +130,7 @@ Now check the output:
 
 ~~~bash
 NAME               AGE   PHASE     IP               NODENAME                       READY
-rhel8-server-ocs   45h   Running   192.168.123.64   ocp4-worker1.aio.example.com   True 
+rhel8-server-ocs   45h   Running   192.168.123.64   ocp4-worker1.%node-network-domain%  True 
 ~~~
 
 As you can see Live Migration in OpenShift Virtualization is quite easy. If you have time, try some other examples. Perhaps start a ping and migrate the machine back. Do you see anything in the ping to indicate the process?
@@ -139,16 +152,16 @@ This will show VMI object in yaml format:
     End Timestamp:    2021-11-10T11:39:20Z
     Migration UID:    2ebfb4e1-0025-4b8b-8c59-9bd986c05505
     Mode:             PreCopy
-    Source Node:      ocp4-worker3.aio.example.com
+    Source Node:      ocp4-worker3.%node-network-domain%
     Start Timestamp:  2021-11-10T11:39:11Z
     Target Direct Migration Node Ports:
       32903:                      49152
       34993:                      0
-    Target Node:                  ocp4-worker1.aio.example.com
+    Target Node:                  ocp4-worker1.%node-network-domain%
     Target Node Address:          10.131.0.43
     Target Node Domain Detected:  true
     Target Pod:                   virt-launcher-rhel8-server-ocs-fxz74
-  Node Name:                      ocp4-worker1.aio.example.com
+  Node Name:                      ocp4-worker1.%node-network-domain%
   Phase:                          Running
 (...)
 
@@ -159,12 +172,12 @@ Events:
   Normal  PreparingTarget   2m53s (x2 over 2m53s)  virt-handler                 VirtualMachineInstance Migration Target Prepared.
   Normal  PreparingTarget   2m53s                  virt-handler                 Migration Target is listening at 10.131.0.43, on ports: 34993,32903
   Normal  Migrating         2m45s (x5 over 2m53s)  virt-handler                 VirtualMachineInstance is migrating.
-  Normal  Migrated          2m44s                  virt-handler                 The VirtualMachineInstance migrated to node ocp4-worker1.aio.example.com.
+  Normal  Migrated          2m44s                  virt-handler                 The VirtualMachineInstance migrated to node ocp4-worker1.%node-network-domain%.
   Normal  Deleted           2m44s                  virt-handler                 Signaled Deletion
   Normal  SuccessfulUpdate  2m41s                  disruptionbudget-controller  shrank PodDisruptionBudget%!(EXTRA string=kubevirt-disruption-budget-8fr8b)
 ~~~
 
-## Node Maintenance
+## Live Migration due to Node Maintenance
 
 Building on-top of live migration, many organisations will need to perform node-maintenance, e.g. for software/hardware updates, or for decommissioning. During the lifecycle of a pod, it's almost a given that this will happen without compromising the workloads, but virtual machines can be somewhat more challenging given their legacy nature. Therefore, OpenShift Virtualization has a node-maintenance feature, which can force a machine to no longer be schedulable and any running workloads will be automatically live migrated off if they have the ability to (e.g. using shared storage) and have an appropriate eviction strategy.
 
@@ -178,12 +191,12 @@ This will list down the nodes:
 
 ~~~bash
 NAME                           STATUS   ROLES    AGE   VERSION
-ocp4-master1.aio.example.com   Ready    master   2d    v1.22.0-rc.0+a44d0f0
-ocp4-master2.aio.example.com   Ready    master   2d    v1.22.0-rc.0+a44d0f0
-ocp4-master3.aio.example.com   Ready    master   2d    v1.22.0-rc.0+a44d0f0
-ocp4-worker1.aio.example.com   Ready    worker   2d    v1.22.0-rc.0+a44d0f0
-ocp4-worker2.aio.example.com   Ready    worker   2d    v1.22.0-rc.0+a44d0f0
-ocp4-worker3.aio.example.com   Ready    worker   2d    v1.22.0-rc.0+a44d0f0
+ocp4-master1.%node-network-domain%  Ready    master   2d    v1.22.0-rc.0+a44d0f0
+ocp4-master2.%node-network-domain%  Ready    master   2d    v1.22.0-rc.0+a44d0f0
+ocp4-master3.%node-network-domain%  Ready    master   2d    v1.22.0-rc.0+a44d0f0
+ocp4-worker1.%node-network-domain%  Ready    worker   2d    v1.22.0-rc.0+a44d0f0
+ocp4-worker2.%node-network-domain%  Ready    worker   2d    v1.22.0-rc.0+a44d0f0
+ocp4-worker3.%node-network-domain%  Ready    worker   2d    v1.22.0-rc.0+a44d0f0
 ~~~
 
 Now check the VMIs:
@@ -194,20 +207,20 @@ oc get vmi
 
 ~~~bash
 NAME               AGE   PHASE     IP               NODENAME                       READY
-rhel8-server-ocs   45h   Running   192.168.123.64   ocp4-worker1.aio.example.com   True
+rhel8-server-ocs   45h   Running   192.168.123.64   ocp4-worker1.%node-network-domain%  True
 ~~~
 
-So in this environment, we have one virtual machine running on *ocp4-worker1*. Let's take down the node for maintenance and ensure that our workload (VM) stays up and running:
+So in this environment, we have one virtual machine running on one of the workers. Let's take down that worker node for maintenance and ensure that our workload (VM) stays up and running:
 
 
-```execute-1
+```copy
 cat << EOF | oc apply -f -
 apiVersion: nodemaintenance.kubevirt.io/v1beta1
 kind: NodeMaintenance
 metadata:
-  name: worker1-maintenance
+  name: worker-maintenance
 spec:
-  nodeName: ocp4-worker1.aio.example.com
+  nodeName: [replace-with-worker-node-name].%node-network-domain%
   reason: "Worker1 Maintenance"
 EOF
 ```
@@ -242,12 +255,12 @@ Notice that scheculing is disabled for `Worker1`:
 
 ~~~bash
 NAME                           STATUS                     ROLES    AGE   VERSION
-ocp4-master1.aio.example.com   Ready                      master   2d    v1.22.0-rc.0+a44d0f0
-ocp4-master2.aio.example.com   Ready                      master   2d    v1.22.0-rc.0+a44d0f0
-ocp4-master3.aio.example.com   Ready                      master   2d    v1.22.0-rc.0+a44d0f0
-ocp4-worker1.aio.example.com   Ready,SchedulingDisabled   worker   2d    v1.22.0-rc.0+a44d0f0
-ocp4-worker2.aio.example.com   Ready                      worker   2d    v1.22.0-rc.0+a44d0f0
-ocp4-worker3.aio.example.com   Ready                      worker   2d    v1.22.0-rc.0+a44d0f0
+ocp4-master1.%node-network-domain%  Ready                      master   2d    v1.22.0-rc.0+a44d0f0
+ocp4-master2.%node-network-domain%  Ready                      master   2d    v1.22.0-rc.0+a44d0f0
+ocp4-master3.%node-network-domain%  Ready                      master   2d    v1.22.0-rc.0+a44d0f0
+ocp4-worker1.%node-network-domain%  Ready,SchedulingDisabled   worker   2d    v1.22.0-rc.0+a44d0f0
+ocp4-worker2.%node-network-domain%  Ready                      worker   2d    v1.22.0-rc.0+a44d0f0
+ocp4-worker3.%node-network-domain%  Ready                      worker   2d    v1.22.0-rc.0+a44d0f0
 ~~~
 
 
@@ -257,11 +270,11 @@ Now check the VMI:
 oc get vmi
 ```
 
-Note that the VM has been automatically live migrated back to an available worker, as per the `EvictionStrategy`, in this case `ocp4-worker3.aio.example.com`. 
+Note that the VM has been automatically live migrated back to an available worker, as per the `EvictionStrategy`, in this case `ocp4-worker3.%node-network-domain%`. 
 
 ~~~bash
 NAME               AGE   PHASE     IP               NODENAME                       READY
-rhel8-server-ocs   46h   Running   192.168.123.64   ocp4-worker3.aio.example.com   True
+rhel8-server-ocs   46h   Running   192.168.123.64   ocp4-worker3.%node-network-domain%  True
 ~~~
 
 
@@ -291,14 +304,14 @@ nodemaintenance.nodemaintenance.kubevirt.io "worker1-maintenance" deleted
 Then check the node again:
 
 ```execute-1
-oc get node/ocp4-worker1.aio.example.com
+oc get node/ocp4-worker1.%node-network-domain%
 ```
 
 Note the removal of the `SchedulingDisabled` annotation on the '**STATUS**' column, also note that just because this node has become active again it doesn't mean that the virtual machine will 'fail back' to it. 
 
 ~~~bash
 NAME                           STATUS   ROLES    AGE   VERSION
-ocp4-worker1.aio.example.com   Ready    worker   2d    v1.22.0-rc.0+a44d0f0
+ocp4-worker1.%node-network-domain%  Ready    worker   2d    v1.22.0-rc.0+a44d0f0
 ~~~
 
 Before proceeding let's remove the `rhel8-server-ocs` virtual machine as well as any lingering PVC's we don't need any longer:
@@ -322,24 +335,3 @@ persistentvolumeclaim "rhel8-ocs" deleted
 persistentvolumeclaim "rhel8-hostpath" deleted
 ~~~
 
-## Live Migration using GUI (Option 2)
-
-You can use current VM for Live Migration test. I'll need to click detail.Then "**Action**" and "**Migrate Virtual Machine**" button.
-
-![](img/livemigration1.png)
-
-Click "**Migrate**" 
-
-![](img/livemigration2.png)
-
-As you can see on your console,VM status is updated to "**Migrating**" State.
-
-![](img/livemigration3.png)
-
-If you want to look logs, You'll need to click "**Events**" tab on your VM details screen.
-
-![](img/livemigration4.png)
-
-After migration job is finished, You'll need to check your current host.It should changed
-
-![](img/livemigration5.png)
