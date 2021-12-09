@@ -20,7 +20,6 @@ sudo rm -rf /var/lib/mongo/*
 sudo systemctl start mongod
 ```
 
-
 ~~~bash
 $ yum install httpd -y
 $ systemctl start httpd

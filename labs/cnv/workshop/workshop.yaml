@@ -11,9 +11,9 @@ modules:
     - network-setup
     - deploy-workloads
     - live-migration
+    - templates
     - cloning
     - masquerade
-    - templates
     - sample-application-architecture
     - deploy-application-components
     - deploy-database-web

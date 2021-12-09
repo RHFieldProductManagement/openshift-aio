@@ -45,16 +45,16 @@ modules:
         exit_sign: Live Migration
     live-migration:
         name: Live Migration
-        exit_sign: Clone a Virtual Machine
+        exit_sign: Templates
+    templates:
+        name: Virtual Machine Templates and Boot Sources
+        exit_sign: Cloning
     cloning:
         name: Clone a Virtual Machine
         exit_sign: Masquerade Networking
     masquerade:
         name: Masquerade Networking
-        exit_sign: Templates 
-    templates:
-        name: Virtual Machine Templates and Boot Sources
-        exit_sign: Parksmap Application
+        exit_sign: Parksmap Application 
     sample-application-architecture:
         name: Parksmap Application Architecture
         exit_sign: Deploying Parksmap 
