@@ -46,15 +46,25 @@ And let's install http package using below command.
 ~~~bash
 yum install httpd -y
 ~~~
+
+And then start and enable httpd service 
+
 ~~~bash
 systemctl start httpd
 systemctl enable httpd
 ~~~
 
 
-And lets  check your HTTP server via browser. First of all , you should get your VM's current public ip then try to connect using this ip.That's it.
+And lets  check your HTTP server via browser. First of all , you should get your VM's current  ip then try to connect using this ip via browser or terminal with curl.That's it.
 
 ![](img/clone1.png)
+
+or 
+
+```execute-1
+curl 10.128.3.192
+```
+
 
 Then we are starting clone  job as you can see below screenshot.
 
@@ -72,7 +82,7 @@ At this point, I'll need some test for this new vm. I am starting VM now. You'll
 
 ![](img/clone5.png)
 
-After vm started , check current public ip and then connect your browser with this new ip. That's it.
+After vm started , check current ip and then connect your browser with this new ip. That's it.
 
 ![](img/clone6.png)
 
