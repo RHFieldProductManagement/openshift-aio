@@ -26,7 +26,7 @@ This will open the next screen where we can accept all the defaults for this lab
 <img  border="1" src="img/ocp-virt-operatore-create-HyperC.png"/>
 
 
-Whilst this does its thing, you can move to the '**Workloads**' --> '**Pods**' menu entry and watch it start all of its resources:
+Whilst this does its thing, you can move to the [Workloads -> Pods](https://console-openshift-console.%cluster_subdomain%/k8s/ns/openshift-cnv/pods) menu entry and watch it start all of its resources:
 
 <img  border="1" src="img/ocp-virt-hco-4.png"/>
 

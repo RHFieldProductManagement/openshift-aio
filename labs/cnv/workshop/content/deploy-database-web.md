@@ -10,9 +10,11 @@ by leveraging OpenShift Virtualization.
 
 In this module we will create MongoDB from a *Template*, which contains all the necessary Kubernetes resources and configuration to deploy and run MongoDB in a VM which is based on Centos.
 
-Please go back to the [Web Console](http://console-openshift-console.%cluster_subdomain%/k8s/cluster/projects)
 
-If you are in the in the Administrator perspective, switch to Developer perspective and go to the *%parksmap-project-namespace%* project. 
+Please go back to the [Developer Console](http://console-openshift-console.%cluster_subdomain%/add/ns/%parksmap-project-namespace%) 
+
+Ensure you are in the *%parksmap-project-namespace%* project. 
+
 
 - From the left menu, click *+Add*. You will see a screen where you have multiple options to deploy application. 
 

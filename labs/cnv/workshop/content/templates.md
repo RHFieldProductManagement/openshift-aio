@@ -35,7 +35,7 @@ This PVC will be cloned for each new virtual machine created using this template
   <tr>
     <td>
 
-1. In the OpenShift Virtualization console, click **Workloads** → **Virtualization** from the side menu.
+1. Click [Workloads -> Virtualization](https://console-openshift-console.%cluster_subdomain%/k8s/ns/parksmap-demo/virtualization) from the side menu.
 
 2. Click the **Templates** tab.
 

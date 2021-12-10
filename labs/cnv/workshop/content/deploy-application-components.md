@@ -39,8 +39,10 @@ The *oc policy* command above is giving a defined _role_ (*view*) to default use
 
 We will use OpenShift Web Console to deploy Parksmap Web Application components. 
 
-Please go to the [Web Console](http://console-openshift-console.%cluster_subdomain%/k8s/cluster/projects) 
-and on the login screen, enter the following credentials:
+Please go to the [Developer Console](http://console-openshift-console.%cluster_subdomain%/add/ns/%parksmap-project-namespace%) 
+
+
+In the case it redirects to login screen, enter the following credentials
 
 - Username: *kubeadmin*
 
@@ -48,7 +50,7 @@ and on the login screen, enter the following credentials:
 
 ### 4.  Search for the Application Template
 
-If you are in the in the Administrator perspective, switch to Developer perspective and go to the `%parksmap-project-namespace%` project. 
+Ensure you are in the *%parksmap-project-namespace%* project.
 
 From the left menu, click `+Add`. You will see a screen where you have multiple options to deploy application to OpenShift. Click `All Services` as shown below.
 
