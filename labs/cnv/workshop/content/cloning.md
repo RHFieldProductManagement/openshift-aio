@@ -87,13 +87,11 @@ And view the route:
 oc get routes
 ```
 
-You can now visit the endpoint at [http://centos-httpd-service-default.apps.%cluster_subdomain%/](http://centos-httpd-service-default.apps.%cluster_subdomain%/) in a new browser tab and find the HTTP server from your Centos based VM - you should see the same content that we curl'd in a previous step, just now it's exposed on the internet:
+You can now visit the endpoint at [http://centos-httpd-service-default.%cluster_subdomain%/](http://centos-httpd-service-default.%cluster_subdomain%/) in a new browser tab and find the HTTP server from your Centos based VM - you should see the same content that we curl'd in a previous step, just now it's exposed on the internet:
 
 <img src="img/clone6.png"/>
 
 > **NOTE**: If you get an "Application is not available" message, make sure that you're accessing the route with **https** - the router performs TLS termination for us, and therefore there's not actually anything listening on port 80 on the outside world, it just forwards 443 (OpenShift ingress) -> 80 (pod network).
-
-
 
 
 

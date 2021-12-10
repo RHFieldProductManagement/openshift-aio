@@ -241,7 +241,7 @@ NAME           HOST/PORT                                              PATH   SER
 fc34-service   fc34-service-default.apps.%cluster_subdomain%        fc34-service   <all>   edge          None
 ~~~
 
-You can now visit the endpoint at [https://fc34-service-default.apps.%cluster_subdomain%/](https://fc34-service-default.apps.%cluster_subdomain%/) in a new browser tab and find the NGINX server from your Fedora based VM - you should see the same content that we curl'd in a previous step, just now it's exposed on the internet:
+You can now visit the endpoint at [https://fc34-service-default.%cluster_subdomain%/](https://fc34-service-default.%cluster_subdomain%/) in a new browser tab and find the NGINX server from your Fedora based VM - you should see the same content that we curl'd in a previous step, just now it's exposed on the internet:
 
 <img src="img/masq-https.png"/>
 
