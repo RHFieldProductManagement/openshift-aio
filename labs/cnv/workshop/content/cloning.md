@@ -92,6 +92,7 @@ Before moving on to the next lab let's clean up the VMs so we ensure our environ
 
 ![](img/clone7.png)
 
+
 # Exercise 2
 
 ## Cloning a Virtual Machine using CLI
