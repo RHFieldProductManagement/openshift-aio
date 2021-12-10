@@ -222,7 +222,7 @@ No resources found in openshift-cnv namespace.
 
 ### Viewing the OpenShift Virtualization Dashboard
 
-When OpenShift Virtualization is deployed it adds additional components to OpenShift's web-console so you can interact with objects and custom resources defined by OpenShift Virtualization, including `VirtualMachine` types. If you select the `Console` button at the top of this pane you should see the web-console displayed. You can now navigate to [Workloads -> Virtualization](https://console-openshift-console.%cluster_subdomain%/k8s/all-namespaces/virtualization) on the left-hand side panel and you should see the new snap-in component for OpenShift Virtualization but with no Virtual Machines found:
+When OpenShift Virtualization is deployed it adds additional components to OpenShift's web-console so you can interact with objects and custom resources defined by OpenShift Virtualization, including `VirtualMachine` types. If you select the `Console` button at the top of this pane you should see the web-console displayed. You can now navigate to [Workloads -> Virtualization](https://console-openshift-console.%cluster_subdomain%/k8s/ns/default/virtualization) on the left-hand side panel and you should see the new snap-in component for OpenShift Virtualization but with no Virtual Machines found:
 
 <img src="img/ocpvirt-dashboard.png"/>
 

@@ -13,39 +13,27 @@ Click '**Create VM**' button.
 
 ![](img/clone8.png)
 
-You dont need to customize Template.But you can if you want.
+Change the Virtual Machine name to `centos8-httpd` and ensure the project is set to `default` and then click '**Create Virtual Machine**' 
 
-Click '**Create Virtual Machine**' 
-
-![](img/clone9.png)
+![](img/clone-createvm.png)
 
 That's it. You create a new VM from CentOS Template.Let's see this new VM details.
 
-Click '**See virtual machine details**'
+Click '**See virtual machine details**'. Now, as you can see, your vm is running now.
 
-![](img/clone10.png)
-
-Now, as you can see, your vm is running now.
-
-![](img/clone11.png)
-
+![](img/clone-vmrunning.png)
 Then  connect to VM Console for installing some packages.
 
 Click '**Console**'
 
-![](img/clone12.png)
+![](img/clone-vmconsole.png)
 
 ~~~bash
-Username: centos
+Username: root
 Password: redhat
 ~~~
 
 And let's install the `http` package using below command.
-
-~~~copy
-sudo -i
-~~~
-
 
 ~~~copy
 yum install httpd -y
@@ -61,14 +49,53 @@ systemctl start httpd
 systemctl enable httpd
 ~~~
 
+Then exit from the VM console.
 
-And lets  check your HTTP server via browser. First of all , you should get your VM's current  ip then try to connect using this ip by executing following command in the terminal as below:
+And lets  check your HTTP server via browser. First of all , you should get your VM's current  ip then try to connect using this ip by executing following command in the lab terminal (not in the VM Console) as below:
 
 ```copy
 curl [Virtual Machine IP]
 ```
 
 You should get a response in **HTML** format.
+
+Now create a Kubernetes Service to access **httpd** server from pod network.
+
+```execute
+oc create service clusterip --tcp=80 centos-httpd-service
+```
+
+```execute
+oc set selector service centos-httpd-service 'vm.kubevirt.io/name=centos8-httpd'
+```
+
+And now execute following to create a route to access this service externally:
+
+```execute
+oc expose service centos-httpd-service
+```
+
+A new route will be created:
+
+~~~bash
+route.route.openshift.io/centos-httpd-service created
+~~~
+
+And view the route:
+
+```execute-1
+oc get routes
+```
+
+You can now visit the endpoint at [https://centos-httpd-service-default.apps.%cluster_subdomain%/](https://centos-httpd-service-default.apps.%cluster_subdomain%/) in a new browser tab and find the HTTP server from your Centos based VM - you should see the same content that we curl'd in a previous step, just now it's exposed on the internet:
+
+<img src="img/clone6.png"/>
+
+> **NOTE**: If you get an "Application is not available" message, make sure that you're accessing the route with **https** - the router performs TLS termination for us, and therefore there's not actually anything listening on port 80 on the outside world, it just forwards 443 (OpenShift ingress) -> 80 (pod network).
+
+
+
+
 
 In order to clone a Virtual Machine, click **Clone Virtual Machine** in **Actions** menu as shown below: 
 
@@ -86,7 +113,7 @@ Now let's test the new VM.  Click  "**...**" and "**Start Virtual Machine**" but
 
 ![](img/clone5.png)
 
-After VM started , note the IP of the new VM and then try to connect the application again by executing following command in the terminal as below:
+After VM started , note the IP of the new VM and then try to connect the application again by executing following command in the lab terminal (not in the VM Console) :
 
 ```copy
 curl [Virtual Machine IP]
