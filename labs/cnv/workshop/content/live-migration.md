@@ -36,7 +36,12 @@ This command should have a similar output as below
 
 ## Live Migration using Web Console 
 
-You can use current VM for Live Migration test. I'll need to click detail.Then "**Action**" and "**Migrate Virtual Machine**" button.
+
+You can use current VM for Live Migration test.
+
+So first go to the Web Console and navigate to [Workloads -> Virtualization ](https://console-openshift-console.%cluster_subdomain%/k8s/ns/default/virtualization). 
+
+ Find the VM then click on VM for the details. Then click "**Action**" and "**Migrate Virtual Machine**" button.
 
 ![](img/livemigration1.png)
 
@@ -48,7 +53,7 @@ As you can see on your console,VM status is updated to "**Migrating**" State.
 
 ![](img/livemigration3.png)
 
-If you want to look logs, You'll need to click "**Events**" tab on your VM details screen.
+If you want to see event logs, You'll need to click "**Events**" tab on your VM details screen.
 
 ![](img/livemigration4.png)
 

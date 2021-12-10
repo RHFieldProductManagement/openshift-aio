@@ -58,6 +58,8 @@ It will take some time MongoDB VM to start and initialize. You can check the sta
 oc get vm
 ```
 
+Execute above command several times until you see VM is in **Running** status:
+
 ~~~bash
 NAME                    AGE   STATUS     READY
 mongodb-nationalparks   45s   Running    True
@@ -71,7 +73,7 @@ After MongoDB Virtual Machine started, open *Virtual Machine Console* as shown i
 
  <br/>
 
-Switch to *Serial Console* and wait for the login prompt.
+Wait for the login prompt.
 
 On the login screen, enter the following credentials:
 
@@ -153,7 +155,7 @@ mongodb-vm-template                                                             
 Now let's check the template definition:
 
 ```execute-1
-oc get template mongodb-vm-template -n openshift -o yaml
+oc get template mongodb-vm-template -n openshift -o yaml |grep -A 31 cloudInitNoCloud
 ```
 
 There are many details, but let's focus on the `cloudInitNoCloud` section. This is the part where put the instructions to initialize the Virtual Machine. 
@@ -199,7 +201,7 @@ name: cloudinitdisk
 Let's check the VirtualMachine object now
 
 ```execute-1
- oc get vm mongodb-nationalparks -n %parksmap-project-namespace% -o yaml
+ oc get vm mongodb-nationalparks -n %parksmap-project-namespace% -o yaml | |grep -A 31 cloudInitNoCloud
 ```
 
 When we instantiate the template, OpenShift replaces the parameters with the values provided :

@@ -117,7 +117,7 @@ virt-launcher-rhel8-server-ocs-z5rmr   1/1     Running   0          3m5s
 Then execute following to describe the details:
 
 ```copy
-oc describe pod virt-launcher-rhel8-server-ocs-z5rmr
+oc describe pod virt-launcher-rhel8-server-ocs-[podid]
 ```
 
 This command will list pod details in yaml format:
@@ -180,10 +180,10 @@ NAME                                   READY   STATUS    RESTARTS   AGE
 virt-launcher-rhel8-server-ocs-z5rmr   1/1     Running   0          30h
 ~~~
 
-Execute following to open a bash shell in the pod:
+Execute following to open a bash shell in the pod (replace the pod name):
 
 ```copy
-oc exec -it virt-launcher-rhel8-server-ocs-z5rmr bash
+oc exec -it virt-launcher-rhel8-server-ocs-z5rmr -- bash
 ```
 And then you can run the usual virsh commands:
 
@@ -293,10 +293,6 @@ This will show interface information in XML format:
 ~~~
 
 Exit the shell before proceeding:
-
-```execute-1
-exit
-```
 
 ```execute-1
 exit

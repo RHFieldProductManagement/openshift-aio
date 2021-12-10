@@ -8,7 +8,7 @@ The namespace `openshift-virtualization-os-images` enables the feature and is in
 
 Define a boot source by using a persistent volume claim (PVC) that is populated by uploading a local file, cloning an existing PVC, importing from a registry, or by URL. Attach a boot source to a virtual machine template by using the web console. After the boot source is attached to a virtual machine template, you create any number of fully configured ready-to-use virtual machines from the template.
 
-Preconfigured Red Hat virtual machine templates are listed in the **Templates** tab within the **Virtualization** page. These templates are available for different versions of Red Hat Enterprise Linux, Fedora, Microsoft Windows 10, and Microsoft Windows Servers. Each Red Hat virtual machine template is preconfigured with the operating system image, default settings for the operating system, flavor (CPU and memory), and workload type (server).
+Preconfigured Red Hat virtual machine templates are listed in the **Templates** tab within the [Workloads -> Virtualization](https://console-openshift-console.%cluster_subdomain%/k8s/ns/default/virtualization/templates) page. These templates are available for different versions of Red Hat Enterprise Linux, Fedora, Microsoft Windows 10, and Microsoft Windows Servers. Each Red Hat virtual machine template is preconfigured with the operating system image, default settings for the operating system, flavor (CPU and memory), and workload type (server).
 
 <img src="img/templates-list.png" width="100%"/></td>
 
@@ -59,7 +59,7 @@ Once you click **Save and import** to import disk image, a new PersistentVolumeC
 
 ![Boot Source PVC](img/templates-boot-source-pvc.png)
 
- After creating the new PersistentVolumeClaim, a CDI (Containerized Data Importer) pod is started in the `openshift-virtualization-os-images` namespace. This CDI pod downloads the specified disk image from the Http URL and populates the newly created PersistentVolumeClaim with the contents of that disk image. You can see this CDI pod by switching into the `openshift-virtualization-os-images` project and selecting **Workloads** → **Pods** from the side menu.
+ After creating the new PersistentVolumeClaim, a CDI (Containerized Data Importer) pod is started in the `openshift-virtualization-os-images` namespace. This CDI pod downloads the specified disk image from the Http URL and populates the newly created PersistentVolumeClaim with the contents of that disk image. You can see this CDI pod by switching into the `openshift-virtualization-os-images` project and selecting [Workloads -> Pods](https://console-openshift-console.%cluster_subdomain%/k8s/ns/openshift-virtualization-os-images/pods) from the side menu.
 
 ![CDI Pod](img/templates-cdi-pod.png)
 
@@ -82,9 +82,9 @@ win10       Succeeded          100.0%                253d
 
 Once the import progress is reached up to 100% and succeeded, you can verify that a boot source was added to the template:
 
-1. In the OpenShift Virtualization console, click **Workloads** → **Virtualization** from the side menu.
+1. In the OpenShift Virtualization console, click [Workloads -> Virtualization](https://console-openshift-console.%cluster_subdomain%/k8s/ns/default/virtualization/templates) from the side menu.
    
-2. Click the Templates tab.
+2. You should be in the Templates tab.
 
 3. Confirm that the tile for `CentOS 8.0+ VM` template displays a green checkmark.
 

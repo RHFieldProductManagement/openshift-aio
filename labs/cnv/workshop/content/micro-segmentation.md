@@ -50,7 +50,7 @@ In this exercise, we'll **restrict access between pods and VMs** as seen from im
 
 Let's verify that nationalparks could access mongodb-mlbparks and mlbparks could access to mongodb-nationalparks.
 
-1. Click **Workloads** → **Pods** from the side menu.
+1. Click [Workloads -> Pods](https://console-openshift-console.%cluster_subdomain%/k8s/ns/parksmap-demo/pods) from the side menu.
 
 2. Click **nationalparks** pod.
 
@@ -103,7 +103,7 @@ It looks like you are trying to access MongoDB over HTTP on the native driver po
 
 Now, let's apply following network policy to restrict access to **mongodb-mlbparks** from **nationalparks**.
 
-1. Click **Networking** → **NetworkPolicies** from the side menu.
+1. Click [Networking -> NetworkPolicies](https://console-openshift-console.%cluster_subdomain%/k8s/ns/parksmap-demo/networkpolicies) from the side menu.
 
 2. Click **CreateNetworkPolicy**  pod.
 
@@ -135,7 +135,7 @@ spec:
 
 Then apply following network policy to restrict access to **mongodb-nationalparks** from **mlbparks**.
 
-1. Click **Networking** → **NetworkPolicies** from the side menu.
+1. Click [Networking -> NetworkPolicies](https://console-openshift-console.%cluster_subdomain%/k8s/ns/parksmap-demo/networkpolicies) from the side menu.
 
 2. Click **CreateNetworkPolicy**  pod.
 
@@ -167,7 +167,7 @@ spec:
 ~~~
 Finally, Let's verify that nationalparks could access only mongodb-nationalparks and mlbparks could access to mongodb-mlbparks.
 
-1. Click **Workloads** → **Pods** from the side menu.
+1. Click [Workloads -> Pods](https://console-openshift-console.%cluster_subdomain%/k8s/ns/parksmap-demo/pods) from the side menu.
 
 2. Click **nationalparks** pod.
 

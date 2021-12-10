@@ -26,19 +26,21 @@ The QEMU guest agent takes a consistent snapshot by attempting to quiesce the VM
 
 > **NOTE**: The qemu-guest-agent is widely available and available by default in Red Hat virtual machines. It might be already installed and enabled on the virtual machine used in this lab module.
 
-1. Navigate to the OpenShift Web UI so we can access the console of the `mongodb-nationalparks` virtual machine. You'll need to select "**Workloads**" --> "**Virtualization**" --> "**Virtual Machines**" --> "**mongodb-nationalparks**" --> "**Console**". You'll be able to login with "**centos/redhat**", noting that you may have to click on the console window for it to capture your input. <img src="img/snapshot-vm-console.png"/>
+1. First navigate to [Workloads -> Virtualization](https://console-openshift-console.%cluster_subdomain%/k8s/ns/parksmap-demo/virtualization). Then open VM Console to access  `mongodb-nationalparks` virtual machine terminal. Then open  "**mongodb-nationalparks**" --> "**Console**". You'll be able to login with "**%mongodb-vm-username%/%mongodb-vm-password%**", noting that you may have to click on the console window for it to capture your input. <img src="img/snapshot-vm-console.png"/>
 
 > **TIP**: You might find `Serial Console` option is more responsive.
 
 > **NOTE**: If you don't see an VMs make sure to change to the Default project via the drop down at the top of the console.
 
 2. Once you're in the virtual machine Install the QEMU guest agent on the virtual machine
-```execute
+
+```copy
 sudo yum install -y qemu-guest-agent
 ```
 
 3. Ensure the service is persistent and start it
-```execute
+
+```copy
 sudo systemctl enable --now qemu-guest-agent
 ```
 
@@ -49,7 +51,7 @@ Virtual machine (VM) snapshots can be created either by using the web console or
   <tr>
     <td>
 
-1. Click **Workloads** → **Virtualization** from the side menu.
+1. Click [Workloads -> Virtualization](https://console-openshift-console.%cluster_subdomain%/k8s/ns/parksmap-demo/virtualization) from the side menu.
    
 2. Click the **Virtual Machines** tab.
    
@@ -79,16 +81,19 @@ It should take just a little seconds to actually create the snapshot and make it
 
 After taking an online snapshot of the database vm, let's destroy the database by forcefully deleting everything under it's data path.
 
-1. Navigate to the OpenShift Web UI so we can access the console of the `mongodb-nationalparks` virtual machine. You'll need to select "**Workloads**" --> "**Virtualization**" --> "**Virtual Machines**" --> "**mongodb-nationalparks**" --> "**Console**". You'll be able to login with "**centos/redhat**", noting that you may have to click on the console window for it to capture your input.
+1. First navigate to [Workloads -> Virtualization](https://console-openshift-console.%cluster_subdomain%/k8s/ns/parksmap-demo/virtualization). Then open VM Console to access  `mongodb-nationalparks` virtual machine terminal.  You'll be able to login with "**%mongodb-vm-username%/%mongodb-vm-password%**", noting that you may have to click on the console window for it to capture your input. 
 
 2. Once you're in the virtual machine, delete everything under it's data path.
-```execute
+
+```copy
 sudo systemctl stop mongod
 ```
-```execute
+
+```copy
 sudo rm -rf /var/lib/mongo/*
 ```
-```execute
+
+```copy
 sudo systemctl start mongod
 ```
 
@@ -99,7 +104,7 @@ Now you can check by refreshing `ParksMap` web page (Map Visualizer on OpenShift
 In this exercise, let's restore our mongodb database vm by using the web console to the snapshot created in the previous exercise.
 You can only restore to a powered off (offline) VM so we will first power off the virtual machine in this exercise.
 
-1. Click **Workloads** → **Virtualization** from the side menu.
+1. Click [Workloads -> Virtualization](https://console-openshift-console.%cluster_subdomain%/k8s/ns/parksmap-demo/virtualization) from the side menu.
 
 2. Click the **Virtual Machines** tab.
 
@@ -145,6 +150,7 @@ In previous exercises in this module, we created and restored vm snapshot in the
 In this exercise, let's create another snapshot of our mongodb database vm, this time by using the cli.
 
 1. List the existing snapshots in the project.
+
 ```execute
 oc get vmsnapshots
 ```
@@ -183,6 +189,7 @@ oc wait vmsnapshot mongodb-nationalparks-snap1 --for condition=Ready
 ```
 
 4. List the existing snapshots in the project again to verify that the new vm snapshot is created successfully.
+
 ```execute
 oc get vmsnapshots
 ```
@@ -254,7 +261,7 @@ oc describe vmsnapshotcontent vmsnapshot-content-7a46dfc9-9904-42e9-a0a3-c02ef43
 
 To see how to restore the VM in the CLI, let's delete the VM's boot disk completely this time after powering of the VM.
 
-1. Click **Workloads** → **Virtualization** from the side menu.
+1. Click [Workloads -> Virtualization](https://console-openshift-console.%cluster_subdomain%/k8s/ns/parksmap-demo/virtualization) from the side menu.
 
 2. Click the **Virtual Machines** tab.
 

@@ -1,12 +1,11 @@
 In this lab we're going to clone a workload using both Web Console and Terminal and prove that it's identical to the previous. 
 
-# Exercise 1
 
 ## Cloning VM using Web Console
 
 In the first section(Using Web Console), For convenience we're going to install CentOS VM using templates section.Then install a basic application inside the VM, and after that clone it - we'll then test to see if the cloned machine works as expected and is "the same" as before.
 
-Let's navigate to the top-level '**Workloads**' menu entry, and select '**Virtualization**' and click '**Templates**' section.
+Let's navigate to **Templates** tab in [Workloads -> Virtualization](https://console-openshift-console.%cluster_subdomain%/k8s/ns/default/virtualization/templates) section.
 
 Now,You can see VMs which names are Red Hat Enterprise Linux, CentOS etc.You  added boot source on CentOS image before.We will use this CentOS Template.
 
@@ -30,70 +29,75 @@ Now, as you can see, your vm is running now.
 
 ![](img/clone11.png)
 
-Then , I need to connect console for install some packages for testing.
+Then  connect to VM Console for installing some packages.
 
 Click '**Console**'
 
 ![](img/clone12.png)
 
 ~~~bash
-Username: root
+Username: centos
 Password: redhat
 ~~~
 
-And let's install http package using below command.
+And let's install the `http` package using below command.
 
-~~~bash
+~~~copy
+sudo -i
+~~~
+
+
+~~~copy
 yum install httpd -y
 ~~~
 
 And then start and enable httpd service 
 
-~~~bash
+~~~copy
 systemctl start httpd
+~~~
+
+~~~copy
 systemctl enable httpd
 ~~~
 
 
-And lets  check your HTTP server via browser. First of all , you should get your VM's current  ip then try to connect using this ip via browser or terminal with curl.That's it.
+And lets  check your HTTP server via browser. First of all , you should get your VM's current  ip then try to connect using this ip by executing following command in the terminal as below:
 
-![](img/clone1.png)
-
-or 
-
-```execute-1
-curl 10.128.3.192
+```copy
+curl [Virtual Machine IP]
 ```
 
+You should get a response in **HTML** format.
 
-Then we are starting clone  job as you can see below screenshot.
+In order to clone a Virtual Machine, click **Clone Virtual Machine** in **Actions** menu as shown below: 
 
 ![](img/clone2.png)
 
-I can change namespace and after finishing clone,  I can start this VM. You'll need to click "**Clone Virtual Machine**" button.
+Now press "**Clone Virtual Machine**" button without changing the default parameters as below:
 
 ![](img/clone3.png)
 
-As you can see your console, current vm is closing now, and new vm is provisioning. 
+Then you should see the current VM in stopping, and the new VM in provisioning status. 
 
 ![](img/clone4.png)
 
-At this point, I'll need some test for this new vm. I am starting VM now. You'll need to click  "**...**" and "**Start Virtual Machine**" buttons.
+Now let's test the new VM.  Click  "**...**" and "**Start Virtual Machine**" buttons to start the VM as shown below:
 
 ![](img/clone5.png)
 
-After vm started , check current ip and then connect your browser with this new ip. That's it.
+After VM started , note the IP of the new VM and then try to connect the application again by executing following command in the terminal as below:
 
-![](img/clone6.png)
+```copy
+curl [Virtual Machine IP]
+```
 
 ### Clean up
 
-Before moving on to the next lab let's clean up the VMs so we ensure our environment has all the resources it might need; we're going to delete our VM's
+Before moving on to the next lab let's clean up the VMs so we ensure our environment has all the resources it might need; we're going to delete the VMs.
 
 ![](img/clone7.png)
 
-
-# Exercise 2
 
 ## Cloning a Virtual Machine using CLI
 

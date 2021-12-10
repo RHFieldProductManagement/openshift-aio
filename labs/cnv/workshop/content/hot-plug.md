@@ -12,7 +12,7 @@ In this exercise, let's attach a new 5G disk to mongodb database vm by using the
   <tr>
     <td>
 
-1. Click **Workloads** → **Virtualization** from the side menu.
+1. Click [Workloads -> Virtualization](https://console-openshift-console.%cluster_subdomain%/k8s/ns/parksmap-demo/virtualization) from the side menu.
    
 2. Click the **Virtual Machines** tab.
    
@@ -34,7 +34,7 @@ Once you click Add to attach new disk, a new vm disk is automatically provisione
 
 To verify if the new 5G disk is recognized and ready to use by the guest operating system, let's connect the console of our virtual machine and list block devices.
 
-1. Click **Workloads** → **Virtualization** from the side menu.
+1. Click [Workloads -> Virtualization](https://console-openshift-console.%cluster_subdomain%/k8s/ns/parksmap-demo/virtualization) from the side menu.
    
 2. Click the **Virtual Machines** tab.
    
@@ -56,7 +56,7 @@ In this exercise, let's resize our hot-plugged 5G disk to 7G by using the web co
   <tr>
     <td>
 
-1. Click **Workloads** → **Virtualization** from the side menu.
+1. Click [Workloads -> Virtualization](https://console-openshift-console.%cluster_subdomain%/k8s/ns/parksmap-demo/virtualization) from the side menu.
    
 2. Click the **Virtual Machines** tab.
    
@@ -79,7 +79,7 @@ Currently, guest operating systems are not noticed automatically when you expand
 To verify if the guest operating system has recognized the disk expansion, let's connect the console of our virtual machine and list block devices again.
 Size of the hot-plugged disk should still listed as 5G instead of 7G.
 
-1. Click **Workloads** → **Virtualization** from the side menu.
+1.Click [Workloads -> Virtualization](https://console-openshift-console.%cluster_subdomain%/k8s/ns/parksmap-demo/virtualization) from the side menu.
    
 2. Click the **Virtual Machines** tab.
    
@@ -99,7 +99,7 @@ libvirt is an open-source API, daemon and management tool for managing platform 
 To send a disk size change event to guest operating system, we can execute `virsh blockresize` command inside the virt-launcher pod of the virtual machine.
 Let's connect the terminal of `virt-launcher` pod of our virtual machine and execute `virsh blockresize` command to notify guest operating system so that it can recognize the disk size expansion.
 
-1. Click **Workloads** → **Pods** from the side menu.
+1. Click [Workloads -> Pods](https://console-openshift-console.%cluster_subdomain%/k8s/ns/parksmap-demo/pods) from the side menu.
    
 2. Select the Pod whose name starts with `virt-launcher-mongodb-nationalparks` its **Overview** screen.
 
@@ -149,7 +149,7 @@ In this exercise, let's detach the disk that we have hot-plugged in the previous
   <tr>
     <td>
 
-1. Click **Workloads** → **Virtualization** from the side menu.
+1. Click [Workloads -> Virtualization](https://console-openshift-console.%cluster_subdomain%/k8s/ns/parksmap-demo/virtualization) from the side menu.
    
 2. Click the **Virtual Machines** tab.
    
@@ -170,7 +170,7 @@ In this exercise, let's detach the disk that we have hot-plugged in the previous
 Once you click **Detach** to hot-unplug the disk it's  detached from the running virtual machine and guest operating system automatically recognizes the event. 
 To verify if the 7G disk removal is recognized by the guest operating system, let's connect the console of our virtual machine and list block devices once again. The disk should no longer be listed by the guest operating system.
 
-1. Click **Workloads** → **Virtualization** from the side menu.
+1. Click [Workloads -> Virtualization](https://console-openshift-console.%cluster_subdomain%/k8s/ns/parksmap-demo/virtualization) from the side menu.
    
 2. Click the **Virtual Machines** tab.
    

@@ -104,7 +104,7 @@ oc get pods -o wide
 Check the VM's IP:
 
 ```execute-1
-oc get pods | grep fc31-podnet
+oc get pods -o wide | grep fc34-podnet
 ```
 
 ~~~bash
@@ -114,8 +114,8 @@ virt-launcher-fc34-podnet-cxztw   1/1     Running   0          20m   10.129.2.21
 
 We can also check the *pod* for the networks-status, showing the IP address that's being managed, adjust to suit your config:
 
-~~~bash
-$ oc describe pod/virt-launcher-fc34-podnet-cxztw | grep -A 9 networks-status
+~~~copy
+oc describe pod/virt-launcher-fc34-podnet-[POD-ID] | grep -A 9 networks-status
               k8s.v1.cni.cncf.io/networks-status:
                 [{
                     "name": "openshift-sdn",
@@ -132,8 +132,10 @@ As this lab guide is being hosted within the same cluster, you should be able to
 
 
 ```copy
-ping -c1 10.129.2.210
+ping -c1 [POD-IP]
 ```
+
+You should see an output  similar to below. Note that IPs may be different:
 
 ~~~bash
 $ ping -c1 10.129.2.210
@@ -163,8 +165,13 @@ root@10.129.2.210's password:
 [root@fc34-podnet ~]# exit
 logout
 Connection to 10.129.2.210 closed.
+~~~
 
-$ oc whoami
+```execute
+oc whoami
+```
+
+~~~bash
 system:serviceaccount:workbook:cnv
 ~~~
 
@@ -172,8 +179,11 @@ system:serviceaccount:workbook:cnv
 
 This becomes even more evident if we curl the IP address of our VM on the pod network, recalling that we installed NGINX on this VM's disk image in an earlier lab step, you'll see that we curl on the pod IP, but it shows the server address as something different:
 
+```exeute
+curl http://[POD-IP]
+```
+
 ~~~bash
-$ curl http://10.129.2.210
 Server address: 10.0.2.2:80
 Server name: fc34-podnet
 Date: 06/Dec/2021:13:06:04 +0000

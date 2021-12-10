@@ -36,7 +36,7 @@ After MongoDB Virtual Machine started,
 
 Open *Virtual Machine Console* as shown in the figure below 
 
-Switch to *Serial Console* and wait for the login prompt.
+Wait for the login prompt.
 
 On the login screen, enter the following credentials:
 
