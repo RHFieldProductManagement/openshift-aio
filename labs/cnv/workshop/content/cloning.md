@@ -1,30 +1,56 @@
-In this lab we're going to clone a workload and prove that it's identical to the previous. For convenience we're going to download and customise a Fedora 34 image, launch a virtual machine via OpenShift Virtualization based on it, install a basic application inside the VM, and then clone it - we'll then test to see if the cloned machine works as expected and is "the same" as before. Before we begin we need to setup our Fedora 34 cloud image, let's first connect to our bastion host as we need somewhere to process and serve the image:
+In this lab we're going to clone a workload using both Web Console and Terminal and prove that it's identical to the previous. 
 
+# Exercise 1
 
 ## Cloning VM using Web Console
 
-Firstly, we are installing httpd package for test.You can use same virtual machine as you have created before.
+In the first section(Using Web Console), For convenience we're going to install CentOS VM using templates section.Then install a basic application inside the VM, and after that clone it - we'll then test to see if the cloned machine works as expected and is "the same" as before.
 
+Let's navigate to the top-level '**Workloads**' menu entry, and select '**Virtualization**' and click '**Templates**' section.
 
-# Work in Progress
-1. Navigate to the OpenShift Web UI so we can access the console of the `mongodb-nationalparks` virtual machine. You'll need to select "**Workloads**" --> "**Virtualization**" --> "**Virtual Machines**" --> "**mongodb-nationalparks**" --> "**Console**". You'll be able to login with "**centos/redhat**", noting that you may have to click on the console window for it to capture your input.
+Now,You can see VMs which names are Red Hat Enterprise Linux, CentOS etc.You  added boot source on CentOS image before.We will use this CentOS Template.
 
-2. Once you're in the virtual machine, delete everything under it's data path.
-```execute
-sudo systemctl stop mongod
-```
-```execute
-sudo rm -rf /var/lib/mongo/*
-```
-```execute
-sudo systemctl start mongod
-```
+Click '**Create VM**' button.
+
+![](img/clone8.png)
+
+You dont need to customize Template.But you can if you want.
+
+Click '**Create Virtual Machine**' 
+
+![](img/clone9.png)
+
+That's it. You create a new VM from CentOS Template.Let's see this new VM details.
+
+Click '**See virtual machine details**'
+
+![](img/clone10.png)
+
+Now, as you can see, your vm is running now.
+
+![](img/clone11.png)
+
+Then , I need to connect console for install some packages for testing.
+
+Click '**Console**'
+
+![](img/clone12.png)
 
 ~~~bash
-$ yum install httpd -y
-$ systemctl start httpd
-$ systemctl enable httpd
+Username: root
+Password: redhat
 ~~~
+
+And let's install http package using below command.
+
+~~~bash
+yum install httpd -y
+~~~
+~~~bash
+systemctl start httpd
+systemctl enable httpd
+~~~
+
 
 And lets  check your HTTP server via browser. First of all , you should get your VM's current public ip then try to connect using this ip.That's it.
 
@@ -56,10 +82,11 @@ Before moving on to the next lab let's clean up the VMs so we ensure our environ
 
 ![](img/clone7.png)
 
+# Exercise 2
 
 ## Cloning a Virtual Machine using CLI
 
-
+For convenience we're going to download and customise a Fedora 34 image, launch a virtual machine via OpenShift Virtualization based on it, install a basic application inside the VM, and then clone it - we'll then test to see if the cloned machine works as expected and is "the same" as before. Before we begin we need to setup our Fedora 34 cloud image, let's first connect to our bastion host as we need somewhere to process and serve the image:
 
 First ssh to bastion node (password is *%bastion-password%*):
 
@@ -483,7 +510,7 @@ fc34-original   37m   Stopped   False
 
 
 
-### Clone the VM (Option 1)
+### Clone the VM
 
 Now that we've got a working virtual machine with a test workload we're ready to actually clone it, to prove that the built-in cloning utilities work, and that the cloned machine shares the same workload. There are a couple of ways of doing this, first we'll use the CLI to do so, and we'll simply clone the underlying storage volume, to do this we'll need to create a PV (persistent volume) to clone into. This is done by creating a special resource called a `DataVolume`, this custom resource type is provide by CDI. DataVolumes orchestrate import, clone, and upload operations and help the process of importing data into a cluster. DataVolumes are integrated into OpenShift Virtualization.
 
