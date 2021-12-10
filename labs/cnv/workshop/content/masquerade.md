@@ -112,6 +112,7 @@ NAME                              READY   STATUS    RESTARTS   AGE   IP         
 virt-launcher-fc34-podnet-cxztw   1/1     Running   0          20m   10.129.2.210   ocp4-worker2.aio.example.com   <none>           <none>
 ~~~
 
+
 We can also check the *pod* for the networks-status, showing the IP address that's being managed, adjust to suit your config:
 
 ~~~copy
@@ -132,13 +133,12 @@ As this lab guide is being hosted within the same cluster, you should be able to
 
 
 ```copy
-ping -c1 [POD-IP]
+ping -c1 [VM-IP-ADDRESS]
 ```
 
-You should see an output  similar to below. Note that IPs may be different:
+You should see an output  similar to below. Note that IPs will be different:
 
 ~~~bash
-$ ping -c1 10.129.2.210
 PING 10.129.2.210 (10.129.2.210) 56(84) bytes of data.
 64 bytes from 10.129.2.210: icmp_seq=1 ttl=63 time=1.69 ms
 
@@ -147,14 +147,24 @@ PING 10.129.2.210 (10.129.2.210) 56(84) bytes of data.
 rtt min/avg/max/mdev = 1.692/1.692/1.692/0.000 ms
 ~~~
 
+```copy
+ssh root@[VM-IP-ADDRESS]
+```
 
 
 ~~~bash
-$ ssh root@10.129.2.210
 root@10.129.2.210's password:
 (password is "redhat")
+~~~
 
-[root@fc34-podnet ~]# ip a s eth0
+Now execute following to check the IP:
+
+```copy
+ip a s eth0
+```
+You should see something similar below:
+
+~~~bash
 2: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1450 qdisc fq_codel state UP group default qlen 1000
     link/ether 02:b1:ce:00:00:05 brd ff:ff:ff:ff:ff:ff
     inet 10.0.2.2/24 brd 10.0.2.255 scope global dynamic noprefixroute eth0
@@ -180,7 +190,7 @@ system:serviceaccount:workbook:cnv
 This becomes even more evident if we curl the IP address of our VM on the pod network, recalling that we installed NGINX on this VM's disk image in an earlier lab step, you'll see that we curl on the pod IP, but it shows the server address as something different:
 
 ```exeute
-curl http://[POD-IP]
+curl http://[VM-IP-ADDRESS]
 ```
 
 ~~~bash
