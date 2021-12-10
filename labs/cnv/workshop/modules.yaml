@@ -66,14 +66,14 @@ modules:
         exit_sign: Deploy second DB
     deploy-database-yaml:
         name: Deploy Database VM using YAML
-        exit_sign: Network Isolation
-    micro-segmentation:
-        name: Network Isolation for Virtual Machines 
         exit_sign: Snapshots
     snapshot-restore:
         name: Backup and Restore Virtual Machines using Snapshots
         exit_sign: Hot-plug 
     hot-plug:
         name: Hot-plugging Virtual Disks
-        exit_sign: Finish Lab 
+        exit_sign: Network Isolation
+    micro-segmentation:
+        name: Network Isolation for Virtual Machines 
+        exit_sign: Finish Lab
 

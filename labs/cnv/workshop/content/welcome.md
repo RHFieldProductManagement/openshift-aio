@@ -12,15 +12,15 @@ This is the self-hosted lab guide that will run you through the following:
 - *Setting up Storage for OpenShift Virtualization*
 - *Setting up Networking for OpenShift Virtualization*
 - *Performing Live Migrations and Node Maintenance*
-- *Creating Virtual Machines from Snapshot*
+- *Virtual Machine Templates and Boot Sources*
 - *Cloning a Virtual Machine*
-- *Utilising network masquerading on pod networking for VM's*
 - *Utilising network masquerading on pod networking for VM's*
 - *ParksMap Application Architecture*
 - *Deploying Parksmap Application Components*
 - *Deploying Database VM using Web Console*
 - *Deploying Database VM using YAML*
 - *Performing Backup and Restore of Virtual Machines*
+- *Hot-plugging Virtual Disks*
 - *Network Isolation for Virtual Machines*
 
 Within the lab you can cut and paste commands directly from the instructions; but also be sure to review all commands carefully both for functionality and syntax!
