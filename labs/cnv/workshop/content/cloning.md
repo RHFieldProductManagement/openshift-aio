@@ -87,7 +87,7 @@ And view the route:
 oc get routes
 ```
 
-You can now visit the endpoint at [https://centos-httpd-service-default.apps.%cluster_subdomain%/](https://centos-httpd-service-default.apps.%cluster_subdomain%/) in a new browser tab and find the HTTP server from your Centos based VM - you should see the same content that we curl'd in a previous step, just now it's exposed on the internet:
+You can now visit the endpoint at [http://centos-httpd-service-default.apps.%cluster_subdomain%/](http://centos-httpd-service-default.apps.%cluster_subdomain%/) in a new browser tab and find the HTTP server from your Centos based VM - you should see the same content that we curl'd in a previous step, just now it's exposed on the internet:
 
 <img src="img/clone6.png"/>
 
