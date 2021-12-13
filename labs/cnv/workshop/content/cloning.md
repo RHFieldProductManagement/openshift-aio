@@ -448,8 +448,8 @@ dnf install podman -y
 
 Copy below command and enter corresponding information:
 
-~~~bash
-[root@fedora ~]# cat >> /etc/systemd/system/nginx.service << EOF
+```execute-1
+cat >> /etc/systemd/system/nginx.service << EOF
 [Unit]
 Description=Nginx Podman container
 Wants=syslog.service
@@ -459,7 +459,7 @@ ExecStop=/usr/bin/podman stop --all
 [Install]
 WantedBy=multi-user.target
 EOF
-~~~
+```
 
 Then enable nginx service:
 

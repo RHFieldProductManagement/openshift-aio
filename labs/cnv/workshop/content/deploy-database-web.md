@@ -203,7 +203,7 @@ name: cloudinitdisk
 Let's check the VirtualMachine object now
 
 ```execute-1
- oc get vm mongodb-nationalparks -n %parksmap-project-namespace% -o yaml | |grep -A 31 cloudInitNoCloud
+ oc get vm mongodb-nationalparks -n %parksmap-project-namespace% -o yaml |grep -A 31 cloudInitNoCloud
 ```
 
 When we instantiate the template, OpenShift replaces the parameters with the values provided :

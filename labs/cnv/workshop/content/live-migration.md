@@ -235,7 +235,7 @@ EOF
 Check the `NodeMaintenance` object is created:
 
 ~~~bash
-nodemaintenance.nodemaintenance.kubevirt.io/worker1-maintenance
+nodemaintenance.nodemaintenance.kubevirt.io/worker-maintenance
 ~~~
 
 > **NOTE**: You may need to modify the above command to specify `workerX` if your virtual machine is currently running on another worker. Also note that you **may** lose your browser based web terminal, and you'll need to wait a few seconds for it to become accessible again (try refreshing your browser) - this is because the router and/or workbook pods may be running on the worker you put into maintenance.
@@ -295,17 +295,17 @@ Here is it:
 
 ~~~bash
 NAME                  AGE
-worker1-maintenance   5m16s
+worker-maintenance   5m16s
 ~~~
 
 Now delete it:
 
 ```execute-1
-oc delete nodemaintenance/worker1-maintenance
+oc delete nodemaintenance/worker-maintenance
 ```
 
 ~~~bash
-nodemaintenance.nodemaintenance.kubevirt.io "worker1-maintenance" deleted
+nodemaintenance.nodemaintenance.kubevirt.io "worker-maintenance" deleted
 ~~~
 
 Then check the node again:

@@ -11,6 +11,7 @@ This is the self-hosted lab guide that will run you through the following:
 - *Deploying OpenShift Virtualization*
 - *Setting up Storage for OpenShift Virtualization*
 - *Setting up Networking for OpenShift Virtualization*
+- *Deploying Workloads*
 - *Performing Live Migrations and Node Maintenance*
 - *Virtual Machine Templates and Boot Sources*
 - *Cloning a Virtual Machine*
