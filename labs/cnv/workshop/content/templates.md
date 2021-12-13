@@ -93,3 +93,15 @@ You can now use this template to create CentOS 8 virtual machines.
 ![Templates](img/templates-boot-source-verify.png)
 
 That's it for adding boot sources to a template. We have imported a Centos 8 cloud disk image into a new PVC and attached that onto a CentOS 8 virtual machine template which we will use to create new virtual machines in the next labs.
+
+4. Now create the application template that you will deploy in Parksmap Application lab:
+
+```execute-1
+oc create -f deploy/parksmap-application-template.yaml
+```
+
+5. And now create the MongoDB Virtual Machine Template that you will deploy in Deploy Database lab:
+
+```execute-1
+oc create -f deploy/mongodb-vm-template.yaml
+```
