@@ -97,11 +97,11 @@ That's it for adding boot sources to a template. We have imported a Centos 8 clo
 4. Now create the application template that you will deploy in Parksmap Application lab:
 
 ```execute-1
-oc create -f deploy/parksmap-application-template.yaml
+oc apply -f deploy/parksmap-application-template.yaml
 ```
 
 5. And now create the MongoDB Virtual Machine Template that you will deploy in Deploy Database lab:
 
 ```execute-1
-oc create -f deploy/mongodb-vm-template.yaml
+oc apply -f deploy/mongodb-vm-template.yaml
 ```
