@@ -48,10 +48,15 @@ This PVC will be cloned for each new virtual machine created using this template
 6. Set **Persistent Volume Claim size** as **20 GiB**. This will also be the size of the root disk of the VMs created by using this template.
    
 7. Fill in the **Source provider** field with the name of the source disk provider. We can enter `CentOS Community` here in this exercise.
-8. and click **Save and import**.
+
+8. Expand **Advanced Storage Settings** and ensure you have selected  `ocs-storagecluster-ceph-rbd` as the *StorageClass*.
+
+9. and click **Save and import**.
 
    </td>
-   <td><img src="img/templates-add-boot-source.png" width="100%"/></td>
+   </tr>
+   <tr>
+   <td><img src="img/template-bootsource.png" width="100%"/></td>
   </tr>
  </table>
 
