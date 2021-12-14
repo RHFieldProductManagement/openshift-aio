@@ -75,5 +75,11 @@ modules:
         exit_sign: Network Isolation
     micro-segmentation:
         name: Network Isolation for Virtual Machines 
+        exit_sign: Hostpath Storage
+    hostpath-storage:
+        name: Hostpath Storage
+        exit_sign: Continue
+    deploy-hostpath:
+        name: Deploy VM using Hostpath Storage
         exit_sign: Finish Lab
 

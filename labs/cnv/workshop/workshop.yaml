@@ -21,5 +21,7 @@ modules:
     - snapshot-restore
     - hot-plug
     - micro-segmentation
+    - hostpath-storage
+    - deploy-hostpath
 
 
