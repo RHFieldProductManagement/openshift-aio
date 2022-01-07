@@ -60,7 +60,7 @@ $ sudo dnf install -y ansible-collection-containers-podman.noarch
 To get started, first clone this repository:
 
 ~~~bash
-$ git clone https://github.com/RHFieldProductManagement/openshift-aio.git
+$ git clone --single-branch --branch ansible-external-roles https://github.com/RHFieldProductManagement/openshift-aio.git
 ~~~
 
 Next, enter the directory and make a copy of the `sample_vars.yml` file, as we'll use this to customise the deployment:
