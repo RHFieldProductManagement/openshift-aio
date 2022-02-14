@@ -63,6 +63,9 @@ ocp4_aio_deploy_nfs: false
 ocp4_aio_deploy_sno: true
 ocp4_aio_deploy_big_vms: false
 
+# Select lab to deploy
+ocp4_aio_deploy_cnvlab: true
+
 # Select OpenShift version for base cluster
 ocp4_aio_ocp_version: latest-4.8
 
