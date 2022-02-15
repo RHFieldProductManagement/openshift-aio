@@ -15,11 +15,12 @@ With the current implementation it's possible to achieve the following-
 * Deploy against an existing RHEL 8 / CentOS 8 baremetal host as a "*prebuilt*" system
 * Utilise the dynamic [Packet/EquinixMetal](https://metal.equinix.com/) provisioner for on-demand access to baremetal
 * Deploy either a [user-provisioned infrastructure](https://docs.openshift.com/container-platform/4.7/architecture/architecture-installation.html) (UPI) or [installer-provisioned infrastructure](https://docs.openshift.com/container-platform/4.7/architecture/architecture-installation.html) (IPI) cluster-
-  * UPI deploys the nodes via DHCP/PXE, with no provider integration
+  * (**WIP**) UPI deploys the nodes via DHCP/PXE, with no provider integration
   * IPI deploy the nodes through the Baremetal IPI interface via IPMI and OpenStack Ironic ([Metal3](https://metal3.io/))
-* Select the exact version of OpenShift that you want, e.g. "*4.6.8*", or a latest release, "*latest-4.7*"
+* Select the exact version of OpenShift that you want, e.g. "*4.6.8*", or from a release tag, "*latest-4.9*" or "*candidate-4.10*"
 * Specify whether you want a [compact cluster](https://www.openshift.com/blog/delivering-a-three-node-architecture-for-edge-deployments), i.e. a master-only 3-node configuration with no workers
 * Specify the number of workers that you want, 1-3, depending on the host specification
+* Deploy three Single Node Openshift clusters 
 * Deploy **just** the base infrastructure required to support OpenShift installation, i.e. don't run the install
 * Deploy an OpenShift cluster, but leave it bare, i.e. no further customisation post-deployment
 * Deploy an OpenShift cluster with a wide variety of additional operators deployed, including -
