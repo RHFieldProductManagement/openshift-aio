@@ -98,14 +98,18 @@
         name: deploy_ocp
       vars:
         aio_host_ip_address: "{{ groups['target'][0] }}"
-      when: ocp4_aio_deploy_type == 'upi' or ocp4_aio_deploy_type == 'ipi'
+      when: 
+        - ocp4_aio_deploy_type == 'upi' or ocp4_aio_deploy_type == 'ipi'
+        - ocp4_aio_deploy_ocp
 
 - hosts: target
   tasks:
     - name: Deploy SNO
       include_role:
         name: deploy_ocp
-      when: ocp4_aio_deploy_type == "sno"
+      when: 
+        - ocp4_aio_deploy_type == "sno"
+        - ocp4_aio_deploy_ocp
 
 # Step 5 : Get infos from deployments
 - hosts: localhost
