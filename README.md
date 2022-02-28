@@ -6,7 +6,7 @@ We do this for simplicity and for ease of scale when we need to - we have full c
 
 The following diagram helps to visualise the configuration:
 
-(**WIP** ADD DIAGRAM)
+(**WIP** - rdo to fix)
 
 
 
