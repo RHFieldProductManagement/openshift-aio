@@ -56,6 +56,16 @@ $ ansible-galaxy collection install containers.podman
 $ sudo dnf install -y ansible-collection-containers-podman.noarch
 ~~~
 
+Another option to make sure to have all the tested versions of all the required ansible components is to create a virtual env and fetch all the required libraries at their tested versions :
+
+~~~bash
+$ python3 -m venv ansible2.9-python3.6
+
+$ source ansible2.9-python3.6/bin/activate
+
+(ansible2.9-python3.6) $ pip3 install -r https://raw.githubusercontent.com/redhat-cop/agnosticd/development/tools/virtualenvs/equinix_metal-ansible2.9-python3.6-2021-11-03.txt
+~~~
+
 ## Configure  
 
 To get started, first clone this repository:
