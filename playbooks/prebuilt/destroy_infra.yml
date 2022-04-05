@@ -162,6 +162,12 @@
       failed_when: vbmc_return.rc > 1
       when: ocp4_aio_deploy_type == "ipi"
 
+    - name: Disable use of bastion DNS
+      ansible.builtin.lineinfile:
+        path: /etc/resolv.conf
+        state: absent
+        line: "nameserver 192.168.123.100"
+
     - name: Disable VirtualBMC
       ansible.builtin.systemd:
         name: virtualbmc
@@ -175,39 +181,39 @@
         state: absent
       when: ocp4_aio_deploy_type == "ipi"
 
-    - name: Check if firewalld is available
-      ansible.builtin.command: systemctl status firewalld
-      register: firewalld_avail
-      failed_when: firewalld_avail.rc == 1
+    # - name: Check if firewalld is available
+    #   ansible.builtin.command: systemctl status firewalld
+    #   register: firewalld_avail
+    #   failed_when: firewalld_avail.rc == 1
 
-    - name: Remove VBMC firewalld ports for IPI deployments
-      firewalld:
-        port: 6230-6236/udp
-        zone: libvirt
-        permanent: yes
-        state: disabled
-      when:
-        - firewalld_avail.rc != 4
-        - ocp4_aio_deploy_type == "ipi"
+    # - name: Remove VBMC firewalld ports for IPI deployments
+    #   firewalld:
+    #     port: 6230-6236/udp
+    #     zone: libvirt
+    #     permanent: yes
+    #     state: disabled
+    #   when:
+    #     - firewalld_avail.rc != 4
+    #     - ocp4_aio_deploy_type == "ipi"
 
-    - name: Remove Guacamole firewalld ports
-      firewalld:
-        port: "{{ item }}"
-        zone: libvirt
-        permanent: yes
-        state: disabled
-      loop:
-        - "8080/tcp"
-      when:
-        - firewalld_avail.rc != 4
+    # - name: Remove Guacamole firewalld ports
+    #   firewalld:
+    #     port: "{{ item }}"
+    #     zone: libvirt
+    #     permanent: yes
+    #     state: disabled
+    #   loop:
+    #     - "8080/tcp"
+    #   when:
+    #     - firewalld_avail.rc != 4
 
-    - name: Reload Firewalld
-      ansible.builtin.command: firewall-cmd --reload
-      register: firewalld_return
-      failed_when: firewalld_return.rc > 0
-      when:
-        - firewalld_avail.rc != 4
-        - ocp4_aio_deploy_type == "ipi"
+    # - name: Reload Firewalld
+    #   ansible.builtin.command: firewall-cmd --reload
+    #   register: firewalld_return
+    #   failed_when: firewalld_return.rc > 0
+    #   when:
+    #     - firewalld_avail.rc != 4
+    #     - ocp4_aio_deploy_type == "ipi"
 
     - name: Disable VBMC iptables ports for IPI deployments
       ansible.builtin.iptables:
@@ -216,9 +222,7 @@
         destination_port: "6230:6236"
         jump: ACCEPT
         state: absent
-      when:
-        - firewalld_avail.rc == 4
-        - ocp4_aio_deploy_type == "ipi"
+      when: ocp4_aio_deploy_type == "ipi"
 
     - name: Disable Guacamole iptables ports
       ansible.builtin.iptables:
@@ -229,22 +233,7 @@
         state: absent
       loop:
         - "8080"
-      when:
-        - firewalld_avail.rc == 4
-        - ocp4_aio_deploy_type == "ipi"
-
-    - name: Disable port 9001 forwarding to bastion:9001 with firewalld
-      firewalld:
-        port_forward:
-          port: "9001"
-          proto: tcp
-          toaddr: 192.168.123.100
-          toport: "9001"
-        zone: public
-        permanent: yes
-        state: absent
-      when:
-        - firewalld_avail.rc != 4
+      when: ocp4_aio_deploy_type == "ipi"
 
     - name: Disable port 9001 on host
       ansible.builtin.iptables:
@@ -254,8 +243,6 @@
         action: insert
         destination_port: "9001"
         jump: ACCEPT
-      when:
-        - firewalld_avail.rc == 4
 
     - name: Disable prerouting for port 9001
       ansible.builtin.iptables:
@@ -268,8 +255,6 @@
         destination_port: "9001"
         jump: DNAT
         to_destination: 192.168.123.100:9001
-      when:
-        - firewalld_avail.rc == 4
 
     - name: Check if ocp4-net network is already configured
       ansible.builtin.command: virsh net-dumpxml ocp4-net
