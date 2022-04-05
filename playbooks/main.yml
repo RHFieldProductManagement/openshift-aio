@@ -123,36 +123,49 @@
     - name: Setting up NFS Storage
       include_role: 
         name: ocp4_role_nfsmount
-      when: ocp4_aio_deploy_nfs or not ocp4_aio_deploy_ocs
+      when: 
+        - ocp4_aio_deploy_nfs or not ocp4_aio_deploy_ocs
+        - ocp4_aio_deploy_ocp
 
     - name: Deploy internal registry
       include_role:
         name: ocp4_role_imgreg
+      when: ocp4_aio_deploy_ocp
 
     - name: Setting up OCS Storage
       include_role:
         name: ocp4_role_ocs
-      when: ocp4_aio_deploy_ocs 
+      when: 
+        - ocp4_aio_deploy_ocs 
+        - ocp4_aio_deploy_ocp
 
     - name: Installing ACM
       include_role:
         name: ocp4_role_acm
-      when: ocp4_aio_deploy_acm or ocp4_aio_deploy_ocp_plus or ocp4_aio_deploy_sno
+      when: 
+        - ocp4_aio_deploy_acm or ocp4_aio_deploy_ocp_plus or ocp4_aio_deploy_sno
+        - ocp4_aio_deploy_ocp
 
     - name: Installing ACS
       include_role:
         name: ocp4_role_acs
-      when: ocp4_aio_deploy_acs or ocp4_aio_deploy_ocp_plus or ocp4_aio_deploy_sno
+      when: 
+        - ocp4_aio_deploy_acs or ocp4_aio_deploy_ocp_plus or ocp4_aio_deploy_sno
+        - ocp4_aio_deploy_ocp
 
     - name: Installing CNV
       include_role:
         name: ocp4_role_cnv
-      when: ocp4_aio_deploy_cnv
+      when: 
+        - ocp4_aio_deploy_cnv
+        - ocp4_aio_deploy_ocp
 
     - name: Deploy OpenShift Virtualization LAB
       include_role:
         name: ocp4_role_deploy_cnvlab
-      when: ocp4_aio_deploy_cnvlab
+      when: 
+        - ocp4_aio_deploy_cnvlab
+        - ocp4_aio_deploy_ocp
   
 # Step 7: Print Output to User
 - import_playbook: finish.yml
