@@ -63,6 +63,8 @@ $ python3 -m venv ansible2.9-python3.6
 
 $ source ansible2.9-python3.6/bin/activate
 
+(ansible2.9-python3.6) $ pip install --upgrade pip 
+
 (ansible2.9-python3.6) $ pip3 install -r https://raw.githubusercontent.com/redhat-cop/agnosticd/development/tools/virtualenvs/equinix_metal-ansible2.9-python3.6-2021-11-03.txt
 ~~~
 
