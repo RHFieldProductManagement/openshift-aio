@@ -70,7 +70,7 @@ ocp4_aio_deploy_cnvlab: true
 ocp4_aio_ocp_version: latest-4.10
 
 # Select Network Type for the Openshift Cluster (OpenShiftSDN or OVNKubernetes)
-ocp4_aio_network_type: OVNKubernetes
+ocp4_aio_network_type: OpenShiftSDN
 
 # Select number of workers for base cluster (1-3, for 0 use ocp4_aio_deploy_compact)
 ocp4_aio_ocp_workers: 2
