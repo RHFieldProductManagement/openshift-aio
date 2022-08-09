@@ -244,17 +244,10 @@
         destination_port: "9001"
         jump: ACCEPT
 
-    - name: Disable prerouting for port 9001
+    - name: flush iptables nat table
       ansible.builtin.iptables:
-        state: absent
-        action: insert
         table: nat
-        chain: PREROUTING
-        protocol: tcp
-        match: tcp
-        destination_port: "9001"
-        jump: DNAT
-        to_destination: 192.168.123.100:9001
+        flush: yes
 
     - name: Check if ocp4-net network is already configured
       ansible.builtin.command: virsh net-dumpxml ocp4-net
