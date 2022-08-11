@@ -46,17 +46,9 @@ Note, these playbooks are expected to be operated from your workstation/laptop, 
 
 ## Software prerequisites
 
-Installation requires either Ansible 2.10+ or you'll need to install the **Podman module** for lower versions. This can be done via `ansible-galaxy` or an RPM:
+Installation requires Ansible-core 2.13+ 
 
-~~~bash
-$ ansible-galaxy collection install containers.podman
-
--or-
-
-$ sudo dnf install -y ansible-collection-containers-podman.noarch
-~~~
-
-Another option to make sure to have all the tested versions of all the required ansible components is to create a virtual env and fetch all the required libraries at their tested versions :
+In order to make sure to have all the tested versions of all the required ansible components there is an option to create a virtual env and fetch all the required libraries at their tested versions :
 
 ~~~bash
 $ python3 -m venv ansible2.9-python3.6
@@ -65,7 +57,7 @@ $ source ansible2.9-python3.6/bin/activate
 
 (ansible2.9-python3.6) $ pip install --upgrade pip 
 
-(ansible2.9-python3.6) $ pip3 install -r https://raw.githubusercontent.com/redhat-cop/agnosticd/development/tools/virtualenvs/equinix_metal-ansible2.9-python3.6-2021-11-03.txt
+(ansible2.9-python3.6) $ pip3 install -r https://raw.githubusercontent.com/redhat-cop/agnosticd/development/tools/virtualenvs/equinix_metal-ansible2.9-python3.6-2022-08-11.txt
 ~~~
 
 ## Configure  
