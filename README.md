@@ -46,9 +46,17 @@ Note, these playbooks are expected to be operated from your workstation/laptop, 
 
 ## Software prerequisites
 
-Installation requires Ansible-core 2.13+ 
+Installation requires either Ansible 2.10+ or you'll need to install the **Podman module** for lower versions. This can be done via `ansible-galaxy` or an RPM:
 
-In order to make sure to have all the tested versions of all the required ansible components there is an option to create a virtual env and fetch all the required libraries at their tested versions :
+~~~bash
+$ ansible-galaxy collection install containers.podman
+
+-or-
+
+$ sudo dnf install -y ansible-collection-containers-podman.noarch
+~~~
+
+Another option to make sure to have all the tested versions of all the required ansible components is to create a virtual env and fetch all the required libraries at their tested versions :
 
 ~~~bash
 $ python3 -m venv ansible2.9-python3.6

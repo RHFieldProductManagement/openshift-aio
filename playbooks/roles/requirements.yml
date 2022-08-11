@@ -45,7 +45,7 @@
 - name: deploy_bastion
   src: https://github.com/RHFieldProductManagement/ocp4_aio_infra_role_deploy_bastion.git
   scm: git
-  version: v0.0.8
+  version: v0.0.9
 
 - name: deploy_guac
   src: https://github.com/RHFieldProductManagement/ocp4_aio_infra_role_deploy_guacamole.git
