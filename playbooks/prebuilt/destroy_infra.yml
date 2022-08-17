@@ -294,11 +294,13 @@
         - postgres
         - guacamole
         - guacd
+      when: ocp4_aio_deploy_guacamole
 
     - name: Remove Guacamole postgres data directory
       ansible.builtin.file:
         path: "/usr/local/pgsql/"
         state: absent
+      when: ocp4_aio_deploy_guacamole
 
     - name: Remove sno directories 1/2
       ansible.builtin.file:
