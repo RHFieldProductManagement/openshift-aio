@@ -66,7 +66,7 @@ ocp4_aio_deploy_big_vms: false
 # Select lab to deploy
 ocp4_aio_deploy_cnvlab: true
 
-# Select OpenShift version for base cluster
+# Select OpenShift version for base cluster (current supported versions are 4.10 and 4.11)
 ocp4_aio_ocp_version: latest-4.10
 
 # Select Network Type for the Openshift Cluster (OpenShiftSDN or OVNKubernetes)
