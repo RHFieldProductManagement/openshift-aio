@@ -121,6 +121,7 @@ The list of available options (exposed as Ansible variables) is described below-
 | `ocp4_aio_ocp_workers`             | Specify the number of workers that you'd like to use between 1-3; there's some work in progress to expand this further, but right now the minimum is *'2'*, although *'1'* can be used if you **manually** enable schedulable masters during installation. <br /><br />* If you specify *'0'* here, `ocp4_aio_deploy_compact` is forced to *true*. <br />* If `ocp4_aio_deploy_ocs` is set to *true*, `ocp4_aio_ocp_workers` will be forced to *'3'*  <br /><br />**Default**: '2' - we'd rather save capacity on the baremetal host, and two is the minimum number of workers in a non-compact cluster. |
 | `ocp4_aio_deploy_type`             | Specify the deployment type that you want to use; you can choose from a SNO or an IPI type deployment, in which the "baremetal" type will be used for both. With a SNO installation, clusters are installed using an in-place install method and dynamically generated ISOs, whereas IPI uses the IPMI-based management to provide a more integrated baremetal management interface via [Metal3](https://metal3.io/). <br /><br />**Default**: "ipi" (Installer Provisioned Infrastructure) |
 | `ocp4_aio_network_type`              | Specify whether you want to use OpenShiftSDN or OVNKubernetes. <br /><br />**Default**: OpenShiftSDN |
+| `ocp4_aio_odflite`                   | Specify whether you want to use the downsized ODF environment for memory constrained ( < 192Gb ram) environments  <br /><br />**Default**: false  |
 
 ## Deployment
 
