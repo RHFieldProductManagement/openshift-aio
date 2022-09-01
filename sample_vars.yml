@@ -89,3 +89,6 @@ ocp4_aio_rhcos_iso_url: "https://mirror.openshift.com/pub/openshift-v4/x86_64/de
 
 # Shall we use DDNS ? (WiP)
 ocp4_aio_use_ddns: false
+
+# Shall we try lowering ODF memory footprint (Experimental) ?
+ocp4_aio_odflite: false
