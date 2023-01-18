@@ -4,25 +4,19 @@ Welcome to our OpenShift All-in-One deployment automation repository. Here you'l
 
 We do this for simplicity and for ease of scale when we need to - we have full control over the baremetal machine and we can virtualise networks, storage, host everything we need with no bandwidth/latency concerns, and also means we don't have to worry about sharing access to hardware and the potential conflicts that may arise from doing so. The purpose of this repo is **not** for production usage, simply to help build an environment for learning/enablement, demonstrations, or reproducing configurations very quickly.
 
-The following diagram helps to visualise the configuration:
-
-(**WIP** - rdo to fix)
-
-
-
 With the current implementation it's possible to achieve the following-
 
-* Deploy against an existing RHEL 8 / CentOS 8 baremetal host as a "*prebuilt*" system
+* Deploy against an existing RHEL/CentOS/RockyLinux baremetal host as a "*prebuilt*" system
 * Utilise the dynamic [Packet/EquinixMetal](https://metal.equinix.com/) provisioner for on-demand access to baremetal
 * Deploy either a [user-provisioned infrastructure](https://docs.openshift.com/container-platform/4.7/architecture/architecture-installation.html) (UPI) or [installer-provisioned infrastructure](https://docs.openshift.com/container-platform/4.7/architecture/architecture-installation.html) (IPI) cluster-
-  * (**WIP**) UPI deploys the nodes via DHCP/PXE, with no provider integration
+  * UPI deploys the nodes via DHCP/PXE, with no provider integration
   * IPI deploy the nodes through the Baremetal IPI interface via IPMI and OpenStack Ironic ([Metal3](https://metal3.io/))
-* Select the exact version of OpenShift that you want, e.g. "*4.6.8*", or from a release tag, "*latest-4.9*" or "*candidate-4.10*"
+* Select the exact version of OpenShift that you want, e.g. "*4.9.30*", or from a release tag, "*latest-4.10*" or "*candidate-4.10*"
 * Specify whether you want a [compact cluster](https://www.openshift.com/blog/delivering-a-three-node-architecture-for-edge-deployments), i.e. a master-only 3-node configuration with no workers
 * Specify the number of workers that you want, 1-3, depending on the host specification
-* Deploy three Single Node Openshift clusters 
+* Deploy Single Node OpenShift clusters 
 * Deploy **just** the base infrastructure required to support OpenShift installation, i.e. don't run the install
-* Deploy an OpenShift cluster, but leave it bare, i.e. no further customisation post-deployment
+* Deploy an OpenShift cluster, but leave it bare, i.e. no further customisation post-deployment.
 * Deploy an OpenShift cluster with a wide variety of additional operators deployed, including -
   * [OpenShift Virtualization](https://www.openshift.com/learn/topics/virtualization/) (CNV)
   * [OpenShift Container Storage / OpenShift Data Foundations](https://www.redhat.com/en/technologies/cloud-computing/openshift-data-foundation) (OCS/ODF)
@@ -30,9 +24,9 @@ With the current implementation it's possible to achieve the following-
   * [Advanced Cluster Security](https://www.redhat.com/en/resources/advanced-cluster-security-for-kubernetes-datasheet) (ACS)
 * Deploy a [Red Hat OpenShift Platform Plus](https://www.openshift.com/products/platform-plus) deployment (combination of OpenShift, ACM, and ACS)
 * Deploy an optional [Apache Guacamole](https://guacamole.apache.org/) instance for easy browser-based interaction with the cluster
-* (**WIP**) Deploy a *disconneted* cluster in which the OpenShift cluster relies on a dedicated image registry
+* Deploy a *disconneted* cluster in which the OpenShift cluster clones OpenShift images locally on a dedicated image registry
 * Deploy NFS-based "basic" persistent volume storage for when OCS/ODF is not enabled
-* (**WIP**) Deploy the cluster in a pre-determined state to support self-paced labs and demonstration for-
+* Deploy the cluster in a pre-determined state to support self-paced labs and demonstrations for-
   * Baremetal IPI cluster deployment & post-deployment utilisation
   * OpenShift Virtualization (CNV) deployment and utilisation
 
