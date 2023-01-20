@@ -44,6 +44,7 @@
           - Open a shell session to this machine: `ssh root@{{ groups['target'][0] }}`
           - All tasks should then be performed on the bastion machine, hop to this: `ssh root@192.168.123.100`.
           - Here you'll find all of the tools you'll likely need, feel free to install more.
+          - root password for the bastion host is {{ hostvars['passwd_holder']['root_password'] }}
       debug:
         msg: "{{ msg.split('\n') }}"
 

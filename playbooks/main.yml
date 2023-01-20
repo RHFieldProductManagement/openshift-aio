@@ -64,6 +64,16 @@
 - hosts: target
   gather_facts: true
   tasks:
+
+    - name: Generate the root password
+      set_fact:
+        bastion_password: "{{ lookup('password', '/dev/null length=12 chars=ascii_letters,digits') }}"
+
+    - name: add bastion_password variable to dummy host
+      add_host:
+        name: "passwd_holder"
+        root_password:  "{{ bastion_password }}"
+
     - name: Setup base software
       include_role:
         name: base_software
@@ -75,21 +85,29 @@
         name: base_virt
       vars:
         aio_host_ip_address: "{{ groups['target'][0] }}"
+        ocp4_aio_root_password: "{{ bastion_password }}"
 
     - name: Prepare bastion VM
       include_role:
         name: prepare_bastion
+      vars:
+        ocp4_aio_root_password: "{{ bastion_password }}"
 
     - name: deploy Guacamole
       include_role:
         name: deploy_guac
       when: ocp4_aio_deploy_guacamole
+      vars:
+        ocp4_aio_root_password: "{{ bastion_password }}"
 
 # Step 4 : Prepare Bastion VM 
 - hosts: bastion
   gather_facts: false
-  roles:
-    - deploy_bastion
+  tasks:
+    - include_role:
+        name: deploy_bastion
+      vars:
+        ocp4_aio_root_password: "{{ bastion_password }}"
 
   tasks:
 # Step 5 : Deploy Openshift or SNO
