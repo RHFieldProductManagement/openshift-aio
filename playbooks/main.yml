@@ -104,12 +104,11 @@
 - hosts: bastion
   gather_facts: false
   tasks:
-    - include_role:
+    - name: Deploy Bastion
+      include_role:
         name: deploy_bastion
       vars:
         ocp4_aio_root_password: "{{ bastion_password }}"
-
-  tasks:
 # Step 5 : Deploy Openshift or SNO
     - name: deploy OCP
       include_role:
