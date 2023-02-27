@@ -182,7 +182,7 @@
         name: ocp4_role_deploy_cnvlab
       vars:
         - guid: "ocp4-aio"
-        - ocp4-aio-console-url: "https://console-openshift-console.apps.aio.example.com"
+        - ocp4_aio_console_url: "https://console-openshift-console.apps.aio.example.com"
       when: 
         - ocp4_aio_deploy_cnvlab
         - ocp4_aio_deploy_ocp
